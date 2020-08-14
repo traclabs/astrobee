@@ -1,10 +1,10 @@
-\defgroup doc Documentation
+\page doc Documentation
 
 # Tools used for FSW documentation
 
 ## Code documentation
 
-Code should be documened using doxygen.
+Code should be documented using doxygen.
 
 *Add here an explanation of the overall structure and how to create subsystem
  pages (or just provide a default template).*

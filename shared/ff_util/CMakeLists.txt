@@ -20,7 +20,7 @@ project(ff_util)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ff_nodelet config_server config_client perf_timer
-  CATKIN_DEPENDS roscpp nodelet dynamic_reconfigure ff_msgs diagnostic_msgs tf2_geometry_msgs actionlib
+  CATKIN_DEPENDS config_reader roscpp nodelet dynamic_reconfigure ff_msgs diagnostic_msgs tf2_geometry_msgs actionlib
 )
 
 create_library(TARGET ff_nodelet

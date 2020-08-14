@@ -1,5 +1,17 @@
 # Astrobee Robot Software v1
 
+## Release 0.11.1
+
+  * Fix install error.
+  * Color in simulated scicam.
+
+## Release 0.11.0
+
+  * Added Ubuntu 18 compatibility
+  * Added dockerfiles for simplified install
+  * Fixes to QP planner
+  * Various other minor fixes
+
 ## Release 0.10.4
 
   * Histogram correction for sparse mapping.
