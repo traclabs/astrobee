@@ -17,7 +17,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 #
-# Helper to configure the freeflyer build in a simple a repeatable way
+# Helper to configure the astrobee build in a simple a repeatable way
 #
 # This script simply invoke cmake to configure the build with some
 # reasonable options for either Native Linux (-l) or/and ArmHF (-a)
@@ -42,7 +42,7 @@ archname="${cpu_type}_${os_kernel}_gcc${gcc_major}"
 # prefix for installation path
 prefix=""
 
-# build name (if used, build under freeflyer/build/$buildname)
+# build name (if used, build under astrobee/build/$buildname)
 buildname=""
 
 # configure nothing by default
@@ -72,11 +72,12 @@ usage_string="$scriptname [-h] [-l <linux build>] [-a <arm build>]\
  [-f <with PicoFlexx driver>] [-F <without PicoFlexx driver>]\
  [-k <use ccache if available>] [-K <do not use ccache>]\
  [-v <with VIVE>] [-V <without VIVE>]\
+ [-t <with integration tests, requires gpu>] [-T <without integration test>]\
  [-g <print debug information only>]"
 #[-t make_target]
 
 # options to parse
-optstring="hlap:b:B:cCdDrRfFkKvVmMg"
+optstring="hlap:b:B:cCdDrRfFkKvVtTg"
 
 # Print the script usage
 print_usage()
@@ -110,6 +111,8 @@ print_help()
     echo -e "\t-F build without the PicoFlexx driver"
     echo -e "\t-v build with the VIVE (default)"
     echo -e "\t-V build without VIVE"
+    echo -e "\t-t build with the integration tests, if tests enabled, requires gpu (default)"
+    echo -e "\t-T build without integration tests, if tests enabled"
     #    echo -e "\t-t make_target  define the make build target"
     #    echo -e "\t   default (when ommited) is 'install'"
     echo -e "\t   when -t is specified, the configure processs is skipped!"
@@ -170,9 +173,9 @@ parse_args()
 		 ;;
 	    "V") extra_opts+=" -DENABLE_VIVE=off"
 		 ;;
-	    "m") extra_opts+=" -DENABLE_DENSE_MAPPER=on"
+	    "t") extra_opts+=" -DENABLE_INTEGRATION_TESTING=on"
 		 ;;
-	    "M") extra_opts+=" -DENABLE_DENSE_MAPPER=off"
+	    "T") extra_opts+=" -DENABLE_INTEGRATION_TESTING=off"
 		 ;;
 	    "g") debug_mode=1
 		 ;;
@@ -332,8 +335,8 @@ if [ $native_build == 1 ] ; then
     # So by default we build in the home directory that is Vagrant native.
     # In addition, we do not create an install directory by default.
     # Update: we are currently forced to provide an install prefix!
-    native_build_path=${build_path:-${HOME}/freeflyer_build/native}
-    native_install_path=${prefix:-${HOME}/freeflyer_install/native}
+    native_build_path=${build_path:-${HOME}/astrobee_build/native}
+    native_install_path=${prefix:-${HOME}/astrobee_install/native}
     configure ${native_build_path} ${build_type:-RelWithDebInfo} \
 	      ${native_install_path} ${ff_path} ${clean_cache} \
               ${dds_opt} ${extra_opts}
@@ -342,8 +345,8 @@ fi
 if [ $armhf_build == 1 ] ; then
     echo "configuring for armhf..."
     armhf_opts="-DCMAKE_TOOLCHAIN_FILE=${ff_path}/scripts/build/ubuntu_cross.cmake -DUSE_CTC=true"
-    armhf_build_path=${build_path:-${HOME}/freeflyer_build/armhf}
-    armhf_install_path=${prefix:-${HOME}/freeflyer_install/armhf}
+    armhf_build_path=${build_path:-${HOME}/astrobee_build/armhf}
+    armhf_install_path=${prefix:-${HOME}/astrobee_install/armhf}
     configure ${armhf_build_path} ${build_type:-Release} \
 	      ${armhf_install_path} ${ff_path} ${clean_cache} \
               ${dds_opt} ${armhf_opts} ${extra_opts}

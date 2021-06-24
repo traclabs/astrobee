@@ -17,6 +17,8 @@ to examine the 'launch' directory in this folder for a XML file called
    the system. Additional files might be needed depending on the context.
 6. `scripts` - A simple bash script to print out the environment variables,
    which can be used to check the context at any point in the launch sequence.
+   A second script to print out the relevant software versions installed on the
+   MLP, LLP, and HLP.
 
 # Environment variables
 
@@ -165,7 +167,7 @@ work reliably with VirtualBox. Run:
 11. To be able to interact with the robot in its environment using a
 GUI program, either via teleoperation, or by writing and running a
 plan, one can use the Astrobee Ground Control Station (GDS). See
-https://babelfish.arc.nasa.gov/trac/freeflyerworkbench/wiki/HowToRunWorkbench
+https://github.com/nasa/astrobee_gds
 for detailed instructions for how to install and run GDS.
 
 Once GDS is downloaded and extracted, its directory should be renamed

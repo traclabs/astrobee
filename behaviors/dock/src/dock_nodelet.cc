@@ -43,6 +43,7 @@
 // Services
 #include <ff_hw_msgs/Undock.h>
 #include <ff_msgs/SetState.h>
+#include <ff_msgs/GetPipelines.h>
 
 // Actions
 #include <ff_msgs/MotionAction.h>
@@ -133,6 +134,14 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
     // [3]
     fsm_.Add(STATE::UNDOCKED,
       GOAL_DOCK, [this](FSM::Event const& event) -> FSM::State {
+        ff_msgs::GetPipelines srv;
+        if (client_l_.Call(srv)) {
+          if (!srv.response.pipelines.empty() && srv.response.pipelines[0].id == "ar") {
+            // Move to the approach pose using AR localization
+            Move(APPROACH_POSE, ff_msgs::MotionGoal::NOMINAL);
+            return STATE::DOCKING_MOVING_TO_APPROACH_POSE;
+          }
+        }
         Switch(LOCALIZATION_MAPPED_LANDMARKS);
         return STATE::DOCKING_SWITCHING_TO_ML_LOC;
       });
@@ -166,7 +175,7 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
     // [31]
     fsm_.Add(STATE::DOCKING_SWITCHING_TO_AR_LOC,
       SWITCH_SUCCESS, [this](FSM::Event const& event) -> FSM::State {
-        Move(BERTHING_POSE, ff_msgs::MotionGoal::DOCKING);
+        Move(BERTHING_POSE, ff_msgs::MotionGoal::PRECISION);
         return STATE::DOCKING_MOVING_TO_COMPLETE_POSE;
       });
     // [32]
@@ -179,7 +188,7 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
     // [8]
     fsm_.Add(STATE::DOCKING_MOVING_TO_COMPLETE_POSE,
       EPS_DOCKED, [this](FSM::Event const& event) -> FSM::State {
-        Move(APPROACH_POSE, ff_msgs::MotionGoal::DOCKING);
+        Move(APPROACH_POSE, ff_msgs::MotionGoal::PRECISION);
         return STATE::DOCKING_CHECKING_ATTACHED;
       });
     // [9]
@@ -194,7 +203,7 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
           err_ = RESPONSE::MOTION_COMPLETE_FAILED;
           err_msg_ = "Motion failed trying to go to complete pose";
         }
-        Move(APPROACH_POSE, ff_msgs::MotionGoal::DOCKING);
+        Move(APPROACH_POSE, ff_msgs::MotionGoal::PRECISION);
         return STATE::RECOVERY_MOVING_TO_APPROACH_POSE;
       });
     // [10]
@@ -208,7 +217,7 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
       MOTION_SUCCESS, [this](FSM::Event const& event) -> FSM::State {
         err_ = RESPONSE::MOTION_ATTACHED_FAILED;
         err_msg_ = "Check attached failed, magnets didn't stop robot's movement";
-        Move(APPROACH_POSE, ff_msgs::MotionGoal::DOCKING);
+        Move(APPROACH_POSE, ff_msgs::MotionGoal::PRECISION);
         return STATE::RECOVERY_MOVING_TO_APPROACH_POSE;
       });
     // [12]
@@ -422,6 +431,9 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
     server_set_state_ = nh->advertiseService(SERVICE_BEHAVIORS_DOCK_SET_STATE,
       &DockNodelet::SetStateCallback, this);
 
+    // Query the current localization pipeline
+    client_l_.Create(nh, SERVICE_LOCALIZATION_MANAGER_GET_CURR_PIPELINE);
+
     // Contact EPS service for undocking
     client_u_.SetConnectedTimeout(cfg_.Get<double>("timeout_undock_connected"));
     client_u_.SetConnectedCallback(std::bind(
@@ -600,11 +612,11 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
   }
 
   // Check that we are close enough to the approach pose
-  bool CloseEnoughToApproach(uint32_t berth) {
+  bool CloseEnoughToApproach(std::string berth) {
     try {
       // Look up the body frame in the berth frame
       geometry_msgs::TransformStamped tf = tf_buffer_.lookupTransform(
-        berths_[berth] + "/approach", GetTransform(FRAME_NAME_BODY),
+        berth + "/approach", GetTransform(FRAME_NAME_BODY),
           ros::Time(0));
       // Copy the transform
       double d = tf.transform.translation.x * tf.transform.translation.x
@@ -620,21 +632,30 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
   }
 
   bool CheckBerth() {
-      // Look for the berth and confirm localization is working
+    // Look for the berth and confirm localization is working
     std::map<uint8_t, std::string>::iterator it;
-    for (it = berths_.begin(); it != berths_.end(); it++) {
-      try {
-        // Look up the body frame in the berth frame
-        geometry_msgs::TransformStamped tf = tf_buffer_.lookupTransform(
-          it->second + "/complete", GetTransform(FRAME_NAME_BODY), ros::Time(0));
-        // Copy the transform
-        double d = tf.transform.translation.x * tf.transform.translation.x
-                 + tf.transform.translation.y * tf.transform.translation.y
-                 + tf.transform.translation.z * tf.transform.translation.z;
-        // If we are within some delta of the origin, then we are at this berth
-        if (sqrt(d) < cfg_.Get<double>("detection_tolerance"))
-          break;
-      } catch (tf2::TransformException &ex) {}
+    ros::Time begin = ros::Time::now();
+    // Some number bigger than the tolerance
+    double d = cfg_.Get<double>("detection_tolerance") * 2;
+    // Give localization time to stabilize if berth not detected within detection_timeout
+    while (((ros::Time::now() - begin).toSec() < cfg_.Get<double>("detection_timeout"))
+          && sqrt(d) > cfg_.Get<double>("detection_tolerance")) {
+      for (it = berths_.begin(); it != berths_.end(); it++) {
+        try {
+          // Look up the body frame in the berth frame
+          geometry_msgs::TransformStamped tf = tf_buffer_.lookupTransform(
+            it->second + "/complete", GetTransform(FRAME_NAME_BODY), ros::Time(0));
+          // Copy the transform
+          d = tf.transform.translation.x * tf.transform.translation.x
+            + tf.transform.translation.y * tf.transform.translation.y
+            + tf.transform.translation.z * tf.transform.translation.z;
+          // If we are within some delta of the origin, then we are at this berth
+          if (sqrt(d) < cfg_.Get<double>("detection_tolerance"))
+            break;
+          else
+            ros::Duration(0.5).sleep();            // sleep for half a second
+        } catch (tf2::TransformException &ex) {}
+      }
     }
     // Let the use know what's happening
     if (it == berths_.end()) {
@@ -763,8 +784,9 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
       msg.header.frame_id = frame_ + "/approach";
       goal.states.push_back(msg);
 
-      // if docking
-      if (fsm_.GetState() == STATE::DOCKING_SWITCHING_TO_ML_LOC) {
+      // if docking and return to dock enabled
+      if (!CloseEnoughToApproach(frame_) &&
+          fsm_.GetState() == STATE::DOCKING_SWITCHING_TO_ML_LOC) {
         // Load parameters from config file
         std::string planner = cfg_.Get<std::string>("planner");
         bool coll_check = cfg_.Get<bool>("enable_collision_checking");
@@ -856,7 +878,7 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
           return;
         }
         // Check that we are close enough to the approach pose
-        if (!CloseEnoughToApproach(goal->berth) && cfg_.Get<std::string>("planner") != "qp") {
+        if (!CloseEnoughToApproach(berths_[goal->berth]) && !goal->return_dock) {
           result.fsm_result = "Too far from dock";
           result.response = RESPONSE::TOO_FAR_AWAY_FROM_APPROACH;
           server_.SendResult(ff_util::FreeFlyerActionState::ABORTED, result);
@@ -931,6 +953,7 @@ class DockNodelet : public ff_util::FreeFlyerNodelet {
   ff_util::FSM fsm_;
   ff_util::FreeFlyerActionClient<ff_msgs::MotionAction> client_m_;
   ff_util::FreeFlyerActionClient<ff_msgs::LocalizationAction> client_s_;
+  ff_util::FreeFlyerServiceClient<ff_msgs::GetPipelines>  client_l_;
   ff_util::FreeFlyerServiceClient<ff_hw_msgs::Undock> client_u_;
   ff_util::FreeFlyerActionServer<ff_msgs::DockAction> server_;
   ff_util::ConfigServer cfg_;

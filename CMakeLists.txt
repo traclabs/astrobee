@@ -18,7 +18,61 @@
 cmake_minimum_required(VERSION 3.0)
 project(Astrobee)
 
-set(ASTROBEE_VERSION 0.11.1)
+set(ASTROBEE_VERSION 0.14.3)
+
+# Define our options
+option(USE_CCACHE
+  "Use ccache to speed up compiling, at the cost of optimization"
+  ON)
+option(USE_CTC
+  "Use cross compile toolchain for making ARM binaries"
+  OFF)
+option(USE_ROS
+  "Build the ROS-dependent functionality."
+  ON)
+option(USE_DDS
+  "Build the DDS-dependent functionality."
+  ON)
+option(USE_STATIC_LIBS
+  "Build using static libraries. Will use lots of drive space."
+  OFF)
+option(TEST_COVERAGE
+  "Build the code with code coverage options. Not compatible with USE_CTC."
+  OFF)
+option(USE_DRIVERS
+  "Build the tools in the drivers directory."
+  ON)
+option(IS_BAMBOO_BUILD
+  "The code is being built under the bamboo CI system"
+  OFF)
+option(ENABLE_GPROF
+  "Enable compling with support for profiling wih gprof (the GNU Profiler)."
+  OFF)
+option(ENABLE_GOOGLE_PROF
+  "Enable support for profiling wih pprof (the Google Profiler)."
+  OFF)
+option(ENABLE_QP
+  "Enable support for the QP planner."
+  ON)
+option(ENABLE_PICOFLEXX
+  "Enable support for building the PicoFlexx driver"
+  ON)
+option(ENABLE_GAZEBO
+  "Enable support for building the Gazebo simulator"
+  ON)
+option(ENABLE_VIVE
+  "Enable support for building the Vive drivers"
+  ON)
+option(ENABLE_VIVE_SOLVER
+  "Enable support for building the Vive offline solver"
+  ON)
+option(ENABLE_INTEGRATION_TESTING
+  "Build the integration tests if tests are active."
+  ON)
+option(BUILD_LOC_RVIZ_PLUGINS
+  "Build the localization rviz plugins."
+  ON)
+
 
 if ( "${CMAKE_VERSION}" VERSION_GREATER 3.0.0 )
   cmake_policy(SET CMP0045 OLD)
@@ -91,53 +145,6 @@ else (USE_CTC)
   list(APPEND CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 endif (USE_CTC)
 
-# Define our options
-option(USE_CCACHE
-  "Use ccache to speed up compiling, at the cost of optimization"
-  ON)
-option(USE_CTC
-  "Use cross compile toolchain for making ARM binaries"
-  OFF)
-option(USE_ROS
-  "Build the ROS-dependent functionality."
-  ON)
-option(USE_DDS
-  "Build the DDS-dependent functionality."
-  ON)
-option(USE_STATIC_LIBS
-  "Build using static libraries. Will use lots of drive space."
-  OFF)
-option(TEST_COVERAGE
-  "Build the code with code coverage options. Not compatible with USE_CTC."
-  OFF)
-option(USE_DRIVERS
-  "Build the tools in the drivers directory."
-  ON)
-option(IS_BAMBOO_BUILD
-  "The code is being built under the bamboo CI system"
-  OFF)
-option(ENABLE_GPROF
-  "Enable compling with support for profiling wih gprof (the GNU Profiler)."
-  OFF)
-option(ENABLE_GOOGLE_PROF
-  "Enable support for profiling wih pprof (the Google Profiler)."
-  OFF)
-option(ENABLE_QP
-  "Enable support for the QP planner."
-  ON)
-option(ENABLE_PICOFLEXX
-  "Enable support for building the PicoFlexx driver"
-  ON)
-option(ENABLE_GAZEBO
-  "Enable support for building the Gazebo simulator"
-  ON)
-option(ENABLE_VIVE
-  "Enable support for building the Vive drivers"
-  ON)
-option(ENABLE_VIVE_SOLVER
-  "Enable support for building the Vive offline solver"
-  ON)
-
 # If the user selected static libs .. set BUILD_SHARED_LIBS accordingly
 if(USE_STATIC_LIBS)
   set(BUILD_SHARED_LIBS OFF)
@@ -202,14 +209,22 @@ find_package(Gflags REQUIRED)
 ADD_DEFINITIONS(-DFREEFLYER_GFLAGS_NAMESPACE=${GFLAGS_NAMESPACE})
 enable_testing()
 
+if (USE_CTC)
+  find_program(LSB_RELEASE_EXEC lsb_release)
+  execute_process(COMMAND "${LSB_RELEASE_EXEC}" --short --codename OUTPUT_VARIABLE LSB_RELEASE_VERSION_SHORT OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if("${LSB_RELEASE_VERSION_SHORT}" STREQUAL "bionic")
+    set(Protobuf_PROTOC_EXECUTABLE /usr/local/bin/protoc)
+  endif()
+endif (USE_CTC)
+
 find_package(Protobuf REQUIRED)
 if (NOT PROTOBUF_PROTOC_EXECUTABLE)
-  message(FATAL_ERROR "Could not find system's protoc execuable")
+  message(FATAL_ERROR "Could not find system's protoc executable")
 endif (NOT PROTOBUF_PROTOC_EXECUTABLE)
 
 find_package(Ceres REQUIRED)
 
-find_package(Boost 1.54.0 QUIET REQUIRED COMPONENTS filesystem system iostreams thread program_options)
+find_package(Boost 1.54.0 QUIET REQUIRED COMPONENTS filesystem system iostreams thread program_options timer)
 find_package(Eigen3 REQUIRED)
 find_package(ZLIB)
 find_package(Luajit20 REQUIRED)
@@ -232,10 +247,16 @@ if (${OpenCV_VERSION} MATCHES "3.3.1")
     endif()
   endforeach(__cvcomponent)
 endif()
+if (USE_CTC)
+  foreach(__cvcomponent ${OpenCV_LIB_COMPONENTS})
+    set(OpenCV_LIBS ${OpenCV_LIBS} "${OpenCV_INSTALL_PATH}/lib/arm-linux-gnueabihf/lib${__cvcomponent}3.so")
+  endforeach(__cvcomponent)
+endif (USE_CTC)
 set(OpenCV_LIBRARIES ${OpenCV_LIBS})
 
 find_package(dbow2 REQUIRED)
 find_package(Alvar REQUIRED)
+find_package(GTSAM REQUIRED)
 find_package(OpenMVG QUIET REQUIRED)
 find_package(JsonCpp REQUIRED)
 find_package(FFMPEG QUIET)    # Optional
@@ -257,6 +278,15 @@ if (NOT USE_CTC)  # pkg-config needs extra work to be used for cross compile
     set (YAMLCPP_INCLUDE_DIRS ${YAMLCPP_INCLUDEDIR})
   endif (YAMLCPP_FOUND)
 endif (NOT USE_CTC)
+
+if(ENABLE_GOOGLE_PROF)
+  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed -lprofiler -Wl,--as-needed")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG")
+endif()
+
+if(USE_CTC) 
+  set(BUILD_LOC_RVIZ_PLUGINS OFF)
+endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unused-local-typedefs -Wno-packed-bitfield-compat -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-local-typedefs -Wno-packed-bitfield-compat -std=c++11")
@@ -282,18 +312,23 @@ else (USE_CTC)
 endif (USE_CTC)
 
 # Bring in catkin
-set(CATKIN_SKIP_TESTING ON CACHE BOOL "NO")
 if (USE_CTC)
   # Catkin brings in GTest as a dependency. We don't want it because
   # we have our own ... on top of that it doesn't build correctly for
   # ARM. Our own unit tests however will continue to
   # work. (non-catkin)
-  set(CATKIN_ENABLE_TESTING OFF)
-  set(CATKIN_SKIP_TESTING OFF)
+  set(CATKIN_SKIP_TESTING ON)
 endif (USE_CTC)
 if (USE_ROS)
   set(ENV{ROS_LANG_DISABLE} "genlisp:gennodejs:geneus:$ENV{ROS_LANG_DISABLE}")
-  find_package(catkin2 COMPONENTS roscpp message_generation std_msgs geometry_msgs sensor_msgs cv_bridge image_transport tf tf2 tf2_ros rosbag nodelet)
+
+  if (USE_CTC)
+    find_package(catkin2 COMPONENTS roscpp message_generation std_msgs geometry_msgs sensor_msgs cv_bridge image_transport tf tf2 tf2_ros rosbag nodelet)
+  else ()
+    find_package(catkin2 COMPONENTS roscpp message_generation std_msgs geometry_msgs sensor_msgs cv_bridge image_transport tf tf2 tf2_ros rosbag nodelet rviz)
+  endif (USE_CTC)
+
+  find_package(Qt5 ${rviz_QT_VERSION} REQUIRED Core Widgets)
 
   if (IS_BAMBOO_BUILD)
     include(BambooFix)

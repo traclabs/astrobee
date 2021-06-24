@@ -4,10 +4,17 @@
 *.tar.xz
 *.tar.gz
 *.deb
+*.ddeb
+*.buildinfo
 libalvar
 libdeepdive
 libdbow2
+libgtsam
+libgtsamlib
 libdbowdlib
 libopenmvg
 libdecomputil
 libjps3d
+libmiro
+libsoracore
+luajit-2.0

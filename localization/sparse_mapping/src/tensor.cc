@@ -658,8 +658,7 @@ void BundleAdjustment(sparse_mapping::SparseMap * s,
 // Load two maps, merge the second one onto the first one, and save the result.
 void AppendMapFile(std::string const& mapOut, std::string const& mapIn,
                    int num_image_overlaps_at_endpoints,
-                   double outlier_factor,
-                   bool bundle_adjust, bool prune_map) {
+                   double outlier_factor, bool bundle_adjust) {
   LOG(INFO) << "Appending " << mapIn << " to " << mapOut << std::endl;
 
   sparse_mapping::SparseMap A(mapOut);
@@ -679,11 +678,6 @@ void AppendMapFile(std::string const& mapOut, std::string const& mapIn,
   if (bundle_adjust) {
     bool fix_cameras = false;
     sparse_mapping::BundleAdjust(fix_cameras, &C);
-  }
-
-  if (prune_map) {
-    LOG(INFO) << "Pruning map.\n";
-    C.PruneMap();
   }
 
   C.Save(mapOut);
@@ -986,7 +980,7 @@ void findTracksForSharedImages(sparse_mapping::SparseMap * A_in,
     size_t cid_b = it->second;
 
     if (A.cid_to_keypoint_map_[cid_a] != B.cid_to_keypoint_map_[cid_b])
-      LOG(FATAL) << "The input maps don't have the same features. They may need to be rebuilt with --skip_pruning.";
+      LOG(FATAL) << "The input maps don't have the same features. They need to be rebuilt.";
 
     auto a_fid_to_pid = A.cid_fid_to_pid_[cid_a];
     auto b_fid_to_pid = B.cid_fid_to_pid_[cid_b];
@@ -1096,7 +1090,7 @@ void TransformMap(std::map<int, int> & cid2cid,
       int cid = *it;
       if (C.cid_to_keypoint_map_[cid0] != C.cid_to_keypoint_map_[cid]) {
         LOG(FATAL) << "The two input maps do not have the same features for same images. "
-                   << "Cannot merge them. Consider rebuilding them with -skip_pruning.";
+                   << "Cannot merge them. Consider rebuilding them.";
       }
     }
   }
@@ -1535,7 +1529,7 @@ void ExtractSubmap(std::vector<std::string> * keep_ptr,
 
 // Register a map to world coordinates from user-supplied data, or simply
 // verify how well the map performs with this data.
-void RegistrationOrVerification(std::vector<std::string> const& data_files,
+double RegistrationOrVerification(std::vector<std::string> const& data_files,
                                 bool verification,
                                 sparse_mapping::SparseMap * map) {
   // Get the interest points in the images, and their positions in
@@ -1731,7 +1725,7 @@ void RegistrationOrVerification(std::vector<std::string> const& data_files,
   }
 
   if (verification)
-    return;
+    return 0;
 
   // Find the transform from the computed map coordinate system
   // to the world coordinate system.
@@ -1777,6 +1771,7 @@ void RegistrationOrVerification(std::vector<std::string> const& data_files,
               << images[id1] << ' '
               << images[id2] << std::endl;
   }
+  return scale;
 }
 
 void PrintTrackStats(std::vector<std::map<int, int> >const& pid_to_cid_fid,

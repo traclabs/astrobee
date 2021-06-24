@@ -29,6 +29,7 @@
 
   <!-- Remaining options -->
   <arg name="output" default="log" />         <!-- Output to screen or log   -->
+  <arg name="ground_truth_localizer" default="false" /> <!-- Use Ground Truth Localizer      -->
   <arg name="drivers" default="true" />       <!-- Should we launch drivers? -->
   <arg name="sim" default="local" />          <!-- SIM IP address            -->
   <arg name="llp" default="local" />          <!-- LLP IP address            -->
@@ -74,7 +75,7 @@
     <!-- If we need to load synthetic drivers (we are not running on a real robot) -->
     <!-- TODO(asymingt) - pass nodes, spurn and extra into gazebo                  -->
     <include unless="$(arg drivers)"
-             file="$(find astrobee)/launch/controller/synthetic.launch">
+           file="$(find astrobee)/launch/controller/synthetic.launch">
       <arg name="world" value="$(arg world)" />   <!-- World name                -->
       <arg name="ns" value="$(arg ns)" />         <!-- Robot namespace           -->
       <arg name="sim" value="$(arg sim)" />       <!-- SIM IP address            -->
@@ -113,6 +114,7 @@
         <arg name="extra" value="$(arg extra)" />      <!-- Inject extra nodes   -->
         <arg name="debug" value="$(arg debug)" />      <!-- Debug node group     -->
         <arg name="output" value="$(arg output)" />
+        <arg name="ground_truth_localizer" value="$(arg ground_truth_localizer)" />
       </include>
 
       <!-- If we have specified a bag, then play it back into flight software-->
@@ -132,9 +134,9 @@
            name="ROS_HOSTNAME" value="$(arg mlp)" />
 
       <!-- Update the environment variables relating to absolute paths -->
-      <env unless="$(eval arg('llp')=='local')"
+      <env unless="$(eval arg('mlp')=='local')"
            name="ASTROBEE_ROBOT" value="$(arg robot)" />
-      <env unless="$(eval arg('llp')=='local')"
+      <env unless="$(eval arg('mlp')=='local')"
            name="ASTROBEE_WORLD" value="$(arg world)" />
       <env unless="$(eval arg('mlp')=='local')"
            name="ASTROBEE_CONFIG_DIR" value="/opt/astrobee/config" />
@@ -152,6 +154,7 @@
         <arg name="extra" value="$(arg extra)" />      <!-- Inject extra nodes   -->
         <arg name="debug" value="$(arg debug)" />      <!-- Debug node group     -->
         <arg name="output" value="$(arg output)" />
+        <arg name="ground_truth_localizer" value="$(arg ground_truth_localizer)" />
       </include>
 
       <!-- If we have specified a bag, then play it back into flight software-->

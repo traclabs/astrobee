@@ -951,7 +951,7 @@ class ChoreographerNodelet : public ff_util::FreeFlyerNodelet {
       NODELET_WARN_STREAM("Velocity violated " << goal_flight_mode_.name);
       return false;
     }
-    // Check deesired acceleration
+    // Check desired acceleration
     if (plan_goal.desired_accel < 0) {
       plan_goal.desired_accel = goal_flight_mode_.hard_limit_accel / divider;
     } else if (plan_goal.desired_accel > goal_flight_mode_.hard_limit_accel / divider) {
@@ -1118,6 +1118,11 @@ class ChoreographerNodelet : public ff_util::FreeFlyerNodelet {
       ros::Time reftime = goal.segment.front().when;
       if (cfg_.Get<bool>("enable_immediate"))
         reftime = ros::Time::now();
+      // Timesync was an attempt to synchronize Astrobees without Astrobee to
+      // Astrobee communication. It is not recommended to enable it since it
+      // hasn't been tested and the synchronization protocol is not robust; one
+      // can not guarentee that the different Astrobees will receive the
+      // command within the same discrete time unit window.
       if (cfg_.Get<bool>("enable_timesync")) {
         reftime.sec += cfg_.Get<int>("discrete_time_unit");
         reftime.sec += reftime.sec % cfg_.Get<int>("discrete_time_unit");

@@ -1,4 +1,4 @@
-\page sim Simulation
+# Simulation
 
 This package provides the code required to simulate multiple Free-Flyers operating within the International Space Station (ISS). Our code is written as plugins for Gazebo, an open source robot simulator. In essence the plugins mimic the ros messages and services provided by real hardware, and as a result they act as drop-in replacements for the true hardware. Running a simulation is therefore as simple as loading all flight software subsystems except the hardware drivers, and spawning simulated hardware in stead of real drivers.
 
@@ -10,7 +10,9 @@ Note that if the simulation is run any speed over real-time then the NavCam, Doc
 
 ## Obtaining media
 
-If you you are not cross-compiling, then the build process started with "make" will download and extract a correct version of the media automatically for you. This is done by the *description* package, as the media is shared between rviz and Gazebo. To see if the media was installed correctly, check that there are subdirectories in the *description/media* directory.
+If you you are not cross-compiling, then the build process started with "make" will download and extract a correct version of the media automatically for you. This is done by the *description* package [\ref media], as the media is shared between rviz and Gazebo. To see if the media was installed correctly, check that there are subdirectories in the *description/media* directory.
+
+
 
 ## Running the Simulator
 
@@ -81,6 +83,14 @@ In many cases you'll only want a single robot spawned on the root namespace, so 
     roslaunch astrobee sim.launch default:=true rviz:=true
 
 The robot will be on the root namespace and placed at a default location. You should see it appear in rviz within a few seconds of launch.
+
+## Rviz in Localization Only Mode
+
+To run only localization nodes, and visualize localization running on a rosbag containing only imu data and NavCam images, run with the loc_only parameter.  This can be done as described below:
+1: Move a map file for your chosen world to astrobee/resources/rviz.  For example, astrobee/resources/rviz/iss.map
+2: Launch rviz using the loc_only command.  For example: 'roslaunch astrobee sim.launch default:=false rviz:=true loc_only:=true'
+3: In a separate command prompt, launch the astrobee localization software, and provide a global path to your rosbag.  For example: 'roslaunch astrobee astrobee.launch robot:=bumble world:=iss loc_only:=true bag:=/path/to/bag/MyBag.bag'
+There are several visualizations that can be enabled in the file astrobee/config/localization.config.  matched_features_on enables a live camera feed with all sparse mapping features in use overlayed over each frame.  all_features_on enables a live camera feed with all detected features in each frame overlayed.  map_cloud_on draws the entire stored sparse map in rviz.
 
 ## Collisions and performance
 
@@ -326,4 +336,7 @@ Customization: description/description/sensor_imu.urdf.xacro
 
 
 \subpage sim_overview
+
 \subpage sim_issues
+
+\subpage urdf
