@@ -100,3 +100,11 @@ tags
 .ctags
 
 .vscode
+
+
+scripts/setup/debians/alvar/control
+scripts/setup/debians/alvar/rules
+scripts/setup/debians/dbow2/control
+scripts/setup/debians/dbow2/rules
+scripts/setup/debians/dlib/control
+scripts/setup/debians/dlib/rules
