@@ -17,19 +17,21 @@
  */
 
 #include <mapper/mapper_nodelet.h>
+#include <octomap_msgs/conversions.h>
+
 #include <string>
 #include <vector>
 #include <algorithm>
-#include <octomap_msgs/conversions.h>
 
 namespace mapper {
 
 // Thread for fading memory of the octomap
 void MapperNodelet::FadeTask(ros::TimerEvent const& event) {
   mutexes_.octomap.lock();
-  ROS_WARN_STREAM("FadeTask: memory_time: " << globals_.octomap.memory_time_ << ", rate: " << fading_memory_update_rate_);
+  ROS_WARN_STREAM("FadeTask: memory_time: " << globals_.octomap.memory_time_
+                                              << ", rate: " << fading_memory_update_rate_);
   if (globals_.octomap.memory_time_ > 0)
-    globals_.octomap.FadeMemory(fading_memory_update_rate_); // fading_memory_update_rate_
+    globals_.octomap.FadeMemory(fading_memory_update_rate_);  // fading_memory_update_rate_
   mutexes_.octomap.unlock();
 }
 
@@ -224,8 +226,7 @@ void MapperNodelet::OctomappingTask() {
     // globals_.octomap.tree.writeBinary("simple_tree.bt");
 
     octomap_msgs::Octomap obstacle_octomap, free_space_octomap;
-    if (!octomap_msgs::fullMapToMsg(globals_.octomap.tree_, obstacle_octomap))
-    {
+    if (!octomap_msgs::fullMapToMsg(globals_.octomap.tree_, obstacle_octomap)) {
       ROS_WARN("Error converting obstacle message!");
     }
     obstacle_octomap.header.frame_id = FRAME_NAME_WORLD;
@@ -254,16 +255,10 @@ void MapperNodelet::OctomappingTask() {
         obstacle_marker_pub_.publish(obstacle_markers);
         obstacle_cloud_pub_.publish(obstacle_cloud);
       }
-      // if (pub_free) 
-      {
-        free_space_marker_pub_.publish(free_markers);
-        free_space_cloud_pub_.publish(free_cloud);
-      }
-      // if (pub_octomaps) 
-      {
-        obstacle_octomap_pub_.publish(obstacle_octomap);
-        free_space_octomap_pub_.publish(free_space_octomap);
-      }
+      free_space_marker_pub_.publish(free_markers);
+      free_space_cloud_pub_.publish(free_cloud);
+      obstacle_octomap_pub_.publish(obstacle_octomap);
+      free_space_octomap_pub_.publish(free_space_octomap);
     }
 
     if (pub_obstacles_inflated || pub_free_inflated) {

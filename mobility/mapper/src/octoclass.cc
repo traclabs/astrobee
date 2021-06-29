@@ -236,7 +236,7 @@ void OctoClass::PclToRayOctomap(const pcl::PointCloud< pcl::PointXYZ > &cloud,
         tree_inflated_.updateNode(*it, true);
     }
   }
-  for (octomap::KeySet::iterator it = occ_cells_in_range.begin(); it != occ_cells_in_range.end(); ++it) { 
+  for (octomap::KeySet::iterator it = occ_cells_in_range.begin(); it != occ_cells_in_range.end(); ++it) {
     tree_.updateNode(*it, true);
   }
   for (octomap::KeySet::iterator it = inflated_free_cells.begin(); it != inflated_free_cells.end(); ++it) {
@@ -307,14 +307,12 @@ void OctoClass::FadeMemory(const double &rate) {  // rate at which this function
     key = it.getKey();
     octomap::OcTreeNode* n = tree_.search(key);
     is_occ = tree_.isNodeOccupied(n);
-    if (is_occ)
-    {
+    if (is_occ) {
        // ROS_WARN_STREAM("node fading from " << n->getOccupancy() << " by " << fading_obs_log_prob_per_run);
        tree_.updateNodeLogOdds(n, fading_obs_log_prob_per_run);
-    }
-    else
+    } else {
         tree_.updateNodeLogOdds(n, fading_free_log_prob_per_run);
-
+    }
     // tree nodes that are unknown
     // if it was occupied then disoccupied, delete node
     if (is_occ != tree_.isNodeOccupied(n))
@@ -328,14 +326,12 @@ void OctoClass::FadeMemory(const double &rate) {  // rate at which this function
     key = it.getKey();
     octomap::OcTreeNode* n = tree_inflated_.search(key);
     is_occ = tree_inflated_.isNodeOccupied(n);
-    if (is_occ)
-    {
+    if (is_occ) {
         // ROS_WARN_STREAM("inflated node fading from " << n->getOccupancy() << " by " << fading_obs_log_prob_per_run);
         tree_inflated_.updateNodeLogOdds(n, fading_obs_log_prob_per_run);
-    }
-    else
+    } else {
         tree_inflated_.updateNodeLogOdds(n, fading_free_log_prob_per_run);
-
+    }
     // tree nodes that are unknown
     // if it was occupied then disoccupied, delete node
     if (is_occ != tree_inflated_.isNodeOccupied(n))
