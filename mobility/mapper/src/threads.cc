@@ -20,14 +20,16 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <octomap_msgs/conversions.h>
 
 namespace mapper {
 
 // Thread for fading memory of the octomap
 void MapperNodelet::FadeTask(ros::TimerEvent const& event) {
   mutexes_.octomap.lock();
+  ROS_WARN_STREAM("FadeTask: memory_time: " << globals_.octomap.memory_time_ << ", rate: " << fading_memory_update_rate_);
   if (globals_.octomap.memory_time_ > 0)
-      globals_.octomap.FadeMemory(fading_memory_update_rate_);
+    globals_.octomap.FadeMemory(fading_memory_update_rate_); // fading_memory_update_rate_
   mutexes_.octomap.unlock();
 }
 
@@ -167,7 +169,7 @@ void MapperNodelet::CollisionCheckTask() {
 }
 
 void MapperNodelet::OctomappingTask() {
-  ROS_DEBUG("OctomappingTask Thread started!");
+  ROS_WARN("OctomappingTask Thread started!");
   geometry_msgs::TransformStamped tf_cam2world;
   pcl::PointCloud< pcl::PointXYZ > pcl_world;
 
@@ -220,16 +222,25 @@ void MapperNodelet::OctomappingTask() {
     globals_.octomap.tree_.prune();   // prune the tree before visualizing
     globals_.octomap.tree_inflated_.prune();
     // globals_.octomap.tree.writeBinary("simple_tree.bt");
+
+    octomap_msgs::Octomap obstacle_octomap, free_space_octomap;
+    if (!octomap_msgs::fullMapToMsg(globals_.octomap.tree_, obstacle_octomap))
+    {
+      ROS_WARN("Error converting obstacle message!");
+    }
+    obstacle_octomap.header.frame_id = FRAME_NAME_WORLD;
+
     mutexes_.octomap.unlock();
 
     // Publish visualization markers iff at least one node is subscribed to it
-    bool pub_obstacles, pub_free, pub_obstacles_inflated, pub_free_inflated;
+    bool pub_obstacles, pub_free, pub_obstacles_inflated, pub_free_inflated, pub_octomaps;
     pub_obstacles = (obstacle_marker_pub_.getNumSubscribers() > 0) || (obstacle_cloud_pub_.getNumSubscribers() > 0);
     pub_free = (free_space_marker_pub_.getNumSubscribers() > 0) || (free_space_cloud_pub_.getNumSubscribers() > 0);
     pub_obstacles_inflated = (inflated_obstacle_marker_pub_.getNumSubscribers() > 0)
                           || (inflated_obstacle_cloud_pub_.getNumSubscribers() > 0);
     pub_free_inflated = (inflated_free_space_marker_pub_.getNumSubscribers() > 0)
                      || (inflated_free_space_cloud_pub_.getNumSubscribers() > 0);
+    pub_octomaps = (obstacle_octomap_pub_.getNumSubscribers() > 0) || (free_space_octomap_pub_.getNumSubscribers() > 0);
 
     if (pub_obstacles || pub_free) {
       visualization_msgs::MarkerArray obstacle_markers, free_markers;
@@ -238,13 +249,20 @@ void MapperNodelet::OctomappingTask() {
       globals_.octomap.TreeVisMarkers(&obstacle_markers, &free_markers,
                                       &obstacle_cloud,   &free_cloud);
       mutexes_.octomap.unlock();
-      if (pub_obstacles) {
+      // if (pub_obstacles)
+      {
         obstacle_marker_pub_.publish(obstacle_markers);
         obstacle_cloud_pub_.publish(obstacle_cloud);
       }
-      if (pub_free) {
+      // if (pub_free) 
+      {
         free_space_marker_pub_.publish(free_markers);
         free_space_cloud_pub_.publish(free_cloud);
+      }
+      // if (pub_octomaps) 
+      {
+        obstacle_octomap_pub_.publish(obstacle_octomap);
+        free_space_octomap_pub_.publish(free_space_octomap);
       }
     }
 

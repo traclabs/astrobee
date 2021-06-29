@@ -121,7 +121,11 @@ void MapperNodelet::Initialize(ros::NodeHandle *nh) {
     TOPIC_MAPPER_OCTOMAP_INFLATED_CLOUD, 1, true);
   hazard_pub_ = nh->advertise<ff_msgs::Hazard>(
     TOPIC_MOBILITY_HAZARD, 1);
-
+  obstacle_octomap_pub_ = nh->advertise<octomap_msgs::Octomap>(
+    TOPIC_MAPPER_OCTOMAP, 1);
+  free_space_octomap_pub_ = nh->advertise<octomap_msgs::Octomap>(
+    TOPIC_MAPPER_OCTOMAP_FREE, 1);
+  
   // Threads
   h_octo_thread_ = std::thread(&MapperNodelet::OctomappingTask, this);
   h_collision_check_thread_ = std::thread(

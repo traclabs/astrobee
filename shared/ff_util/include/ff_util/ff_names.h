@@ -251,6 +251,8 @@
 #define TOPIC_MAPPER_OCTOMAP_INFLATED_FREE_CLOUD    "mob/mapper/inflated_free_space_cloud"
 #define TOPIC_MAPPER_FRUSTRUM_MARKERS               "mob/mapper/frustum_markers"
 #define TOPIC_MAPPER_DISCRETE_TRAJECTORY_MARKERS    "mob/mapper/discrete_trajectory_markers"
+#define TOPIC_MAPPER_OCTOMAP                        "mob/mapper/obstacle_octomap"
+#define TOPIC_MAPPER_OCTOMAP_FREE                   "mob/mapper/free_space_octomap"
 
 //////////////////
 // LOCALIZATION //

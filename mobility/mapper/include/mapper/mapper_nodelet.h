@@ -34,6 +34,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <tf/transform_broadcaster.h>
 #include <std_srvs/Trigger.h>
+#include <octomap_msgs/Octomap.h>
 
 // Keepout zones for the planner
 #include <boost/filesystem.hpp>
@@ -203,6 +204,8 @@ class MapperNodelet : public ff_util::FreeFlyerNodelet {
   ros::Publisher free_space_marker_pub_;           // Obstacle map
   ros::Publisher obstacle_cloud_pub_;              // Obstacle map
   ros::Publisher free_space_cloud_pub_;            // Obstacle map
+  ros::Publisher obstacle_octomap_pub_;            // Obstacle map
+  ros::Publisher free_space_octomap_pub_;          // Obstacle map
   ros::Publisher inflated_obstacle_marker_pub_;    // Inflated obstacle map
   ros::Publisher inflated_free_space_marker_pub_;  // Inflated free map
   ros::Publisher inflated_obstacle_cloud_pub_;     // Inflated obstacle map

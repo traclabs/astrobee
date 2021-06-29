@@ -37,17 +37,17 @@ OctoClass::OctoClass() {}
 
 void OctoClass::SetMemory(const double memory) {
   memory_time_ = memory;
-  ROS_DEBUG("Fading memory time: %f seconds", memory_time_);
+  ROS_WARN("Fading memory time: %f seconds", memory_time_);
 }
 
 void OctoClass::SetMaxRange(const double max_range) {
   max_range_ = max_range;
-  ROS_DEBUG("Maximum range: %f meters", max_range_);
+  ROS_WARN("Maximum range: %f meters", max_range_);
 }
 
 void OctoClass::SetMinRange(const double min_range) {
   min_range_ = min_range;
-  ROS_DEBUG("Minimum range: %f meters", min_range_);
+  ROS_WARN("Minimum range: %f meters", min_range_);
 }
 
 void OctoClass::SetResolution(const double resolution_in) {
@@ -117,7 +117,7 @@ void OctoClass::ResetMap() {
 void OctoClass::SetOccupancyThreshold(const double occupancy_threshold) {
   tree_.setOccupancyThres(occupancy_threshold);
   tree_inflated_.setOccupancyThres(occupancy_threshold);
-  ROS_DEBUG("Occupancy probability threshold: %f", occupancy_threshold);
+  ROS_WARN("Occupancy probability threshold: %f", occupancy_threshold);
 }
 
 void OctoClass::SetHitMissProbabilities(const double probability_hit,
@@ -126,8 +126,8 @@ void OctoClass::SetHitMissProbabilities(const double probability_hit,
   tree_.setProbMiss(probability_miss);
   tree_inflated_.setProbHit(probability_hit);
   tree_inflated_.setProbMiss(probability_miss);
-  ROS_DEBUG("Probability hit: %f", probability_hit);
-  ROS_DEBUG("Probability miss: %f", probability_miss);
+  ROS_WARN("Probability hit: %f", probability_hit);
+  ROS_WARN("Probability miss: %f", probability_miss);
 }
 
 void OctoClass::SetClampingThresholds(const double clamping_threshold_min,
@@ -136,8 +136,8 @@ void OctoClass::SetClampingThresholds(const double clamping_threshold_min,
   tree_.setClampingThresMax(clamping_threshold_max);
   tree_inflated_.setClampingThresMin(clamping_threshold_min);
   tree_inflated_.setClampingThresMax(clamping_threshold_max);
-  ROS_DEBUG("Clamping threshold minimum: %f", clamping_threshold_min);
-  ROS_DEBUG("Clamping threshold maximum: %f", clamping_threshold_max);
+  ROS_WARN("Clamping threshold minimum: %f", clamping_threshold_min);
+  ROS_WARN("Clamping threshold maximum: %f", clamping_threshold_max);
 }
 
 // // Function obtained from https://github.com/OctoMap/octomap_ros
@@ -236,7 +236,7 @@ void OctoClass::PclToRayOctomap(const pcl::PointCloud< pcl::PointXYZ > &cloud,
         tree_inflated_.updateNode(*it, true);
     }
   }
-  for (octomap::KeySet::iterator it = occ_cells_in_range.begin(); it != occ_cells_in_range.end(); ++it) {
+  for (octomap::KeySet::iterator it = occ_cells_in_range.begin(); it != occ_cells_in_range.end(); ++it) { 
     tree_.updateNode(*it, true);
   }
   for (octomap::KeySet::iterator it = inflated_free_cells.begin(); it != inflated_free_cells.end(); ++it) {
@@ -252,6 +252,7 @@ void OctoClass::ComputeUpdate(const octomap::KeySet &occ_inflated,  // Inflated 
                               octomap::KeySet *occ_slim_in_range,
                               octomap::KeySet *free_slim,
                               octomap::KeySet *free_inflated) {
+  ROS_INFO_STREAM("ComputeUpdate()");
   octomap::KeyRay keyray;
   for (octomap::KeySet::const_iterator occIt = occ_slim.begin(); occIt != occ_slim.end(); ++occIt) {
     const octomap::point3d& p = tree_inflated_.keyToCoord(*occIt);
@@ -285,6 +286,7 @@ void OctoClass::ComputeUpdate(const octomap::KeySet &occ_inflated,  // Inflated 
 }
 
 void OctoClass::FadeMemory(const double &rate) {  // rate at which this function is being called
+  // ROS_WARN_STREAM("FadeMemory update()");
   const double clamp_log_max = tree_.getClampingThresMaxLog();
   const double clamp_log_min = tree_.getClampingThresMinLog();
   const double occ_thres = tree_.getOccupancyThres();
@@ -306,7 +308,10 @@ void OctoClass::FadeMemory(const double &rate) {  // rate at which this function
     octomap::OcTreeNode* n = tree_.search(key);
     is_occ = tree_.isNodeOccupied(n);
     if (is_occ)
-        tree_.updateNodeLogOdds(n, fading_obs_log_prob_per_run);
+    {
+       // ROS_WARN_STREAM("node fading from " << n->getOccupancy() << " by " << fading_obs_log_prob_per_run);
+       tree_.updateNodeLogOdds(n, fading_obs_log_prob_per_run);
+    }
     else
         tree_.updateNodeLogOdds(n, fading_free_log_prob_per_run);
 
@@ -324,7 +329,10 @@ void OctoClass::FadeMemory(const double &rate) {  // rate at which this function
     octomap::OcTreeNode* n = tree_inflated_.search(key);
     is_occ = tree_inflated_.isNodeOccupied(n);
     if (is_occ)
+    {
+        // ROS_WARN_STREAM("inflated node fading from " << n->getOccupancy() << " by " << fading_obs_log_prob_per_run);
         tree_inflated_.updateNodeLogOdds(n, fading_obs_log_prob_per_run);
+    }
     else
         tree_inflated_.updateNodeLogOdds(n, fading_free_log_prob_per_run);
 
