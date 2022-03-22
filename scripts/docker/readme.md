@@ -12,26 +12,48 @@ The docker image for the astrobee FSW is divided throughout 2 docker files.
 
 Available docker files:
 
-	astrobee_base_kinetic - Contains installation of all astrobee dependencies the Ubuntu 16.04 + ROS kinetic setup.
-	astrobee_base_melodic - Contains installation of all astrobee dependencies the Ubuntu 18.04 + ROS melodic setup.
+- `astrobee_base.Dockerfile` - Contains installation of all astrobee dependencies the Ubuntu + ROS setup.
+- `astrobee.Dockerfile` - Builds the astrobee FSW code on top of astrobee_base.
+- `astrobee_quick.Dockerfile` - Builds the astrobee FSW code using a previous astrobee image as a build cache. This dramatically speeds up build times for small changes.
 
-	astrobee_kinetic - Builds the astrobee FSW code on top of astrobee_base_kinetic.
-	astrobee_melodic - Builds the astrobee FSW code on top of astrobee_base_melodic.
+The Docker files accept the following version args (note that they must match up):
 
+- `UBUNTU_VERSION` - The version of Ubuntu to use. Valid values are "16.04", "18.04", and "20.04".
+- `ROS_VERSION` - The version of ROS to use. Valid values are "kinetic", "melodic", and "noetic".
+- `PYTHON` - The version of Python to use. Valid values are "" (an empty string representing Python 2) and "3".
+
+If `UBUNTU_VERSION` is `"16.04"`, `ROS_VERSION` and `PYTHON` must be `"kinetic"` and `""` respectively.
+If `UBUNTU_VERSION` is `"18.04"`, `ROS_VERSION` and `PYTHON` must be `"melodic"` and `""` respectively.
+If `UBUNTU_VERSION` is `"20.04"`, `ROS_VERSION` and `PYTHON` must be `"neotic"` and `"3"` respectively.
+
+The Docker files also accept args to use local or container registry images.
+
+- `REMOTE` - The repository where the dockerfile should derive its base. Valid values are `astrobee` (the default for local builds) or `ghcr.io/nasa` (the official repository).
+- `REMOTE_CACHED` - (Only for `astrobee_quick.dockerfile`, defaults to `${REMOTE}`). The repository for the build cache image. Valid values are `astrobee` (the default for local builds) or `ghcr.io/nasa` (the official repository).
 
 ## Building the docker images
 
 To build the docker images, run:
     
     ./build.sh
-The option -n is used for ubuntu 18 docker images
+
+The build script will automatically detect the current Ubuntu OS version and define the docker files variables
+`UBUNTU_VERSION`, `ROS_VERSION`, and `PYTHON`. If a specific version is desired, the option --xenial, --bionic,
+and --focal is used for ubuntu 16.04, 18.04, and 20.04 docker images, respectively.
 
 ## Run the container
 
 To run the docker container:
 
     ./run.sh
-The option -n is used for ubuntu 18 docker images
+
+It will automatically detect the current Ubuntu OS version. If a specific version is desired, the option
+--xenial, --bionic, and --focal is used for ubuntu 16.04, 18.04, and 20.04 docker images, respectively.
+To add arguments to the launch file in addition to `dds:=false robot:=sim_pub` you can do instead:
+
+    ./run.sh --args "rviz:=true sviz:=true"
+
+*Note: You have to install the nvidia-container-toolkit for the gazebo simulation to run properly*
 
 To open another terminal inside the docker container:
 
@@ -67,7 +89,7 @@ Next, download the cross toolchain and install the chroot:
 
 From the root of the repository, run:
 
-	./scripts/docker/cross_compile/cross_compile.sh
+    ./scripts/docker/cross_compile/cross_compile.sh
 
 The code will be cross-compiles inside the docker container in /opt/astrobee, and
 can be copied to the robot.

@@ -60,13 +60,17 @@ class GraphOptimizer {
   virtual bool MeasurementRecentEnough(const localization_common::Time timestamp) const;
   const gtsam::NonlinearFactorGraph& graph_factors() const;
   gtsam::NonlinearFactorGraph& graph_factors();
+  template <typename FactorType>
+  const std::vector<boost::shared_ptr<const FactorType>> Factors() const;
+  const int num_factors() const;
   void SaveGraphDotFile(const std::string& output_path = "graph.dot") const;
   const GraphOptimizerParams& params() const;
   void LogOnDestruction(const bool log_on_destruction);
   const GraphStats* const graph_stats() const;
   GraphStats* graph_stats();
   const boost::optional<gtsam::Marginals>& marginals() const;
-  std::shared_ptr<gtsam::Values> values();
+  std::shared_ptr<gtsam::Values> shared_values();
+  const gtsam::Values& values() const;
 
  private:
   gtsam::NonlinearFactorGraph MarginalFactors(const gtsam::NonlinearFactorGraph& old_factors,
@@ -156,6 +160,17 @@ class GraphOptimizer {
   gtsam::Marginals::Factorization marginals_factorization_;
   boost::optional<localization_common::Time> last_latest_time_;
 };
+
+// Implementation
+template <typename FactorType>
+const std::vector<boost::shared_ptr<const FactorType>> GraphOptimizer::Factors() const {
+  typename std::vector<boost::shared_ptr<const FactorType>> factors;
+  for (const auto& factor : graph_factors()) {
+    const auto casted_factor = boost::dynamic_pointer_cast<const FactorType>(factor);
+    if (casted_factor) factors.emplace_back(casted_factor);
+  }
+  return factors;
+}
 }  // namespace graph_optimizer
 
 #endif  // GRAPH_OPTIMIZER_GRAPH_OPTIMIZER_H_

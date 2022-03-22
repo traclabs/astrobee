@@ -36,6 +36,7 @@
 #include <map>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace graph_localizer {
 namespace sym = gtsam::symbol_shorthand;
@@ -107,6 +108,11 @@ class CombinedNavStateGraphValues : public graph_optimizer::GraphValues {
 
   const CombinedNavStateGraphValuesParams& params() const;
 
+  std::vector<localization_common::Time> Timestamps() const;
+
+  boost::optional<localization_common::Time> Timestamp(graph_optimizer::KeyCreatorFunction key_creator_function,
+                                                       const gtsam::Key key) const;
+
  private:
   // Removes keys from timestamp_key_index_map, values from values
   bool RemoveCombinedNavState(const localization_common::Time timestamp);
@@ -122,6 +128,7 @@ class CombinedNavStateGraphValues : public graph_optimizer::GraphValues {
   void serialize(ARCHIVE& ar, const unsigned int /*version*/) {
     ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(graph_optimizer::GraphValues);
     ar& BOOST_SERIALIZATION_NVP(timestamp_key_index_map_);
+    ar& BOOST_SERIALIZATION_NVP(params_);
   }
 
   CombinedNavStateGraphValuesParams params_;

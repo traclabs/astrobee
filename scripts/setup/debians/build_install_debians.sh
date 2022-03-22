@@ -19,6 +19,7 @@
 #
 # Install the dependencies needed for the debians. Build and install flight
 # software debians.
+set -e
 
 DEBIAN_LOC=$(dirname "$(readlink -f "$0")")
 
@@ -26,38 +27,45 @@ sudo apt-get install -y devscripts equivs libproj-dev
 
 # delete old debians (-f avoids 'no such file' warning on first run)
 rm -f *_amd64.deb
-
 DIST=`cat /etc/os-release | grep -oP "(?<=VERSION_CODENAME=).*"`
 
-if [ "$DIST" = "xenial" ]; then
-  echo "Ubuntu 16 detected"
-elif [ "$DIST" = "$bionic" ]; then
-  echo "Ubuntu 18 detected"
-  # Install dependencies
-  ${DEBIAN_LOC}/install_opencv.sh
-  ${DEBIAN_LOC}/install_luajit.sh
+if [ "$DIST" != "xenial" ]; then
+  echo "Ubuntu 16 not detected"
+
+  # opencv
+  cd ${DEBIAN_LOC}/opencv
+  sudo mk-build-deps -i -r -t "apt-get --no-install-recommends -y" control
+  cd ${DEBIAN_LOC}
+  ./build_opencv.sh || exit 1
+  mv ${DEBIAN_LOC}/libopencv/libopencv*_amd64.deb .
+  sudo dpkg -i libopencv*_amd64.deb || exit 1
 
   # alvar
-  cp ${DEBIAN_LOC}/files_18_04/alvar_rules ${DEBIAN_LOC}/alvar/rules
-  cp ${DEBIAN_LOC}/files_18_04/alvar_control ${DEBIAN_LOC}/alvar/control
-  cp ${DEBIAN_LOC}/files_18_04/alvar_changelog ${DEBIAN_LOC}/alvar/changelog
+  cp ${DEBIAN_LOC}/files/alvar_rules ${DEBIAN_LOC}/alvar/rules
+  cp ${DEBIAN_LOC}/files/alvar_control ${DEBIAN_LOC}/alvar/control
+  cp ${DEBIAN_LOC}/files/alvar_changelog ${DEBIAN_LOC}/alvar/changelog
   # dlib
-  cp ${DEBIAN_LOC}/files_18_04/dlib_rules ${DEBIAN_LOC}/dlib/rules
-  cp ${DEBIAN_LOC}/files_18_04/dlib_control ${DEBIAN_LOC}/dlib/control
-  cp ${DEBIAN_LOC}/files_18_04/dlib_changelog ${DEBIAN_LOC}/dlib/changelog
+  cp ${DEBIAN_LOC}/files/dlib_rules ${DEBIAN_LOC}/dlib/rules
+  cp ${DEBIAN_LOC}/files/dlib_control ${DEBIAN_LOC}/dlib/control
+  cp ${DEBIAN_LOC}/files/dlib_changelog ${DEBIAN_LOC}/dlib/changelog
   # dbow2
-  cp ${DEBIAN_LOC}/files_18_04/dbow2_rules ${DEBIAN_LOC}/dbow2/rules
-  cp ${DEBIAN_LOC}/files_18_04/dbow2_control ${DEBIAN_LOC}/dbow2/control
-  cp ${DEBIAN_LOC}/files_18_04/dbow2_changelog ${DEBIAN_LOC}/dbow2/changelog
+  cp ${DEBIAN_LOC}/files/dbow2_rules ${DEBIAN_LOC}/dbow2/rules
+  cp ${DEBIAN_LOC}/files/dbow2_control ${DEBIAN_LOC}/dbow2/control
+  cp ${DEBIAN_LOC}/files/dbow2_changelog ${DEBIAN_LOC}/dbow2/changelog
   # gtsam
-  cp ${DEBIAN_LOC}/files_18_04/gtsam_changelog ${DEBIAN_LOC}/gtsam/changelog
-  # decomputil
-  #jps3d
+  cp ${DEBIAN_LOC}/files/gtsam_changelog ${DEBIAN_LOC}/gtsam/changelog
+fi
+
+if [ "$DIST" = "bionic" ]; then
+  echo "Ubuntu 18 detected"
+   # jps3d
   sudo apt-get install -y libvtk6.3 libboost-filesystem1.62.0 libboost-system1.62.0
-  cp ${DEBIAN_LOC}/files_18_04/jps3d_changelog ${DEBIAN_LOC}/jps3d/changelog
-  # openmvg
+  cp ${DEBIAN_LOC}/files/jps3d_changelog ${DEBIAN_LOC}/jps3d/changelog
 elif [ "$DIST" = "focal" ]; then
   echo "Ubuntu 20 detected"
+  #jps3d
+  sudo apt-get install -y libvtk7.1p libboost-filesystem1.71.0 libboost-system1.71.0
+  cp ${DEBIAN_LOC}/files/jps3d_changelog ${DEBIAN_LOC}/jps3d/changelog
 fi
 
 # alvar
@@ -109,3 +117,27 @@ cd ${DEBIAN_LOC}
 ./build_openmvg.sh || exit 1
 sudo dpkg -i libopenmvg*_amd64.deb || exit 1
 
+REQUIRED_PKG="rti-dev"
+PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG 2>&1 | grep "install ok installed" || true)
+echo Checking for $REQUIRED_PKG: $PKG_OK
+if [ "install ok installed" = "$PKG_OK" ]; then
+  echo "$REQUIRED_PKG exists. Setting up miro and soracore."
+
+  # miro
+  cd ${DEBIAN_LOC}/miro
+  sudo mk-build-deps -i -r -t "apt-get --no-install-recommends -y" control
+  cd ${DEBIAN_LOC}
+  ./build_miro.sh || exit 1
+  sudo dpkg -i libmiro*_amd64.deb || exit 1
+
+  # soracore
+  cd ${DEBIAN_LOC}/soracore
+  sudo mk-build-deps -i -r -t "apt-get --no-install-recommends -y" control
+  cd ${DEBIAN_LOC}
+  ./build_soracore.sh || exit 1
+  sudo dpkg -i libsoracore*_amd64.deb || exit 1
+
+fi
+
+# Rename debians
+for file in *.deb; do mv "$file" "${file%.deb}_${DIST}.deb"; done;
