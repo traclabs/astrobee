@@ -43,6 +43,10 @@ OpState* OpStateReady::HandleCmd(ff_msgs::CommandStampedPtr const& cmd) {
     }
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_CUSTOM_GUEST_SCIENCE) {
     exec_->CustomGuestScience(cmd);
+  } else if (cmd->cmd_name == CommandConstants::CMD_NAME_DEPLOY_ARM) {
+    if (exec_->DeployArm(cmd)) {
+      return OpStateRepo::Instance()->teleop()->StartupState();
+    }
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_DOCK) {
     if (exec_->Dock(cmd)) {
       return OpStateRepo::Instance()->teleop()->StartupState();
@@ -85,6 +89,9 @@ OpState* OpStateReady::HandleCmd(ff_msgs::CommandStampedPtr const& cmd) {
     if (exec_->ResetEkf(cmd)) {
       return OpStateRepo::Instance()->teleop()->StartupState();
     }
+  } else if (cmd->cmd_name ==
+                            CommandConstants::CMD_NAME_RESTART_GUEST_SCIENCE) {
+    exec_->RestartGuestScience(cmd);
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_RUN_PLAN) {
     // Store run plan command idea just in case we need to ack it in this state
     if (exec_->RunPlan(cmd)) {
@@ -98,6 +105,8 @@ OpState* OpStateReady::HandleCmd(ff_msgs::CommandStampedPtr const& cmd) {
     exec_->SetEnableImmediate(cmd);
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_SET_ENABLE_REPLAN) {
     exec_->SetEnableReplan(cmd);
+  } else if (cmd->cmd_name == CommandConstants::CMD_NAME_SET_EXPOSURE) {
+    exec_->SetExposure(cmd);
   } else if (cmd->cmd_name ==
                         CommandConstants::CMD_NAME_SET_FLASHLIGHT_BRIGHTNESS) {
     exec_->SetFlashlightBrightness(cmd);
@@ -105,6 +114,8 @@ OpState* OpStateReady::HandleCmd(ff_msgs::CommandStampedPtr const& cmd) {
     exec_->SetHolonomicMode(cmd);
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_SET_INERTIA) {
     exec_->SetInertia(cmd);
+  } else if (cmd->cmd_name == CommandConstants::CMD_NAME_SET_MAP) {
+    exec_->SetMap(cmd);
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_SET_OPERATING_LIMITS) {
     exec_->SetOperatingLimits(cmd);
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_SET_PLAN) {
@@ -154,8 +165,6 @@ OpState* OpStateReady::HandleCmd(ff_msgs::CommandStampedPtr const& cmd) {
     if (exec_->StopArm(cmd)) {
       return OpStateRepo::Instance()->teleop()->StartupState();
     }
-  } else if (cmd->cmd_name == CommandConstants::CMD_NAME_STOP_GUEST_SCIENCE) {
-    exec_->StopGuestScience(cmd);
   } else if (cmd->cmd_name == CommandConstants::CMD_NAME_STOW_ARM) {
     if (exec_->StowArm(cmd)) {
       return OpStateRepo::Instance()->teleop()->StartupState();

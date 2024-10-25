@@ -16,8 +16,7 @@
  * under the License.
  */
 #include <QObject>
-#include <ff_util/ff_names.h>
-#include <graph_bag/utilities.h>
+#include <ff_common/ff_names.h>
 #include <localization_common/logger.h>
 #include <localization_common/utilities.h>
 #include <localization_measurements/measurement_conversions.h>
@@ -41,7 +40,6 @@
 #include "utilities.h"               // NOLINT
 
 namespace localization_rviz_plugins {
-namespace gb = graph_bag;
 namespace lc = localization_common;
 namespace lm = localization_measurements;
 namespace mc = msg_conversions;

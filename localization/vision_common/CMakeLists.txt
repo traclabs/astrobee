@@ -26,15 +26,18 @@ find_package(catkin2 REQUIRED COMPONENTS
   localization_common optimization_common 
 )
 
-# Find OpenCV3
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
-find_package(OpenCV331 REQUIRED)
+# Find GTSAM
+find_package(GTSAM REQUIRED)
+
+# Find OpenCV
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
+find_package(OpenCV4WithXFeatures REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include 
-  LIBRARIES ${PROJECT_NAME} ${OpenCV_LIBRARIES}  
+  LIBRARIES ${PROJECT_NAME} ${OpenCV_LIBRARIES} ${GTSAM_LIBRARIES} gtsam 
   CATKIN_DEPENDS localization_common optimization_common 
 )
 
@@ -45,6 +48,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${GTSAM_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
@@ -52,18 +56,35 @@ include_directories(
 # Declare C++ libraries
 add_library(${PROJECT_NAME}
   src/brisk_feature_detector_and_matcher.cc
-  src/camera_utilities.cc
   src/good_features_to_track_detector.cc
   src/lk_optical_flow_feature_detector_and_matcher.cc
   src/parameter_reader.cc
+  src/pose_estimation.cc
+  src/spaced_feature_track.cc
+  src/spaced_feature_tracker.cc
   src/surf_feature_detector_and_matcher.cc
   src/test_utilities.cc
+  src/utilities.cc
 )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} gtsam ${OpenCV_LIBRARIES})
 
 if(CATKIN_ENABLE_TESTING)
   find_package(rostest REQUIRED)
+  add_rostest_gtest(test_feature_tracker
+    test/test_feature_tracker.test
+    test/test_feature_tracker.cc
+  )
+  target_link_libraries(test_feature_tracker
+    ${PROJECT_NAME} ${catkin_LIBRARIES}  
+  )
+  add_rostest_gtest(test_inverse_depth_measurement
+    test/test_inverse_depth_measurement.test
+    test/test_inverse_depth_measurement.cc
+  )
+  target_link_libraries(test_inverse_depth_measurement
+    ${PROJECT_NAME} ${catkin_LIBRARIES}  
+  )
   add_rostest_gtest(test_lk_optical_flow_feature_detector_and_matcher
     test/test_lk_optical_flow_feature_detector_and_matcher.test
     test/test_lk_optical_flow_feature_detector_and_matcher.cc
@@ -71,7 +92,6 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(test_lk_optical_flow_feature_detector_and_matcher
     ${PROJECT_NAME} ${catkin_LIBRARIES}  
   )
-  find_package(rostest REQUIRED)
   add_rostest_gtest(test_ransac_pnp
     test/test_ransac_pnp.test
     test/test_ransac_pnp.cc
@@ -93,11 +113,32 @@ if(CATKIN_ENABLE_TESTING)
   target_link_libraries(test_pnp
     ${PROJECT_NAME} ${catkin_LIBRARIES} 
   )
-  add_rostest_gtest(test_camera_utilities
-    test/test_camera_utilities.test
-    test/test_camera_utilities.cc
+  add_rostest_gtest(test_pose_estimation
+    test/test_pose_estimation.test
+    test/test_pose_estimation.cc
   )
-  target_link_libraries(test_camera_utilities
+  target_link_libraries(test_pose_estimation
+    ${PROJECT_NAME} ${catkin_LIBRARIES}  
+  )
+  add_rostest_gtest(test_spaced_feature_track
+    test/test_spaced_feature_track.test
+    test/test_spaced_feature_track.cc
+  )
+  target_link_libraries(test_spaced_feature_track
+    ${PROJECT_NAME} ${catkin_LIBRARIES}  
+  )
+  add_rostest_gtest(test_spaced_feature_tracker
+    test/test_spaced_feature_tracker.test
+    test/test_spaced_feature_tracker.cc
+  )
+  target_link_libraries(test_spaced_feature_tracker
+    ${PROJECT_NAME} ${catkin_LIBRARIES}  
+  )
+  add_rostest_gtest(test_utilities
+    test/test_utilities.test
+    test/test_utilities.cc
+  )
+  target_link_libraries(test_utilities
     ${PROJECT_NAME} ${catkin_LIBRARIES}  
   )
 

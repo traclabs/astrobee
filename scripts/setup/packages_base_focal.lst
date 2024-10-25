@@ -10,7 +10,6 @@ libbtf1
 libcolamd2
 libccolamd2
 libcholmod3
-libsuitesparse-dev
 libklu1
 libblas3
 liblapack3
@@ -21,7 +20,6 @@ libv4l2rds0
 libgl1-mesa-glx
 libgmp10
 libusb-1.0-0
-libtinyxml2.6.2v5
 libpcl-common1.10
 libpcl-features1.10
 libpcl-filters1.10
@@ -33,11 +31,7 @@ libpcl-sample-consensus1.10
 libpcl-search1.10
 libjson-c4
 libargtable2-0
-libboost-program-options1.71.0
-libboost-signals1.67.0
-libboost-system1.71.0
-libboost-chrono1.71.0
-libboost-thread1.71.0
+libvtk7.1p
 libboost-program-options1.71.0
 libboost-signals1.67.0
 libboost-system1.71.0
@@ -82,7 +76,8 @@ ros-noetic-mavlink
 ros-noetic-xacro
 ros-noetic-octomap
 ros-noetic-catkin
-libalvar2
+ros-noetic-pcl-conversions
+ros-noetic-ar-track-alvar
 libdbow21
 libgtsam
 libopenmvg1
@@ -93,6 +88,13 @@ libmiro0
 libsoracore1
 libdecomputil0
 libjps3d0
+libopencv-core4.2
+libopencv-calib3d4.2
+libopencv-highgui4.2
+libopencv-imgcodecs4.2
+libopencv-imgproc4.2
+libopencv-features2d4.2
+libopencv-xfeatures2d
 build-essential
 cmake
 libgoogle-glog-dev
@@ -109,7 +111,6 @@ libyaml-cpp-dev
 libusb-1.0-0-dev
 libvtk7-dev
 libpcl-dev
-libpcl-conversions-dev
 libboost-program-options-dev
 libboost-system-dev
 libboost-chrono-dev
@@ -119,7 +120,6 @@ libsuitesparse-dev
 libatlas-base-dev
 libjson-c-dev
 libargtable2-dev
-libalvar-dev
 libdbow2-dev
 libgtsam-dev
 libopenmvg-dev
@@ -130,6 +130,4 @@ libsoracore-dev
 libmiro-dev
 libdecomputil-dev
 libjps3d-dev
-libopencv3.3.1
-libopencv-dev3.3.1
 python3-catkin-tools

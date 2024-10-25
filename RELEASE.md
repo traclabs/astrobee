@@ -1,5 +1,66 @@
 # Releases
 
+## Release 0.19.1
+
+  * Updated Map Matching with TEBLID and CLAHE
+
+## Release 0.19.0
+
+  * New split localizer
+
+## Release 0.18.0
+
+  * Astrobee now using OpenCV 4! Please see install updates in INSTALL.md
+
+## Release 0.17.3
+
+  * Comms bridge added rate feature
+  * Bug fixes
+  * User feedback improvements
+
+## Release 0.17.2
+
+  * Adding Generic comms bridge
+  * Multiple bug fixes
+  * Ubuntu 20 only supported now
+
+## Release 0.17.1
+
+  * Multiple bug fixes
+
+## Release 0.17.0
+
+  * Full compatibility and debians built for Ubuntu 20
+  * Deleted all simulink autocode for ctl and fam
+
+## Release 0.16.7
+
+  * Remove simulink auto-generated code
+  * improved documentation, other tools and fixes
+
+## Release 0.16.6
+
+  * switch map online possibility
+  * other fixes
+
+## Release 0.16.5
+
+  * Fix multiple bugs
+
+## Release 0.16.4
+
+  * Auto-exposure
+  * Add splice tool
+  * Add arm deploy to bridge
+  * Various bug fixes
+
+## Release 0.16.3
+
+  * Added bag tools
+  * Disabled mapper (can be enabled through service)
+  * Add debayer live
+  * Multiple other fixes and improvements
+
 ## Release 0.16.2
 
   * Performance improvements

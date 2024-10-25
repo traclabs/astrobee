@@ -19,11 +19,11 @@
 #include <marker_tracking_node/marker_tracker.h>
 
 #include <ff_msgs/CameraRegistration.h>
-#include <ff_util/ff_names.h>
+#include <ff_common/ff_names.h>
 #include <marker_tracking/marker_detector.h>
 #include <msg_conversions/msg_conversions.h>
 
-#include <alvar/Marker.h>
+#include <ar_track_alvar/Marker.h>
 #include <camera/camera_model.h>
 #include <cv_bridge/cv_bridge.h>
 #include <glog/logging.h>
@@ -204,10 +204,11 @@ void MarkerTracker::VideoCallback(const sensor_msgs::ImageConstPtr& image_msg) {
   // Convert the image
   cv_bridge::CvImageConstPtr cv_ptr_ =
       cv_bridge::toCvShare(image_msg, sensor_msgs::image_encodings::MONO8);
-  IplImage ipl_image = cv_ptr_->image;
+  std::shared_ptr<cv::Mat> image;
+  image = std::make_shared<cv::Mat>(cv_ptr_->image);
 
   // Detect our AR Tags
-  detector_->Detect(&ipl_image, 0.08, 0.2);
+  detector_->Detect(image, 0.08, 0.2);
 
   // No markers? Early exit.
   if (!detector_->NumMarkers()) return;

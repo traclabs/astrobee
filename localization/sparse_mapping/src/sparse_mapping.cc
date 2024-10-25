@@ -117,9 +117,13 @@ namespace sparse_mapping {
 // of unknown values, but intolerant when true and false are mixed.
 void sparse_mapping::HistogramEqualizationCheck(int histogram_equalization1,
                                                 int histogram_equalization2) {
-  if ( (histogram_equalization1 == 0 && histogram_equalization2 == 1) ||
-       (histogram_equalization1 == 1 && histogram_equalization2 == 0) )
+  // Ignore if either has unknown equalization value
+  if (histogram_equalization1 == HistogramEqualizationType::kUnknown ||
+      histogram_equalization2 == HistogramEqualizationType::kUnknown) {
+    return;
+  } else if (histogram_equalization1 != histogram_equalization2) {
     LOG(FATAL) << "Incompatible values of histogram equalization detected.";
+  }
 }
 
 bool sparse_mapping::IsBinaryDescriptor(std::string const& descriptor) {
@@ -129,15 +133,15 @@ bool sparse_mapping::IsBinaryDescriptor(std::string const& descriptor) {
 }
 
 // Writes the NVM control network format.
-void sparse_mapping::WriteNVM(std::vector<Eigen::Matrix2Xd > const& cid_to_keypoint_map,
+void sparse_mapping::WriteNVM(std::vector<Eigen::Matrix2Xd> const& cid_to_keypoint_map,
                               std::vector<std::string> const& cid_to_filename,
-                              std::vector<std::map<int, int> > const& pid_to_cid_fid,
+                              std::vector<std::map<int, int>> const& pid_to_cid_fid,
                               std::vector<Eigen::Vector3d> const& pid_to_xyz,
                               std::vector<Eigen::Affine3d> const&
-                              cid_to_cam_t_global,
-                              double focal_length,
+                              cid_to_cam_t_global, double focal_length,
                               std::string const& output_filename) {
   std::fstream f(output_filename, std::ios::out);
+  f.precision(17);  // use high precision since we will write positions and orientations
   f << "NVM_V3\n";
 
   CHECK(cid_to_filename.size() == cid_to_keypoint_map.size())
@@ -701,7 +705,7 @@ void sparse_mapping::ParseHuginControlPoints(std::string const& hugin_file,
                                              Eigen::MatrixXd * points) {
   // Initialize the outputs
   (*images).clear();
-  *points = Eigen::MatrixXd(6, 1);
+  *points = Eigen::MatrixXd(6, 0);  // this will be resized as points are added
 
   std::ifstream hf(hugin_file.c_str());
   if (!hf.good())

@@ -51,17 +51,20 @@
 #include <ff_msgs/MotionAction.h>
 #include <ff_msgs/PerchAction.h>
 #include <ff_msgs/PlanStatusStamped.h>
+#include <ff_msgs/ResetMap.h>
+#include <ff_msgs/ResponseOnly.h>
 #include <ff_msgs/SetDataToDisk.h>
+#include <ff_msgs/SetExposure.h>
 #include <ff_msgs/SetFloat.h>
 #include <ff_msgs/SetInertia.h>
 #include <ff_msgs/SetRate.h>
 #include <ff_msgs/SetZones.h>
 #include <ff_msgs/UnloadLoadNodelet.h>
 #include <ff_msgs/Zone.h>
+#include <ff_common/ff_names.h>
 #include <ff_util/config_client.h>
 #include <ff_util/ff_action.h>
 #include <ff_util/ff_flight.h>
-#include <ff_util/ff_names.h>
 #include <ff_util/ff_nodelet.h>
 #include <ff_util/ff_service.h>
 
@@ -111,7 +114,8 @@ class Executive : public ff_util::FreeFlyerNodelet {
   void GuestScienceStateCallback(ff_msgs::GuestScienceStateConstPtr const&
                                                                         state);
   void GuestScienceCustomCmdTimeoutCallback(ros::TimerEvent const& te);
-  void GuestScienceStartStopCmdTimeoutCallback(ros::TimerEvent const& te);
+  void GuestScienceStartStopRestartCmdTimeoutCallback(ros::TimerEvent const&
+                                                                            te);
   void InertiaCallback(geometry_msgs::InertiaStampedConstPtr const& inertia);
   void LedConnectedCallback();
   void MotionStateCallback(ff_msgs::MotionStatePtr const& state);
@@ -187,6 +191,7 @@ class Executive : public ff_util::FreeFlyerNodelet {
   bool LoadUnloadNodelet(ff_msgs::CommandStampedPtr const& cmd);
   ros::Time MsToSec(std::string timestamp);
   bool PowerItem(ff_msgs::CommandStampedPtr const& cmd, bool on);
+  bool ProcessGuestScienceCommand(ff_msgs::CommandStampedPtr const& cmd);
   bool ResetEkf(std::string const& cmd_id);
   void StartWaitTimer(float duration);
   void StopWaitTimer();
@@ -202,7 +207,9 @@ class Executive : public ff_util::FreeFlyerNodelet {
   bool ArmPanAndTilt(ff_msgs::CommandStampedPtr const& cmd);
   bool AutoReturn(ff_msgs::CommandStampedPtr const& cmd);
   bool CustomGuestScience(ff_msgs::CommandStampedPtr const& cmd);
+  bool DeployArm(ff_msgs::CommandStampedPtr const& cmd);
   bool Dock(ff_msgs::CommandStampedPtr const& cmd);
+  bool EnableAstrobeeIntercomms(ff_msgs::CommandStampedPtr const& cmd);
   bool Fault(ff_msgs::CommandStampedPtr const& cmd);
   bool GripperControl(ff_msgs::CommandStampedPtr const& cmd);
   bool IdlePropulsion(ff_msgs::CommandStampedPtr const& cmd);
@@ -216,6 +223,7 @@ class Executive : public ff_util::FreeFlyerNodelet {
   bool Prepare(ff_msgs::CommandStampedPtr const& cmd);
   bool ReacquirePosition(ff_msgs::CommandStampedPtr const& cmd);
   bool ResetEkf(ff_msgs::CommandStampedPtr const& cmd);
+  bool RestartGuestScience(ff_msgs::CommandStampedPtr const& cmd);
   bool RunPlan(ff_msgs::CommandStampedPtr const& cmd);
   bool SetCamera(ff_msgs::CommandStampedPtr const& cmd);
   bool SetCameraRecording(ff_msgs::CommandStampedPtr const& cmd);
@@ -226,9 +234,11 @@ class Executive : public ff_util::FreeFlyerNodelet {
   bool SetEnableAutoReturn(ff_msgs::CommandStampedPtr const& cmd);
   bool SetEnableImmediate(ff_msgs::CommandStampedPtr const& cmd);
   bool SetEnableReplan(ff_msgs::CommandStampedPtr const& cmd);
+  bool SetExposure(ff_msgs::CommandStampedPtr const& cmd);
   bool SetFlashlightBrightness(ff_msgs::CommandStampedPtr const& cmd);
   bool SetHolonomicMode(ff_msgs::CommandStampedPtr const& cmd);
   bool SetInertia(ff_msgs::CommandStampedPtr const& cmd);
+  bool SetMap(ff_msgs::CommandStampedPtr const& cmd);
   bool SetOperatingLimits(ff_msgs::CommandStampedPtr const& cmd);
   bool SetPlan(ff_msgs::CommandStampedPtr const& cmd);
   bool SetPlanner(ff_msgs::CommandStampedPtr const& cmd);
@@ -252,6 +262,7 @@ class Executive : public ff_util::FreeFlyerNodelet {
  protected:
   virtual void Initialize(ros::NodeHandle *nh);
   bool ReadParams();
+  bool ReadMapperParams();
   bool ReadCommand(config_reader::ConfigReader::Table *response,
                    ff_msgs::CommandStampedPtr cmd);
   void PublishAgentState();
@@ -263,7 +274,7 @@ class Executive : public ff_util::FreeFlyerNodelet {
   ExecutiveActionClient<ff_msgs::MotionAction> motion_ac_;
   ExecutiveActionClient<ff_msgs::PerchAction> perch_ac_;
 
-  config_reader::ConfigReader config_params_;
+  config_reader::ConfigReader config_params_, mapper_config_params_;
 
   ff_msgs::AgentStateStamped agent_state_;
 
@@ -305,9 +316,12 @@ class Executive : public ff_util::FreeFlyerNodelet {
   ros::ServiceClient perch_cam_config_client_, perch_cam_enable_client_;
   ros::ServiceClient sci_cam_config_client_, sci_cam_enable_client_;
   ros::ServiceClient payload_power_client_, pmc_enable_client_;
+  ros::ServiceClient set_dock_cam_exposure_client_;
+  ros::ServiceClient set_nav_cam_exposure_client_;
   ros::ServiceClient set_inertia_client_, set_rate_client_;
   ros::ServiceClient set_data_client_, enable_recording_client_;
-  ros::ServiceClient eps_terminate_client_;
+  ros::ServiceClient reset_map_client_, eps_terminate_client_;
+  ros::ServiceClient enable_astrobee_intercommunication_client_;
   ros::ServiceClient unload_load_nodelet_client_;
   ros::ServiceClient set_collision_distance_client_;
 
@@ -316,7 +330,7 @@ class Executive : public ff_util::FreeFlyerNodelet {
   ros::Subscriber gs_config_sub_, gs_state_sub_, camera_state_sub_;
   ros::Subscriber perch_state_sub_, inertia_sub_;
 
-  ros::Timer gs_start_stop_command_timer_, gs_custom_command_timer_;
+  ros::Timer gs_start_stop_restart_command_timer_, gs_custom_command_timer_;
   ros::Timer reload_params_timer_, wait_timer_, sys_monitor_heartbeat_timer_;
   ros::Timer sys_monitor_startup_timer_;
 
@@ -326,7 +340,7 @@ class Executive : public ff_util::FreeFlyerNodelet {
   std::shared_ptr<ff_util::ConfigClient> mapper_cfg_;
 
   std::string primary_apk_running_, run_plan_cmd_id_;
-  std::string gs_start_stop_cmd_id_, gs_custom_cmd_id_;
+  std::string gs_start_stop_restart_cmd_id_, gs_custom_cmd_id_;
 
   std::vector<Action> running_actions_;
 
@@ -340,7 +354,6 @@ class Executive : public ff_util::FreeFlyerNodelet {
   int pub_queue_size_;
   int sub_queue_size_;
 
-  // TODO(Katie) Move to Agent state stamped
   bool allow_blind_flying_;
   bool live_led_on_;
   bool sys_monitor_heartbeat_fault_blocking_;

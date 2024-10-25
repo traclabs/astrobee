@@ -23,15 +23,7 @@ add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 find_package(catkin2 REQUIRED COMPONENTS
-  roscpp
-  std_msgs
-  sensor_msgs
-  cv_bridge
-  image_transport
-  rosbag
   ff_common
-  ff_msgs
-  nodelet
   config_reader
 )
 
@@ -40,19 +32,16 @@ find_package(cmake_modules REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 
+# Find OpenCV
+find_package(OpenCV 4.0 REQUIRED)
+
+
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES camera
   CATKIN_DEPENDS
-    roscpp
-    std_msgs
-    sensor_msgs
-    cv_bridge
-    image_transport
-    rosbag
     ff_common
-    ff_msgs
-    nodelet
     config_reader
 )
 
@@ -65,6 +54,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 # Declare C++ libraries
@@ -73,7 +63,7 @@ add_library(camera
   src/camera_params.cc
 )
 add_dependencies(camera ${catkin_EXPORTED_TARGETS})
-target_link_libraries(camera ${catkin_LIBRARIES} ${EIGEN_LIBRARIES})
+target_link_libraries(camera ${catkin_LIBRARIES} ${EIGEN_LIBRARIES} ${OpenCV_LIBRARIES})
 
 ## Declare a C++ executable: undistort_image
 add_executable(undistort_image tools/undistort_image.cc)

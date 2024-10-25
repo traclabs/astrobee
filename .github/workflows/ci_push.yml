@@ -2,99 +2,44 @@ name: Build, test and push packages CI
 
 on:
   push:
-    branches: [ 'develop' ]
+    branches-ignore:
+      - gh-pages
+      - ros2
 
 jobs:
-
-  build-xenial:
-
-    runs-on: ubuntu-18.04
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Checkout submodule
-      run: git submodule update --init --depth 1 description/media
-
-    - name: Build code for Ubuntu 16
-      run: docker build . -f ./scripts/docker/astrobee.Dockerfile
-                          --build-arg UBUNTU_VERSION=16.04
-                          --build-arg ROS_VERSION=kinetic
-                          --build-arg PYTHON=''
-                          --build-arg REMOTE=ghcr.io/nasa
-                          -t ghcr.io/${{ github.repository_owner }}/astrobee:latest-ubuntu16.04
-
-    - name: Test code
-      run: docker build . -f ./scripts/docker/test_astrobee.Dockerfile
-                          --build-arg UBUNTU_VERSION=16.04
-                          --build-arg REMOTE=ghcr.io/${{ github.repository_owner }}
-                          -t astrobee:test-ubuntu16.04
-
-    - name: Log in to registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
-    - name: Push Docker image
-      run: |
-        if [ "${{ github.repository_owner }}" = "nasa" ]; then docker push ghcr.io/${{ github.repository_owner }}/astrobee:latest-ubuntu16.04; fi;
-
-  build-bionic:
-
-    runs-on: ubuntu-18.04
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Checkout submodule
-      run: git submodule update --init --depth 1 description/media
-
-    - name: Build code for Ubuntu 18
-      run: docker build . -f ./scripts/docker/astrobee.Dockerfile
-                          --build-arg UBUNTU_VERSION=18.04
-                          --build-arg ROS_VERSION=melodic
-                          --build-arg PYTHON=3
-                          --build-arg REMOTE=ghcr.io/nasa
-                          -t ghcr.io/${{ github.repository_owner }}/astrobee:latest-ubuntu18.04
-
-    - name: Test code
-      run: docker build . -f ./scripts/docker/test_astrobee.Dockerfile
-                          --build-arg UBUNTU_VERSION=18.04
-                          --build-arg REMOTE=ghcr.io/${{ github.repository_owner }}
-                          -t astrobee:test-ubuntu18.04
-
-    - name: Log in to registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-
-    - name: Push Docker image
-      run: |
-        if [ "${{ github.repository_owner }}" = "nasa" ]; then docker push ghcr.io/${{ github.repository_owner }}/astrobee:latest-ubuntu18.04; fi;
 
   build-focal:
 
     runs-on: ubuntu-20.04
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Checkout submodule
       run: git submodule update --init --depth 1 description/media
 
-    - name: Build code for Ubuntu 20
-      run: docker build . -f ./scripts/docker/astrobee.Dockerfile
-                          --build-arg UBUNTU_VERSION=20.04
-                          --build-arg ROS_VERSION=noetic
-                          --build-arg PYTHON=3
-                          --build-arg REMOTE=ghcr.io/nasa
-                          -t ghcr.io/${{ github.repository_owner }}/astrobee:latest-ubuntu20.04
-
-    - name: Test code
-      run: docker build . -f ./scripts/docker/test_astrobee.Dockerfile
-                          --build-arg UBUNTU_VERSION=20.04
-                          --build-arg REMOTE=ghcr.io/${{ github.repository_owner }}
-                          -t astrobee:test-ubuntu20.0
-
     - name: Log in to registry
       run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-    - name: Push Docker image
-      run: |
-        if [ "${{ github.repository_owner }}" = "nasa" ]; then docker push ghcr.io/${{ github.repository_owner }}/astrobee:latest-ubuntu20.04; fi;
+    - name: Build, test, push docker
+      run: >
+        revision="latest";
+        build_arg="astrobee";
+        push_arg="";
+        branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}};
+        if [ "${{ github.repository_owner }}" == "nasa" ]; then
+          if [ $branch == "develop" ]; then
+            push_arg="push_astrobee";
+          fi;
+          if [ $branch == "master" ]; then
+            export VERSION=`grep -w -m 1 "Release" RELEASE.md | awk '{print $3}'`;
+            revision="v${VERSION}";
+            build_arg="astrobee_base astrobee";
+            push_arg="push_astrobee_base push_astrobee";
+          fi;
+        fi;
+        command="./scripts/docker/build.sh --focal --remote --revision ${revision} \
+                                     --owner ${{ github.repository_owner }} \
+                                     ${build_arg} test_astrobee ${push_arg}";
+        echo "$command";
+        eval "$command";

@@ -19,8 +19,8 @@ cmake_minimum_required(VERSION 3.0)
 project(astrobee_gazebo)
 
 if (ENABLE_GAZEBO)
-## Compile as C++14, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+## Compile as C++17
+add_compile_options(-std=c++17)
 
 ## Find catkin macros and libraries
 find_package(catkin2 REQUIRED COMPONENTS
@@ -35,8 +35,9 @@ find_package(catkin2 REQUIRED COMPONENTS
   ff_hw_msgs
   tf2_geometry_msgs
   ff_util
-  gnc_autocode
+  pmc
   camera
+  cv_bridge
   jsonloader
 )
 
@@ -44,7 +45,7 @@ find_package(catkin2 REQUIRED COMPONENTS
 find_package(gazebo REQUIRED)
 
 # Find jsoncpp
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake")
+LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake")
 find_package(JsonCpp REQUIRED)
 
 # Add gazebo to the link directorries
@@ -76,7 +77,6 @@ catkin_package(
     gazebo_sensor_plugin_perch_cam
     #gazebo_sensor_plugin_handrail_detect
     gazebo_sensor_plugin_haz_cam
-    gazebo_sensor_plugin_sci_cam
     gazebo_world_plugin_speed
     gazebo_system_plugin_client
   CATKIN_DEPENDS
@@ -91,8 +91,9 @@ catkin_package(
     ff_hw_msgs
     tf2_geometry_msgs
     ff_util
-    gnc_autocode
+    pmc
     camera
+    cv_bridge
     jsonloader
 )
 
@@ -289,15 +290,6 @@ add_library(gazebo_sensor_plugin_dock_cam
 )
 add_dependencies(gazebo_sensor_plugin_dock_cam ${catkin_EXPORTED_TARGETS})
 target_link_libraries(gazebo_sensor_plugin_dock_cam
-  ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES}
-)
-
-# Create a sensor plugin for the sci cam
-add_library(gazebo_sensor_plugin_sci_cam
-  src/gazebo_sensor_plugin_sci_cam/gazebo_sensor_plugin_sci_cam.cc
-)
-add_dependencies(gazebo_sensor_plugin_sci_cam ${catkin_EXPORTED_TARGETS})
-target_link_libraries(gazebo_sensor_plugin_sci_cam
   ${GAZEBO_LIBRARIES} ${catkin_LIBRARIES}
 )
 

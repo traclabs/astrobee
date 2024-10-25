@@ -30,9 +30,8 @@ find_package(catkin2 REQUIRED COMPONENTS
   vision_common
 )
 
-# Find OpenCV3
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
-find_package(OpenCV 3.3.1 REQUIRED)
+# Find OpenCV
+find_package(OpenCV 4.0 REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 
@@ -74,7 +73,7 @@ target_link_libraries(create_undistorted_images
 add_executable(run_camera_target_based_intrinsics_calibrator tools/run_camera_target_based_intrinsics_calibrator.cc)
 add_dependencies(run_camera_target_based_intrinsics_calibrator ${catkin_EXPORTED_TARGETS})
 target_link_libraries(run_camera_target_based_intrinsics_calibrator
-  ${PROJECT_NAME} ${catkin_LIBRARIES} ${CERES_LIBRARIES})
+  glog ${PROJECT_NAME} ${catkin_LIBRARIES} ${CERES_LIBRARIES})
 
 #############
 ## Install ##

@@ -50,13 +50,13 @@ then
  
   if [ "${NO_TUNNEL}" -eq 1 ]; then
       echo "Getting the custom Debian without tunnel"
-      sudo /bin/bash -c "echo \"deb [arch=amd64] http://astrobee.ndc.nasa.gov/software ${DIST} main\" > $arssrc" || exit 1
-      sudo /bin/bash -c "echo \"deb-src http://astrobee.ndc.nasa.gov/software ${DIST} main\" >> $arssrc" || exit 1
+      sudo /bin/bash -c "echo \"deb [arch=amd64] https://astrobee.ndc.nasa.gov/software_new ${DIST} main\" > $arssrc" || exit 1
+      sudo /bin/bash -c "echo \"deb-src https://astrobee.ndc.nasa.gov/software_new ${DIST} main\" >> $arssrc" || exit 1
   else
       echo "Tunnelling to get the custom Debian"
-      sudo /bin/bash -c "echo \"deb [arch=amd64] http://127.0.0.1:8765/software ${DIST} main\" > $arssrc" || exit 1
-      sudo /bin/bash -c "echo \"deb-src http://127.0.0.1:8765/software ${DIST} main\" >> $arssrc" || exit 1
-      ssh -N -L 8765:astrobee.ndc.nasa.gov:80 ${username}m.ndc.nasa.gov &
+      sudo /bin/bash -c "echo \"deb [arch=amd64] https://127.0.0.1:8765/software_new ${DIST} main\" > $arssrc" || exit 1
+      sudo /bin/bash -c "echo \"deb-src https://127.0.0.1:8765/software_new ${DIST} main\" >> $arssrc" || exit 1
+      ssh -N -L 127.0.0.1:8765:astrobee.ndc.nasa.gov:443 ${username}m.ndc.nasa.gov &
   fi
   
   trap "kill $! 2> /dev/null; sudo truncate -s 0 $arssrc; wait $!" 0 HUP QUIT ILL ABRT FPE SEGV PIPE TERM INT
@@ -74,4 +74,12 @@ if ! sudo apt-get install -m -y $pkgs; then
     echo "Couldn't install a necessary package."
     exit 1
   }
+fi
+
+DIST=`cat /etc/os-release | grep -oP "(?<=VERSION_CODENAME=).*"`
+if [ "$DIST" == "focal" ]; then
+  echo "Ubuntu 20.04 Focal Fossa detected"
+
+  echo "If 'python' interpreter is missing, point to 'python3'"
+  which python >/dev/null || sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 fi

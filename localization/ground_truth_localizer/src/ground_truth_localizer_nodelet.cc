@@ -19,7 +19,7 @@
 #include <ground_truth_localizer/ground_truth_localizer_nodelet.h>
 #include <ground_truth_localizer/utilities.h>
 #include <ff_msgs/EkfState.h>
-#include <ff_util/ff_names.h>
+#include <ff_common/ff_names.h>
 #include <localization_common/utilities.h>
 
 #include <glog/logging.h>
@@ -74,11 +74,11 @@ void GroundTruthLocalizerNodelet::PoseCallback(geometry_msgs::PoseStamped::Const
   const lc::Time timestamp = lc::TimeFromHeader(pose->header);
   PublishLocState(timestamp);
   heartbeat_.header.stamp = ros::Time::now();
-  // Publish heartbeat for graph localizer and imu augmentor since flight software expects this
+  // Publish heartbeat for graph localizer and pose extrapolator since flight software expects this
   // and this runs in place of them
   heartbeat_.node = NODE_GRAPH_LOC;
   heartbeat_pub_.publish(heartbeat_);
-  heartbeat_.node = NODE_IMU_AUG;
+  heartbeat_.node = NODE_POSE_EXTR;
   heartbeat_pub_.publish(heartbeat_);
 }
 
@@ -97,6 +97,11 @@ void GroundTruthLocalizerNodelet::PublishLocState(const lc::Time& timestamp) {
 
   // Also publish world_T_body TF
   const auto world_T_body_tf = lc::PoseToTF(*pose_, "world", "body", timestamp, platform_name_);
+
+  // If the rate is higher than the sim time, prevent repeated timestamps
+  if (world_T_body_tf.header.stamp == last_time_) return;
+  last_time_ = world_T_body_tf.header.stamp;
+
   transform_pub_.sendTransform(world_T_body_tf);
 }
 }  // namespace ground_truth_localizer

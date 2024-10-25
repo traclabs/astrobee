@@ -23,6 +23,7 @@ add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 find_package(catkin2 REQUIRED COMPONENTS
+  rosbag
   roscpp
   cv_bridge
   image_transport
@@ -31,6 +32,7 @@ find_package(catkin2 REQUIRED COMPONENTS
   ff_util
   sparse_mapping
   msg_conversions
+  localization_common
 )
 
 # System dependencies are found with CMake's conventions
@@ -38,13 +40,13 @@ find_package(OpenMVG QUIET REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # Find OpenCV
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
-find_package(OpenCV331 REQUIRED)
+find_package(OpenCV 4.0 REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
+    rosbag
   	roscpp
   	message_runtime
   	std_msgs
@@ -57,6 +59,8 @@ catkin_package(
   	sparse_mapping
     msg_conversions
     ff_util
+    nodelet
+    localization_common
 )
 
 
@@ -99,7 +103,7 @@ target_link_libraries(interest_points_test_bag
 add_executable(merge_bags tools/merge_bags.cc)
 add_dependencies(merge_bags ${catkin_EXPORTED_TARGETS})
 target_link_libraries(merge_bags
-  localization_node gflags glog ${catkin_LIBRARIES})
+  gflags glog ${catkin_LIBRARIES})
 
 #############
 ## Install ##
