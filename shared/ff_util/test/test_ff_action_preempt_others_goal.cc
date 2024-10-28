@@ -48,7 +48,7 @@ class Server : ff_util::FreeFlyerComponent {
       ff_util::FreeFlyerComponent(options, "action_server_test", true),
       messages_(0) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     action_.SetGoalCallback(std::bind(&Server::GoalCallback,
                             this,
                             std::placeholders::_1));
@@ -107,7 +107,7 @@ class Client1 : ff_util::FreeFlyerComponent {
   explicit Client1(const rclcpp::NodeOptions& options) :
       ff_util::FreeFlyerComponent(options, "action_client1_test", true) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     // Setters for callbacks
     action_.SetFeedbackCallback(std::bind(&Client1::FeedbackCallback,
                                           this,
@@ -158,7 +158,7 @@ class Client2 : ff_util::FreeFlyerComponent {
   explicit Client2(const rclcpp::NodeOptions& options) :
       ff_util::FreeFlyerComponent(options, "action_client2_test", true) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     // Create the timer before creating the action since that calls the
     // connected callback
     timer_.createTimer(1.0,

@@ -41,7 +41,7 @@ class TimestampedInterpolater : public TimestampedSet<T> {
  public:
   explicit TimestampedInterpolater(const boost::optional<int> max_size = boost::none);
   TimestampedInterpolater(const std::vector<Time>& timestamps, const std::vector<T>& objects,
-                          const boost::optional<int> max_size = boost::none);
+                          const boost::optional<size_t> max_size = boost::none);
 
   // Returns the interpolated object (or exact object if timestamps match) at the provided timestamp.
   boost::optional<T> Interpolate(const Time timestamp) const;
@@ -80,7 +80,7 @@ TimestampedInterpolater<T, ParamsT>::TimestampedInterpolater(const boost::option
 template <typename T, class ParamsT>
 TimestampedInterpolater<T, ParamsT>::TimestampedInterpolater(const std::vector<Time>& timestamps,
                                                              const std::vector<T>& objects,
-                                                             const boost::optional<int> max_size)
+                                                             const boost::optional<size_t> max_size)
     : TimestampedSet<T>(timestamps, objects, max_size) {}
 
 template <typename T, class ParamsT>

@@ -523,7 +523,7 @@ for (uint i = 0; i < compressed_pos_.size(); i++) {
 
 // Clear all the data within this object
 void SampledTrajectory3D::ClearObject() {
-  SampledTrajectory3D newObj();
+  SampledTrajectory3D newObj;
   pos_.clear();
   time_.clear();
   n_points_ = 0;

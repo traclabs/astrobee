@@ -49,7 +49,7 @@ class Server : ff_util::FreeFlyerComponent {
   explicit Server(const rclcpp::NodeOptions& options) :
       ff_util::FreeFlyerComponent(options, "action_server_test", true) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     action_.SetGoalCallback(std::bind(&Server::GoalCallback,
                                       this,
                                       std::placeholders::_1));
@@ -99,7 +99,7 @@ class Client : ff_util::FreeFlyerComponent {
       ff_util::FreeFlyerComponent(options, "action_client_test", true),
       preempted_(false) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     // Setters for callbacks
     action_.SetFeedbackCallback(std::bind(&Client::FeedbackCallback,
                                           this,

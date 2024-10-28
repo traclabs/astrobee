@@ -21,6 +21,9 @@
 
 // PCL specific includes
 #include <sensor_msgs/msg/point_cloud2.hpp>
+namespace sensor_msgs {
+typedef msg::PointCloud2 PointCloud2;
+}  // namespace sensor_msgs
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>

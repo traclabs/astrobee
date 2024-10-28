@@ -83,14 +83,6 @@ echo "  Analysing python code style with 'isort'."
 # could happen for example if the .isort.cfg src_paths list gets out
 # of date.
 
-<<<<<<< HEAD
-if $(isort . --extend-skip cmake --profile black --diff --check-only --quiet >/dev/null); then
-    echo "Linter checks using 'isort' passed."
-else
-    echo "Errors detected with 'isort'. Fixing them. Try to add and commit your files again."
-  isort . --extend-skip cmake --profile black >/dev/null
-  failed_lint=true
-=======
 isort_args=(
     "--extend-skip=cmake"
     "--extend-skip=submodules"
@@ -103,7 +95,6 @@ else
     echo "Errors detected with 'isort'. Fixing them. Try to add and commit your files again."
     isort . "${isort_args[@]}" >/dev/null
     failed_lint=true
->>>>>>> master
 fi
 
 # Cancel commit if linter failed

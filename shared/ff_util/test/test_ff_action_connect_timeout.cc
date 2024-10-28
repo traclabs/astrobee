@@ -46,7 +46,7 @@ class Client : ff_util::FreeFlyerComponent {
   explicit Client(const rclcpp::NodeOptions& options) :
       ff_util::FreeFlyerComponent(options, "action_client_test", true) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     // Setters for callbacks
     action_.SetFeedbackCallback(std::bind(&Client::FeedbackCallback,
                                           this,

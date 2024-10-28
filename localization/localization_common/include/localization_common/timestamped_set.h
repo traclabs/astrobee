@@ -48,12 +48,12 @@ struct TimestampedValue {
 template <typename T>
 class TimestampedSet {
  public:
-  explicit TimestampedSet(const boost::optional<int> max_size = boost::none);
+  explicit TimestampedSet(const boost::optional<size_t> max_size = boost::none);
   ~TimestampedSet() = default;
 
   // Assumes values have corresponding timestamps at the same index and each timestamp is unique.
   TimestampedSet(const std::vector<Time>& timestamps, const std::vector<T>& values,
-                 const boost::optional<int> max_size = boost::none);
+                 const boost::optional<size_t> max_size = boost::none);
 
   // Adds a value at the corresponding timestamp.
   // Returns whether the value was successfully added.
@@ -165,16 +165,16 @@ class TimestampedSet {
   void serialize(ARCHIVE& ar, const unsigned int /*version*/);
 
   std::map<Time, T> timestamp_value_map_;
-  boost::optional<int> max_size_;
+  boost::optional<size_t> max_size_;
 };
 
 // Implementation
 template <typename T>
-TimestampedSet<T>::TimestampedSet(const boost::optional<int> max_size) : max_size_(max_size) {}
+TimestampedSet<T>::TimestampedSet(const boost::optional<size_t> max_size) : max_size_(max_size) {}
 
 template <typename T>
 TimestampedSet<T>::TimestampedSet(const std::vector<Time>& timestamps, const std::vector<T>& values,
-                                  const boost::optional<int> max_size)
+                                  const boost::optional<size_t> max_size)
   : max_size_(max_size) {
   for (unsigned int i = 0; i < values.size(); ++i) {
     Add(timestamps[i], values[i]);
@@ -434,7 +434,7 @@ TimestampedSet<T>::InRangeValues(const Time oldest_allowed_timestamp, const Time
   auto lower_bound = timestamp_value_map_.lower_bound(oldest_allowed_timestamp);
   // No values less than latest allowed time
   if (upper_bound == timestamp_value_map_.cbegin()) return {cend(), cend()};
-  return std::make_pair(timestamp_value_map_.lower_bound(oldest_allowed_timestamp), upper_bound);
+  return std::make_pair(lower_bound, upper_bound);
 }
 
 template <typename T>

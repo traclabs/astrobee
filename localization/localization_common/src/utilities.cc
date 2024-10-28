@@ -29,6 +29,7 @@ typedef msg::Quaternion Quaternion;
 }  // namespace geometry_msgs
 #include <cstdlib>
 #include <string>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
 namespace localization_common {
 namespace mc = msg_conversions;
@@ -98,7 +99,7 @@ void LoadGraphVIOConfig(config_reader::ConfigReader& config, const std::string& 
 }
 
 void SetEnvironmentConfigs(const std::string& world, const std::string& robot_config_file) {
-  const std::string astrobee_configs_path = ros::package::getPath("astrobee");
+  const std::string astrobee_configs_path = ament_index_cpp::get_package_share_directory("astrobee");
   const std::string full_robot_config_file = "config/robots/" + robot_config_file;
   setenv("ASTROBEE_RESOURCE_DIR", (astrobee_configs_path + "/resources").c_str(), true);
   setenv("ASTROBEE_CONFIG_DIR", (astrobee_configs_path + "/config").c_str(), true);
@@ -120,6 +121,8 @@ rclcpp::Time TimeToRosTime(const Time timestamp) {
 }
 
 void TimeToHeader(const Time timestamp, std_msgs::Header& header) { header.stamp = TimeToRosTime(timestamp); }
+
+void TimeToMsg(const Time timestamp, builtin_interfaces::msg::Time& time_msg) { time_msg = builtin_interfaces::msg::Time(TimeToRosTime(timestamp)); }
 
 gtsam::Pose3 PoseFromMsg(const geometry_msgs::PoseStamped& msg) { return PoseFromMsg(msg.pose); }
 

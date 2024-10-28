@@ -100,7 +100,7 @@ Time TimeFromRosTime(const rclcpp::Time& time);
 
 void TimeToHeader(const Time timestamp, std_msgs::Header& header);
 
-void TimeToMsg(const Time timestamp, rclcpp::Time& time_msg);
+void TimeToMsg(const Time timestamp, builtin_interfaces::msg::Time& time_msg);
 
 gtsam::Pose3 PoseFromMsg(const geometry_msgs::PoseStamped& msg);
 
@@ -132,7 +132,7 @@ ff_msgs::CombinedNavState CombinedNavStateToMsg(const CombinedNavState& combined
                                                 const PoseCovariance& pose_covariance,
                                                 const Eigen::Matrix3d& velocity_covariance,
                                                 const Eigen::Matrix<double, 6, 6>& imu_bias_covariance,
-                                                const TimestampedSet<PoseCovariance>& correlation_covariances = {});
+                                                const TimestampedSet<PoseCovariance>& correlation_covariances = TimestampedSet<PoseCovariance>(boost::none) );
 
 template <class LocMsgType>
 void CombinedNavStateToLocMsg(const CombinedNavState& combined_nav_state, LocMsgType& loc_msg);

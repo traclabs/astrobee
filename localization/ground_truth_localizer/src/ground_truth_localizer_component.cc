@@ -89,7 +89,7 @@ void GroundTruthLocalizerComponent::PoseCallback(const std::shared_ptr<geometry_
   // and this runs in place of them
   heartbeat_.node = NODE_GRAPH_LOC;
   heartbeat_pub_->publish(heartbeat_);
-  heartbeat_.node = NODE_IMU_AUG;
+  heartbeat_.node = NODE_POSE_EXTR;
   heartbeat_pub_->publish(heartbeat_);
 }
 

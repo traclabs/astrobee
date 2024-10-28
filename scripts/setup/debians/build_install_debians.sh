@@ -31,12 +31,12 @@ rm -f *.deb *.debian.tar.xz *.orig.tar.gz *.dsc *.build *.buildinfo *.changes *.
 
 # Add public debians to build list
 #build_list+=( ar-track-alvar-msgs ar-track-alvar dlib dbow2 gtsam decomputil jps3d openmvg opencv-xfeatures2d)
-build_list+=( gtsam)
+build_list+=(jps3d)
 
 # If restricted rti-dev debian is present, add miro and soracore as well
 dpkg-query -W -f='${Status}\n' rti-dev 2>&1 | grep -q "install ok installed" &&
 echo "Package rti-dev exists. Including miro and soracore to build list..." &&
-build_list+=( miro soracore )
+#build_list+=( miro soracore )
 
 export DEBEMAIL="nospam@nospam.org"
 for pkg in ${build_list[@]}

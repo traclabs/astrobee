@@ -298,4 +298,8 @@ install(DIRECTORY launch
 # pluginlib_export_plugin_description_file(astrobee_gazebo gazebo_astrobee_plugins.xml)
 
 ament_package()
-# endif (ENABLE_GAZEBO)
+
+else (ENABLE_GAZEBO)
+  find_package(ament_cmake REQUIRED)
+  ament_package()
+endif (ENABLE_GAZEBO)

@@ -34,7 +34,7 @@ class TestPublisher : ff_util::FreeFlyerComponent {
   explicit TestPublisher(const rclcpp::NodeOptions& options) :
     ff_util::FreeFlyerComponent(options, "latched_topic_publisher", true) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     latched_publisher_ = FF_CREATE_PUBLISHER(nh,
                                              std_msgs::msg::String,
                                              TOPIC_ROBOT_NAME,

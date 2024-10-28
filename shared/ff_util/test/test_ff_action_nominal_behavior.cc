@@ -47,7 +47,7 @@ class Server : ff_util::FreeFlyerComponent {
       ff_util::FreeFlyerComponent(options, "action_server_test", true),
       messages_(ff_msgs::msg::DockState::DOCKING_MAX_STATE) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     action_.SetGoalCallback(std::bind(&Server::GoalCallback,
                                       this,
                                       std::placeholders::_1));
@@ -112,7 +112,7 @@ class Client : ff_util::FreeFlyerComponent {
       ff_util::FreeFlyerComponent(options, "action_client_test", true),
       messages_(ff_msgs::msg::DockState::DOCKING_MAX_STATE) {}
 
-  void Initialize(NodeHandle nh) {
+  void Initialize(NodeHandle &nh) {
     // Setters for callbacks
     action_.SetFeedbackCallback(std::bind(&Client::FeedbackCallback,
                                           this,

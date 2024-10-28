@@ -18,11 +18,10 @@
 cmake_minimum_required(VERSION 3.5)
 project(localization_common)
 
-## Compile as C++14, supported in ROS Kinetic and newer
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
+set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -fPIC" ) # -Werror
 
 # Find amend and libraries
 find_package(ament_cmake REQUIRED)
@@ -33,6 +32,7 @@ find_package(camera REQUIRED)
 find_package(config_reader REQUIRED)
 find_package(msg_conversions REQUIRED)
 find_package(ff_msgs REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 
 # Find GTSAM
 find_package(GTSAM REQUIRED)
@@ -72,8 +72,8 @@ add_library(${PROJECT_NAME} SHARED
   src/test_utilities.cc
   src/utilities.cc
 )
-target_link_libraries(${PROJECT_NAME} gtsam ${OpenCV_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME} rclcpp ff_msgs config_reader camera msg_conversions)
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBRARIES} gtsam)  
+ament_target_dependencies(${PROJECT_NAME} rclcpp ff_msgs config_reader camera msg_conversions ament_index_cpp)
 ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 if(BUILD_TESTING)
@@ -114,7 +114,9 @@ endif()
 #############
 
 ament_export_include_directories(include)
-
+ament_export_dependencies(
+  GTSAM
+)
 # Mark libraries for installation
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}

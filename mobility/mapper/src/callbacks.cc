@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include "mapper/pcl_conversions.h"
+#include <rclcpp/wait_for_message.hpp>
 
 namespace mapper {
 
@@ -31,10 +32,10 @@ void MapperComponent::PclCallback() {
   if (use_haz_cam_) {
     std::string cam = TOPIC_HARDWARE_NAME_HAZ_CAM;
     // Get depth message
-    boost::shared_ptr<sensor_msgs::PointCloud2 const> msg;
-    // rclcpp::wait_for_message<sensor_msgs::PointCloud2>(msg, nh_,
-    //                   cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5));
-    if (msg == NULL) {
+    sensor_msgs::PointCloud2 msg;
+     
+    if (!rclcpp::wait_for_message<sensor_msgs::PointCloud2>(msg, nh_,
+                       cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5))) {
       FF_INFO("No point clound message received");
     } else {
       // Structure to include pcl and its frame
@@ -42,7 +43,7 @@ void MapperComponent::PclCallback() {
 
       // Convert message into pcl type
       pcl::PointCloud<pcl::PointXYZ> cloud;
-      pcl::fromROSMsg(*msg, cloud);
+      pcl::fromROSMsg(msg, cloud);
       new_pcl.cloud = cloud;
       new_pcl.tf_cam2world = globals_.tf_cam2world;
 
@@ -53,12 +54,11 @@ void MapperComponent::PclCallback() {
   if (use_perch_cam_) {
     std::string cam = TOPIC_HARDWARE_NAME_PERCH_CAM;
     // Get depth message
-    boost::shared_ptr<sensor_msgs::PointCloud2 const> msg;
+    sensor_msgs::PointCloud2 msg;
 
     // TODO(@mgouveia): New feature not available in current rolling
-    // rclcpp::wait_for_message(msg, nh_
-    //                   cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5));
-    if (msg == NULL) {
+    if (!rclcpp::wait_for_message(msg, nh_,
+                       cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5))) {
       FF_INFO("No point clound message received");
     } else {
     // Structure to include pcl and its frame
@@ -66,7 +66,7 @@ void MapperComponent::PclCallback() {
 
     // Convert message into pcl type
     pcl::PointCloud<pcl::PointXYZ> cloud;
-    pcl::fromROSMsg(*msg, cloud);
+    pcl::fromROSMsg(msg, cloud);
     new_pcl.cloud = cloud;
     new_pcl.tf_cam2world = globals_.tf_perch2world;
 

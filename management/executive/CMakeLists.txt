@@ -20,9 +20,9 @@ project(executive)
 
 ## Compile as C++14, supported in ROS Kinetic and newer
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
 
 ## Find ament and libraries
@@ -31,6 +31,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(ff_msgs REQUIRED)
 find_package(ff_hw_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(config_reader REQUIRED)
 find_package(ff_util REQUIRED)
 find_package(jsonloader REQUIRED)
@@ -74,7 +75,7 @@ add_library(executive SHARED
 )
 target_link_libraries(executive sequencer)
 target_compile_definitions(executive PRIVATE "COMPOSITION_BUILDING_DLL")
-ament_target_dependencies(executive rclcpp rclcpp_components ff_common ff_msgs ff_hw_msgs config_reader ff_util jsonloader)
+ament_target_dependencies(executive rclcpp rclcpp_components ff_common ff_msgs ff_hw_msgs std_srvs config_reader ff_util jsonloader)
 rclcpp_components_register_nodes(executive "executive::Executive")
 
 ## Declare a C++ executable: data_to_disk_pub
