@@ -26,6 +26,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // FSW libraries
+#include <ff_util/ff_component.h>
 #include <ff_common/ff_names.h>
 #include <ff_util/ff_action.h>
 #include <ff_util/ff_service.h>

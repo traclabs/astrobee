@@ -21,6 +21,7 @@
 
 // FSW nodelet
 #include <ff_common/ff_names.h>
+#include <ff_util/ff_component.h>
 
 // Services
 #include <ff_msgs/srv/set_streaming_lights.hpp>

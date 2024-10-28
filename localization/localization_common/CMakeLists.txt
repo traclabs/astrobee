@@ -24,11 +24,10 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
 
-
 # Find amend and libraries
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-
+find_package(astrobee REQUIRED)
 find_package(ff_common REQUIRED)
 find_package(camera REQUIRED)
 find_package(config_reader REQUIRED)
@@ -43,7 +42,7 @@ find_package(Eigen3 REQUIRED)
 
 # Find OpenCV
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
-find_package(OpenCV331 REQUIRED)
+find_package(OpenCV 4.0 REQUIRED)
 
 ###########
 ## Build ##
@@ -61,9 +60,13 @@ add_library(${PROJECT_NAME} SHARED
   src/averager.cc
   src/combined_nav_state.cc
   src/combined_nav_state_covariances.cc
+  src/distance_scaled_pose_covariance_interpolater.cc
+  src/pose_covariance_interpolater.cc
   src/pose_interpolater.cc
+  src/pose_with_covariance_interpolater.cc
   src/rate_timer.cc
   src/ros_timer.cc
+  src/stats_logger.cc
   src/time.cc
   src/timer.cc
   src/test_utilities.cc
@@ -84,8 +87,16 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}  
   )
 
+  ament_add_gtest(test_pose_with_covariance_interpolater
+    #test/test_pose_with_covariance_interpolater.test
+    test/test_pose_with_covariance_interpolater.cc
+  )
+  target_link_libraries(test_pose_with_covariance_interpolater
+    ${PROJECT_NAME}  
+  )
   ament_add_gtest(test_timestamped_set
     test/test_timestamped_set.cc
+    #test/test_timestamped_set.test
   )
   target_link_libraries(test_timestamped_set
     ${PROJECT_NAME}  

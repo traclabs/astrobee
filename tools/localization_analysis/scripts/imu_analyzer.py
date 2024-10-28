@@ -29,7 +29,6 @@ import sys
 
 import matplotlib
 
-import imu_measurements
 import plot_helpers
 
 matplotlib.use("pdf")

@@ -33,6 +33,7 @@ find_package(catkin2 REQUIRED COMPONENTS
   ff_util
   sparse_mapping
   msg_conversions
+  localization_common
 )
 
 # System dependencies are found with CMake's conventions
@@ -40,8 +41,7 @@ find_package(OpenMVG QUIET REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 # Find OpenCV
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
-find_package(OpenCV331 REQUIRED)
+find_package(OpenCV 4.0 REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -61,6 +61,7 @@ catkin_package(
     msg_conversions
     ff_util
     nodelet
+    localization_common
 )
 
 

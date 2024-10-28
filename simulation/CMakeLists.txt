@@ -18,10 +18,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(astrobee_gazebo)
 
-# Default to C++14
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-endif()
+if (ENABLE_GAZEBO)
+## Compile as C++17
+add_compile_options(-std=c++17)
 
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -fPIC" )
 

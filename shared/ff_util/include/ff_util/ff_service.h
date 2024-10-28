@@ -179,7 +179,7 @@ class FreeFlyerServiceClient {
       }
     // Case: disconnected
     } else {
-      service_client_ = node_->create_client<ServiceSpec>(topic_, rmw_qos_profile_services_default,
+      service_client_ = node_->create_client<ServiceSpec>(topic_, rclcpp::ServicesQoS(),
                                                                 client_group_);
       state_ = WAITING_FOR_CONNECT;
       StartOptionalTimer(timer_connected_, to_connected_);

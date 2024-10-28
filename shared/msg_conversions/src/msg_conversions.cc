@@ -51,19 +51,13 @@ Eigen::Quaterniond ros_to_eigen_quat(const geometry_msgs::Quaternion& q) {
 
 geometry_msgs::Quaternion eigen_to_ros_quat(const Eigen::Quaterniond& q) {
   geometry_msgs::Quaternion out;
-  out.x = q.x();
-  out.y = q.y();
-  out.z = q.z();
-  out.w = q.w();
+  RotationToMsg(q, out);
   return out;
 }
 
 geometry_msgs::Quaternion eigen_to_ros_quat(const Eigen::Vector4d& v) {
   geometry_msgs::Quaternion out;
-  out.x = v.x();
-  out.y = v.y();
-  out.z = v.z();
-  out.w = v.w();
+  RotationToMsg(v, out);
   return out;
 }
 
@@ -268,19 +262,28 @@ geometry_msgs::Pose ros_transform_to_ros_pose(const geometry_msgs::Transform& p)
 
 geometry_msgs::Quaternion tf2_quat_to_ros_quat(const tf2::Quaternion& q) {
   geometry_msgs::Quaternion out;
-      out.x = q.x();
-      out.y = q.y();
-      out.z = q.z();
-      out.w = q.w();
+  RotationToMsg(q, out);
   return out;
 }
 
 geometry_msgs::Pose tf2_transform_to_ros_pose(const tf2::Transform& p) {
   geometry_msgs::Pose transform;
-      transform.position.x = p.getOrigin().x();
-      transform.position.y = p.getOrigin().y();
-      transform.position.z = p.getOrigin().z();
-      transform.orientation = tf2_quat_to_ros_quat(p.getRotation());
+  VectorToMsg(p.getOrigin(), transform.position);
+  transform.orientation = tf2_quat_to_ros_quat(p.getRotation());
+  return transform;
+}
+
+geometry_msgs::Pose eigen_transform_to_ros_pose(const Eigen::Affine3d& p) {
+  geometry_msgs::Pose transform;
+  transform.position = eigen_to_ros_point(p.translation());
+  transform.orientation = eigen_to_ros_quat((Eigen::Quaterniond)p.linear());
+  return transform;
+}
+
+geometry_msgs::Transform eigen_transform_to_ros_transform(const Eigen::Affine3d& p) {
+  geometry_msgs::Transform transform;
+  transform.translation = eigen_to_ros_vector(p.translation());
+  transform.rotation = eigen_to_ros_quat((Eigen::Quaterniond)p.linear());
   return transform;
 }
 
@@ -312,45 +315,63 @@ tf2::Transform ros_pose_to_tf2_transform(const geometry_msgs::Pose& p) {
   return transform;
 }
 
-Eigen::Isometry3d LoadEigenTransform(config_reader::ConfigReader& config, const std::string& transform_config_name) {
+Eigen::Isometry3d LoadEigenTransform(config_reader::ConfigReader& config, const std::string& transform_config_name,
+                                     const std::string& prefix) {
   Eigen::Vector3d body_t_sensor;
   Eigen::Quaterniond body_Q_sensor;
-  if (!msg_conversions::config_read_transform(&config, transform_config_name.c_str(), &body_t_sensor, &body_Q_sensor))
-    FF_FATAL_STREAM("Unspecified transform config: " << transform_config_name);
+  if (!msg_conversions::config_read_transform(&config, (prefix + transform_config_name).c_str(), &body_t_sensor, &body_Q_sensor))
+    FF_FATAL_STREAM("Unspecified transform config: " << prefix + transform_config_name);
   Eigen::Isometry3d body_T_sensor = Eigen::Isometry3d::Identity();
   body_T_sensor.translation() = body_t_sensor;
   body_T_sensor.linear() = body_Q_sensor.toRotationMatrix();
   return body_T_sensor;
 }
 
-float LoadFloat(config_reader::ConfigReader& config, const std::string& config_name) {
+float LoadFloat(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   float val;
-  if (!config.GetReal(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
+  if (!config.GetReal((prefix + config_name).c_str(), &val)) FF_FATAL_STREAM("Failed to load " << prefix + config_name);
   return val;
 }
 
-double LoadDouble(config_reader::ConfigReader& config, const std::string& config_name) {
+double LoadDouble(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   double val;
-  if (!config.GetReal(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
+  if (!config.GetReal((prefix + config_name).c_str(), &val)) FF_FATAL_STREAM("Failed to load " << prefix + config_name);
   return val;
 }
 
-int LoadInt(config_reader::ConfigReader& config, const std::string& config_name) {
+int LoadInt(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   int val;
-  if (!config.GetInt(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
+  if (!config.GetInt((prefix + config_name).c_str(), &val)) FF_FATAL_STREAM("Failed to load " << prefix + config_name);
   return val;
 }
 
-bool LoadBool(config_reader::ConfigReader& config, const std::string& config_name) {
+bool LoadBool(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   bool val;
-  if (!config.GetBool(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
+  if (!config.GetBool((prefix + config_name).c_str(), &val)) FF_FATAL_STREAM("Failed to load " << prefix + config_name);
   return val;
 }
 
-std::string LoadString(config_reader::ConfigReader& config, const std::string& config_name) {
+std::string LoadString(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   std::string val;
-  if (!config.GetStr(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
+  if (!config.GetStr( (prefix + config_name).c_str(), &val)) FF_FATAL_STREAM("Failed to load " << prefix + config_name);
   return val;
+}
+
+void Load(config_reader::ConfigReader& config, float& val, const std::string& config_name, const std::string& prefix) {
+  val = LoadFloat(config, config_name, prefix);
+}
+void Load(config_reader::ConfigReader& config, double& val, const std::string& config_name, const std::string& prefix) {
+  val = LoadDouble(config, config_name, prefix);
+}
+void Load(config_reader::ConfigReader& config, int& val, const std::string& config_name, const std::string& prefix) {
+  val = LoadInt(config, config_name, prefix);
+}
+void Load(config_reader::ConfigReader& config, bool& val, const std::string& config_name, const std::string& prefix) {
+  val = LoadBool(config, config_name, prefix);
+}
+void Load(config_reader::ConfigReader& config, std::string& val, const std::string& config_name,
+          const std::string& prefix) {
+  val = LoadString(config, config_name, prefix);
 }
 
 void EigenPoseToMsg(const Eigen::Isometry3d& pose, geometry_msgs::Pose& msg_pose) {

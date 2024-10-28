@@ -1,4 +1,4 @@
-#/bin/bash -e
+#!/bin/bash -e
 #
 # Copyright (c) 2017, United States Government, as represented by the
 # Administrator of the National Aeronautics and Space Administration.
@@ -49,9 +49,6 @@ while [[ $# -gt 0 ]]; do
       # Packages to find and build dependencies
       sudo apt-get install -y devscripts equivs libproj-dev || die
       # Dependencies for jps3d
-      if [[ $dist == "bionic" ]]; then
-        sudo apt-get install -y libvtk6.3 libboost-filesystem1.62.0 libboost-system1.62.0 || die
-      fi
       if [[ $dist == "focal" ]]; then
         sudo apt-get install -y libvtk7.1p libboost-filesystem1.71.0 libboost-system1.71.0 || die
       fi
@@ -61,7 +58,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Build opencv if ubuntu 18 or 20
-[[ "$dist" =~ ^bionic|focal$ ]] && build_list+=( opencv )
+#[[ "$dist" =~ ^bionic|focal$ ]] && build_list+=( opencv )
+
 
 # Add public debians to build list
 build_list+=( alvar dlib dbow2 gtsam decomputil jps3d openmvg )

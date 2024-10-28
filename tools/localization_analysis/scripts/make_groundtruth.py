@@ -41,24 +41,19 @@ if __name__ == "__main__":
         help="Existing map to use as basis for groundtruth.  Should largely overlap area covered in input bagfile.",
     )
     parser.add_argument(
-        "maps_directory",
-        help="Location of images used for each bagfile use to generate base_surf_map.",
+        "--loc-map",
+        default="",
+        help="Full path to Localization map for bagfile to test localization performance. If not passed the localization test is not run",
     )
-    parser.add_argument(
-        "loc_map", help="Localization map for bagfile to test localization performance."
-    )
-    parser.add_argument("config_path", help="Full path to config path.")
     parser.add_argument(
         "-o", "--output-directory", default="groundtruth_creation_output"
     )
-    parser.add_argument("-w", "--world", default="iss")
     parser.add_argument(
         "-i",
         "--image-topic",
         default="/mgt/img_sampler/nav_cam/image_record",
         help="Image topic.",
     )
-    parser.add_argument("-r", "--robot-name", default="bumble")
     parser.add_argument(
         "-m",
         "--map-name",
@@ -74,9 +69,9 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--generate-image-features",
-        dest="use_image_features",
-        action="store_false",
-        help="Use image features msgs from bagfile or generate features from images.",
+        dest="generate_image_features",
+        action="store_true",
+        help="Generate image features instead of using image features msgs from bagfile.",
     )
     parser.add_argument(
         "--no-histogram-equalization",
@@ -92,11 +87,10 @@ if __name__ == "__main__":
     if not os.path.isfile(args.base_surf_map):
         print("Base surf map " + args.base_surf_map + " does not exist.")
         sys.exit()
-    if not os.path.isfile(args.loc_map):
-        print("Loc map " + args.loc_map + " does not exist.")
-        sys.exit()
-    if not os.path.isdir(args.maps_directory):
-        print("Maps directory " + args.maps_directory + " does not exist.")
+    if args.loc_map == "":
+        print("Not running map localization comparison part that part")
+    elif not os.path.isfile(args.loc_map):
+        print("Loc map does not exist")
         sys.exit()
     if os.path.isdir(args.output_directory):
         print("Output directory " + args.output_directory + " already exists.")
@@ -104,7 +98,6 @@ if __name__ == "__main__":
 
     bagfile = os.path.abspath(args.bagfile)
     base_surf_map = os.path.abspath(args.base_surf_map)
-    maps_directory = os.path.abspath(args.maps_directory)
 
     os.mkdir(args.output_directory)
     os.chdir(args.output_directory)
@@ -117,69 +110,74 @@ if __name__ == "__main__":
     make_map.make_map(
         bagfile,
         map_name,
-        args.world,
-        args.robot_name,
         args.histogram_equalization,
         args.max_low_movement_mean_distance,
         base_surf_map,
-        maps_directory,
     )
 
-    robot_config = "config/robots/" + args.robot_name + ".config"
     groundtruth_bag = map_name + ".bag"
-    groundtruth_map_file = map_name + ".brisk.vocabdb.map"
+    groundtruth_map_file = map_name + ".teblid512.vocabdb.map"
     groundtruth_pdf = "groundtruth.pdf"
     groundtruth_csv = "groundtruth.csv"
     make_groundtruth_command = (
-        "rosrun localization_analysis run_graph_bag_and_plot_results.py "
+        "rosrun localization_analysis run_offline_replay_and_plot_results.py "
         + bagfile
         + " "
         + groundtruth_map_file
-        + " "
-        + args.config_path
         + " -i "
         + args.image_topic
-        + " -r "
-        + robot_config
-        + " -w "
-        + args.world
         + " -o "
         + groundtruth_bag
-        + " --output-file "
+        + " --loc-output-file "
+        + "loc_"
         + groundtruth_pdf
-        + " --output-csv-file "
+        + " --vio-output-file "
+        + "vio_"
+        + groundtruth_pdf
+        + " --loc-results-csv-file "
+        + "loc_"
+        + groundtruth_csv
+        + " --vio-results-csv-file "
+        + "vio_"
         + groundtruth_csv
         + " --generate-image-features"
     )
     lu.run_command_and_save_output(make_groundtruth_command, "make_groundtruth.txt")
-    os.rename("run_graph_bag_command.txt", "groundtruth_run_graph_bag_command.txt")
-
-    loc_results_bag = bag_prefix + "_results.bag"
-    loc_pdf = "loc_results.pdf"
-    loc_csv = "loc_results.csv"
-    get_loc_results_command = (
-        "rosrun localization_analysis run_graph_bag_and_plot_results.py "
-        + bagfile
-        + " "
-        + args.loc_map
-        + " "
-        + args.config_path
-        + " -i "
-        + args.image_topic
-        + " -r "
-        + robot_config
-        + " -w "
-        + args.world
-        + " -o "
-        + loc_results_bag
-        + " --output-file "
-        + loc_pdf
-        + " --output-csv-file "
-        + loc_csv
-        + " -g "
-        + groundtruth_bag
+    os.rename(
+        "run_offline_replay_command.txt", "groundtruth_run_offline_replay_command.txt"
     )
-    if not args.use_image_features:
-        get_loc_results_command += " --generate-image-features"
-    lu.run_command_and_save_output(get_loc_results_command, "get_loc_results.txt")
-    os.rename("run_graph_bag_command.txt", "loc_run_graph_bag_command.txt")
+
+    if args.loc_map != "":
+        loc_results_bag = bag_prefix + "_results.bag"
+        loc_pdf = "loc_results.pdf"
+        loc_csv = "loc_results.csv"
+        get_loc_results_command = (
+            "rosrun localization_analysis run_offline_replay_and_plot_results.py "
+            + bagfile
+            + " "
+            + args.loc_map
+            + " -i "
+            + args.image_topic
+            + " -o "
+            + loc_results_bag
+            + " --loc-output-file "
+            + "loc_"
+            + loc_pdf
+            + " --vio-output-file "
+            + "vio_"
+            + loc_pdf
+            + " --loc-results-csv-file "
+            + "loc_"
+            + loc_csv
+            + " --vio-results-csv-file "
+            + "vio_"
+            + loc_csv
+            + " -g "
+            + groundtruth_bag
+        )
+        if args.generate_image_features:
+            get_loc_results_command += " --generate-image-features"
+        lu.run_command_and_save_output(get_loc_results_command, "get_loc_results.txt")
+        os.rename(
+            "run_offline_replay_command.txt", "loc_run_offline_replay_command.txt"
+        )

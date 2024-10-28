@@ -61,6 +61,8 @@
 #include <ff_msgs/srv/set_rate.hpp>
 #include <ff_msgs/srv/set_zones.hpp>
 #include <ff_msgs/srv/unload_load_nodelet.hpp>
+#include <ff_msgs/srv/reset_map.hpp>
+#include <ff_msgs/srv/set_exposure.hpp>
 
 #include <ff_common/ff_names.h>
 #include <ff_common/ff_ros.h>
@@ -246,10 +248,12 @@ class Executive : public ff_util::FreeFlyerComponent {
   bool SetEnableAutoReturn(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetEnableImmediate(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetEnableReplan(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
+  bool SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const& cmd);
   bool SetFlashlightBrightness(
                             ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetHolonomicMode(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetInertia(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
+  bool SetMap(ff_msgs::msg::CommandStamped::SharedPtr const& cmd);
   bool SetOperatingLimits(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetPlan(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetPlanner(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
@@ -341,9 +345,13 @@ class Executive : public ff_util::FreeFlyerComponent {
   FreeFlyerServiceClient<ff_hw_msgs::srv::ConfigurePayloadPower>
                                                           payload_power_client_;
   FreeFlyerServiceClient<ff_hw_msgs::srv::SetEnabled> pmc_enable_client_;
+  FreeFlyerServiceClient<ff_msgs::srv::SetExposure> set_dock_cam_exposure_client_;
+  FreeFlyerServiceClient<ff_msgs::srv::SetExposure> set_nav_cam_exposure_client_;
+
   FreeFlyerServiceClient<ff_msgs::srv::SetInertia> set_inertia_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetRate> set_rate_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetDataToDisk> set_data_client_;
+  FreeFlyerServiceClient<ff_msgs::srv::ResetMap> reset_map_client_;  
   FreeFlyerServiceClient<ff_msgs::srv::EnableRecording>
                                                       enable_recording_client_;
   FreeFlyerServiceClient<ff_hw_msgs::srv::ClearTerminate> eps_terminate_client_;
@@ -352,7 +360,6 @@ class Executive : public ff_util::FreeFlyerComponent {
   FreeFlyerServiceClient<ff_msgs::srv::UnloadLoadNodelet> unload_load_nodelet_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetFloat> set_collision_distance_client_;
   FreeFlyerServiceClient<ff_hw_msgs::srv::ConfigureSystemLeds> led_client_;
-
 
   Subscriber<ff_msgs::msg::CameraStatesStamped> camera_state_sub_;
   Subscriber<ff_msgs::msg::CommandStamped> cmd_sub_;
@@ -396,7 +403,6 @@ class Executive : public ff_util::FreeFlyerComponent {
   int pub_queue_size_;
   int sub_queue_size_;
 
-  // TODO(Katie) Move to Agent state stamped
   bool allow_blind_flying_;
   bool live_led_on_;
   bool sys_monitor_heartbeat_fault_blocking_;

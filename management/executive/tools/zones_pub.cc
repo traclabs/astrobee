@@ -20,12 +20,21 @@
 #include <ff_common/ff_ros.h>
 #include <ff_common/init.h>
 
+<<<<<<< HEAD
 #include <ff_msgs/msg/compressed_file.hpp>
 #include <ff_msgs/msg/compressed_file_ack.hpp>
 #include <ff_msgs/msg/command_constants.hpp>
 #include <ff_msgs/msg/command_stamped.hpp>
 
 #include <ff_util/ff_timer.h>
+=======
+#include <ros/ros.h>
+#include <ff_msgs/CompressedFile.h>
+#include <ff_msgs/CompressedFileAck.h>
+#include <ff_msgs/CommandConstants.h>
+#include <ff_msgs/CommandStamped.h>
+#include <ff_common/ff_names.h>
+>>>>>>> master
 
 #include <boost/filesystem.hpp>
 
