@@ -18,12 +18,13 @@
 cmake_minimum_required(VERSION 3.5)
 project(planner_trapezoidal)
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -O3 -fPIC" )
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../cmake")
 
 ## Find amend and libraries
 find_package(ament_cmake REQUIRED)
@@ -68,6 +69,16 @@ rclcpp_components_register_nodes(${PROJECT_NAME} "planner_trapezoidal::PlannerTr
 #############
 ## Install ##
 #############
+
+ament_export_dependencies(
+  ff_common
+  ff_util
+  ff_msgs
+  choreographer
+  tf2_geometry_msgs
+)
+
+ament_export_include_directories(include)
 
 target_include_directories(planner_trapezoidal
   PUBLIC

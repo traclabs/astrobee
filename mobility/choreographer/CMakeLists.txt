@@ -18,12 +18,14 @@
 cmake_minimum_required(VERSION 3.5)
 project(choreographer)
 
-# Default to C++14
+# Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/../../cmake")
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -41,6 +43,8 @@ find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 
+find_package(JPS3D REQUIRED)
+
 ###########
 ## Build ##
 ###########
@@ -48,6 +52,7 @@ find_package(pcl_conversions REQUIRED)
 # Specify additional locations of header files
 include_directories(
   include
+  ${JPS3D_INCLUDE_DIR}
 )
 
 # Declare C++ libraries
@@ -57,6 +62,7 @@ add_library(choreographer SHARED
 )
 target_compile_definitions(choreographer
   PRIVATE "COMPOSITION_BUILDING_DLL")
+target_link_libraries(choreographer ${JPS3D_LIBRARIES})
 ament_target_dependencies(choreographer rclcpp rclcpp_components ff_common ff_util ff_msgs ff_hw_msgs jsonloader geometry_msgs nav_msgs visualization_msgs pcl_conversions)
 rclcpp_components_register_nodes(choreographer "choreographer::ChoreographerComponent")
 
@@ -124,6 +130,7 @@ ament_export_dependencies(
   ff_util
   jsonloader
   pcl_conversions
+  JPS3D
 )
 
 ament_export_include_directories(include)

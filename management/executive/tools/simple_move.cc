@@ -54,7 +54,7 @@ void AckCallback(ff_msgs::msg::AckStamped::SharedPtr const Ack) {
 
 int main(int argc, char** argv) {
   rclcpp::init(argc, argv);
-  NodeHandle nh;
+  NodeHandle nh = std::make_shared<rclcpp::Node>("simple_move");
 
   if (argc <= 1) {
     FF_ERROR("Error! Must provide x, y, and z as arguments!");

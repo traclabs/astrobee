@@ -100,6 +100,19 @@ endif()
 #############
 ## Install ##
 #############
+ament_export_dependencies(
+  std_srvs
+  ff_util
+  ff_msgs
+  visualization_msgs
+  sensor_msgs
+  pcl_msgs
+  octomap
+  Eigen3
+  PCL
+)
+
+ament_export_include_directories(include)
 
 # Mark libraries for installation
 install(TARGETS ${PROJECT_NAME}

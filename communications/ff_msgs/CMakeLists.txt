@@ -32,7 +32,6 @@ find_package(builtin_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(actionlib_msgs REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
@@ -69,7 +68,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   geometry_msgs
   sensor_msgs
   trajectory_msgs
-  actionlib_msgs
   diagnostic_msgs
   tf2_geometry_msgs
 

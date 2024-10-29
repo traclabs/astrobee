@@ -2666,8 +2666,8 @@ bool Executive::SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
     err_msg = "Malformed arguments for set exposure command!";
     completed_status = ff_msgs::msg::AckCompletedStatus::BAD_SYNTAX;
   } else {
-    ff_msgs::srv::SetExposure set_exposure_srv;
-    set_exposure_srv.request.exposure = cmd->args[1].f;
+    ff_util::FreeFlyerService<ff_msgs::srv::SetExposure> set_exposure_srv;
+    set_exposure_srv.request->exposure = cmd->args[1].f;
     if (cmd->args[0].s == CommandConstants::PARAM_NAME_CAMERA_NAME_DOCK) {
       // Check to make sure the dock camera exposure service is valid
       if (!set_dock_cam_exposure_client_.exists()) {
@@ -2678,7 +2678,7 @@ bool Executive::SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
         if (!set_dock_cam_exposure_client_.call(set_exposure_srv)) {
           err_msg = "Failed to set dock cam exposure.";
         } else {
-          if (set_exposure_srv.response.success) {
+          if (set_exposure_srv.response->success) {
             successful = true;
             completed_status = ff_msgs::msg::AckCompletedStatus::OK;
           }
@@ -2694,7 +2694,7 @@ bool Executive::SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
         if (!set_nav_cam_exposure_client_.call(set_exposure_srv)) {
           err_msg = "Failed to set nav cam exposure.";
         } else {
-          if (set_exposure_srv.response.success) {
+          if (set_exposure_srv.response->success) {
             successful = true;
             completed_status = ff_msgs::msg::AckCompletedStatus::OK;
           }
@@ -2881,17 +2881,17 @@ bool Executive::SetMap(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
       return false;
     }
 
-    ff_msgs::srv::ResetMap map_srv;
+    ff_util::FreeFlyerService<ff_msgs::srv::ResetMap> map_srv;
     // Extract map path and name
-    map_srv.request.map_file = cmd->args[0].s;
+    map_srv.request->map_file = cmd->args[0].s;
 
-    if (!CheckServiceExists(reset_map_client_, "Reset map", cmd->cmd_id)) {
+    if (!CheckServiceExists(reset_map_client_.exists(), "Reset map", cmd->cmd_id)) {
       return false;
     }
 
     if (!reset_map_client_.call(map_srv)) {
       state_->AckCmd(cmd->cmd_id,
-                     ff_msgs::AckCompletedStatus::EXEC_FAILED,
+                     ff_msgs::msg::AckCompletedStatus::EXEC_FAILED,
                      "Reset map service returned false!");
       return false;
     }
@@ -4210,7 +4210,7 @@ bool Executive::ReadParams() {
 
   if (!config_params_.GetBool("sys_monitor_heartbeat_fault_blocking",
                               &sys_monitor_heartbeat_fault_blocking_)) {
-    err_msg == "Sys monitor heartbeat fault blocking not specified.";
+    err_msg = "Sys monitor heartbeat fault blocking not specified.";
     FF_ERROR("%s", err_msg.c_str());
     this->AssertFault(ff_util::INITIALIZATION_FAILED, err_msg);
     return false;

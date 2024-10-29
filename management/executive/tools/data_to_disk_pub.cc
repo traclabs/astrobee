@@ -98,7 +98,7 @@ void TimerCallback() {
 int main(int argc, char** argv) {
   ff_common::InitFreeFlyerApplication(&argc, &argv);
   rclcpp::init(argc, argv);
-  NodeHandle nh;
+  NodeHandle nh = std::make_shared<rclcpp::Node>("data_to_disk_pub");
 
   if (!google::RegisterFlagValidator(&FLAGS_compression, &ValidateCompression)) {
     std::cerr << "Failed to register compression flag validator." << std::endl;

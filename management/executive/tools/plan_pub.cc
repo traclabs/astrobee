@@ -51,11 +51,6 @@ namespace io = boost::iostreams;
 
 FF_DEFINE_LOGGER("plan_pub")
 
-DEFINE_string(compression, "none",
-              "Type of compression [none, deflate, gzip]");
-
-constexpr uintmax_t kMaxSize = 128 * 1024;
-
 rclcpp::Time plan_pub_time;
 
 Publisher<ff_msgs::msg::CommandStamped> command_pub;
@@ -93,13 +88,10 @@ void on_cf_ack(ff_msgs::msg::CompressedFileAck::SharedPtr const cf_ack) {
 
   // If remote and in the granite lab, the clocks of the robots might not be
   // properly synchronized because we do it manually
-  if (plan_pub_time <= cf_ack->header.stamp + duration(5.0)) {
+  if (plan_pub_time <= rclcpp::Time(cf_ack->header.stamp) + rclcpp::Duration::from_seconds(5.0)) {
     FF_INFO("Compressed file ack is valid! Sending set plan!");
     ff_msgs::msg::CommandStamped cmd;
     cmd.cmd_name = ff_msgs::msg::CommandConstants::CMD_NAME_SET_PLAN;
-
-  if (plan_pub_time <= cf_ack->header.stamp + rclcpp::Duration(5.0)) {
-
     cmd.subsys_name = "Astrobee";
     command_pub->publish(cmd);
   }
@@ -114,7 +106,7 @@ void on_plan_status(ff_msgs::msg::PlanStatusStamped::SharedPtr const ps) {
 
   // If remote and in the granite lab, the clocks of the robots might not be
   // properly synchronized because we do it manually
-  if (plan_pub_time <= ps->header.stamp + rclcpp::Duration(5.0)) {
+  if (plan_pub_time <= ps->header.stamp + rclcpp::Duration::from_seconds(5.0)) {
     ff_msgs::msg::CommandStamped cmd;
     cmd.cmd_name = ff_msgs::msg::CommandConstants::CMD_NAME_RUN_PLAN;
     cmd.subsys_name = "Astrobee";
@@ -135,7 +127,7 @@ void TimerCallback() {
 int main(int argc, char** argv) {
   ff_common::InitFreeFlyerApplication(&argc, &argv);
   rclcpp::init(argc, argv);
-  NodeHandle nh; // ros::NodeHandle n(std::string("/") + FLAGS_ns);
+  NodeHandle nh  = std::make_shared<rclcpp::Node>("plan_pub"); // ros::NodeHandle n(std::string("/") + FLAGS_ns);
 
   if (!google::RegisterFlagValidator(&FLAGS_compression, &ValidateCompression)) {
     std::cerr << "Failed to register compression flag validator." << std::endl;
@@ -211,7 +203,7 @@ int main(int argc, char** argv) {
     rclcpp::sleep_for(ns);
   }
   if (count == MAX_COUNT && !FLAGS_remote) {
-    ROS_ERROR("Could not connect");
+    FF_ERROR("Could not connect");
     return 1;
   }
 

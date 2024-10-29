@@ -248,12 +248,12 @@ class Executive : public ff_util::FreeFlyerComponent {
   bool SetEnableAutoReturn(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetEnableImmediate(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetEnableReplan(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
-  bool SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const& cmd);
+  bool SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetFlashlightBrightness(
                             ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetHolonomicMode(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetInertia(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
-  bool SetMap(ff_msgs::msg::CommandStamped::SharedPtr const& cmd);
+  bool SetMap(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetOperatingLimits(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetPlan(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SetPlanner(ff_msgs::msg::CommandStamped::SharedPtr const cmd);

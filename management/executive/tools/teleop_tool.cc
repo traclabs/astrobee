@@ -851,7 +851,7 @@ int main(int argc, char** argv) {
     rclcpp::Time start_time = nh->now();
 
     // Spin for 3 seconds
-    while (nh->now() - start_time < rclcpp::Duration(3.0))
+    while (nh->now() - start_time < rclcpp::Duration::from_seconds(3.0))
         loop_rate.sleep();
   }
 
