@@ -16,14 +16,18 @@
  * under the License.
  */
 
-#include <gazebo/sensors/WideAngleCameraSensor.hh>
+#include <gz/sensors/WideAngleCameraSensor.hh>
 #include <astrobee_gazebo/astrobee_gazebo.h>
 
 // Transformation helper code
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 
-namespace gazebo {
+namespace gz {
+
+namespace sim {
+
+namespace system {
 
 FF_DEFINE_LOGGER("gazebo");
 
@@ -51,8 +55,15 @@ void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::strin
   gzwarn << "Starting plugin " << plugin_name_ << plugin_name << std::endl;
   robot_name_ = robot_name;
 
+  // Ensure that ROS is setup
+  if(!rclcpp::ok())
+  {
+     rclcpp::init(0, nullptr);  
+  }
   // Get nodehandle based on the model.
-  nh_ = gazebo_ros::Node::Get(sdf);
+  auto node_name = sdf->Get<std::string>("node_name");
+  nh_ = rclcpp::Node::make_shared(node_name);
+  
   // Initialize ROS node for Gazebo
   FreeFlyerComponent::FreeFlyerComponentGazeboInit(nh_, plugin_name);
   FF_DEBUG_STREAM("Loading " << plugin_name_  << plugin_name << " on robot " << robot_name_);
@@ -113,50 +124,60 @@ std::string FreeFlyerPlugin::GetFrame(std::string target, std::string delim) {
 FreeFlyerModelPlugin::FreeFlyerModelPlugin(std::string const& plugin_name,
   std::string const& plugin_frame, bool send_heartbeats) :
     FreeFlyerPlugin::FreeFlyerPlugin(
-      plugin_name, plugin_frame, send_heartbeats) {}
+      plugin_name, plugin_frame, send_heartbeats) {
+
+  link_ = gz::sim::kNullEntity;
+  world_ = gz::sim::kNullEntity;
+  model_ = nullptr;
+}
 
 // Destructor
 FreeFlyerModelPlugin::~FreeFlyerModelPlugin() {}
 
 // Auto-called when Gazebo loads the plugin
-void FreeFlyerModelPlugin::Load(physics::ModelPtr model, sdf::ElementPtr sdf) {
-  sdf_   = sdf;
-  link_  = model->GetLink();
-  world_ = model->GetWorld();
-  model_ = model;
+void FreeFlyerModelPlugin::Configure(const gz::sim::Entity &_entity,
+                         const std::shared_ptr<const sdf::Element> &_sdf,
+                         gz::sim::EntityComponentManager &_ecm,
+                         gz::sim::EventManager &_eventMgr) {
+  sdf_   = _sdf->Clone();
+  //link_  = model->GetLink();
+  //world_ = model->GetWorld();
+  //model_ = gz::sim::Model(_entity);
 
   // Read namespace
-  std::string ns = model_->GetName();
+  std::string ns = model_->Name(_ecm);
   if (ns == "bsharp")
     ns = "/";
 
   // Read plugin custom name if specified
   std::string plugin_name = "";
-  if (sdf->HasElement("plugin_name"))
-    plugin_name = sdf->Get<std::string>("plugin_name");
+  if (_sdf->HasElement("plugin_name"))
+    plugin_name = _sdf->Get<std::string>("plugin_name");
   // Read plugin custom frame if specified
-  if (sdf->HasElement("plugin_frame"))
-    plugin_frame_ = sdf->Get<std::string>("plugin_frame");
+  if (_sdf->HasElement("plugin_frame"))
+    plugin_frame_ = _sdf->Get<std::string>("plugin_frame");
 
   // Initialize the FreeFlyerPlugin
-  InitializePlugin(ns, plugin_name, sdf);
+  InitializePlugin(ns, plugin_name, sdf_);
 
   // Now load the rest of the plugin
   LoadCallback(nh_, model_, sdf_);
 }
 
+
+
 // Get the model link
-physics::LinkPtr FreeFlyerModelPlugin::GetLink() {
+gz::sim::Entity FreeFlyerModelPlugin::GetLink() {
   return link_;
 }
 
 // Get the model world
-physics::WorldPtr FreeFlyerModelPlugin::GetWorld() {
+gz::sim::Entity FreeFlyerModelPlugin::GetWorld() {
   return world_;
 }
 
 // Get the model
-physics::ModelPtr FreeFlyerModelPlugin::GetModel() {
+std::shared_ptr<gz::sim::Model> FreeFlyerModelPlugin::GetModel() {
   return model_;
 }
 
@@ -166,7 +187,7 @@ bool FreeFlyerModelPlugin::ExtrinsicsCallback(
   // A tf nullptr means no transform is required
   if (tf) {
     // Handle the transform for all sensor types
-    ignition::math::Pose3d pose(
+    gz::math::Pose3d pose(
       tf->transform.translation.x,
       tf->transform.translation.y,
       tf->transform.translation.z,
@@ -175,7 +196,7 @@ bool FreeFlyerModelPlugin::ExtrinsicsCallback(
       tf->transform.rotation.y,
       tf->transform.rotation.z);
     // Set the model pose
-    model_->SetWorldPose(pose);
+    //model_->SetWorldPoseCmd(_ecm, pose);
   }
   // Success
   return true;
@@ -193,30 +214,29 @@ FreeFlyerSensorPlugin::FreeFlyerSensorPlugin(std::string const& plugin_name,
 FreeFlyerSensorPlugin::~FreeFlyerSensorPlugin() {}
 
 // Sensor plugin load callback
-void FreeFlyerSensorPlugin::Load(sensors::SensorPtr sensor, sdf::ElementPtr sdf) {
-  sensor_ = sensor;
-  sdf_ = sdf;
-  world_ = gazebo::physics::get_world(sensor->WorldName());
-  #if GAZEBO_MAJOR_VERSION > 7
-  model_ = boost::static_pointer_cast < physics::Link >(
-    world_->EntityByName(sensor->ParentName()))->GetModel();
-  #else
-  model_ = boost::static_pointer_cast<physics::Link>(
-    world_->GetEntity(sensor->ParentName()))->GetModel();
-  #endif
+void FreeFlyerSensorPlugin::Configure(const gz::sim::Entity &_entity,
+                         const std::shared_ptr<const sdf::Element> &_sdf,
+                         gz::sim::EntityComponentManager &_ecm,
+                         gz::sim::EventManager &_eventMgr) {
+  //sensor_ = sensor;
+  sdf_ = _sdf->Clone();
+  //world_ = gazebo::physics::get_world(sensor->WorldName());
+  
+  // Store pointer to model
+  model_.reset( new gz::sim::Model(_entity));
 
   // Read namespace
-  std::string ns = model_->GetName();
+  std::string ns = model_->Name(_ecm);
   if (ns == "bsharp")
     ns = "/";
 
   // Read plugin custom name if specified
   std::string plugin_name = "";
-  if (sdf->HasElement("plugin_name"))
-    plugin_name = sdf->Get<std::string>("plugin_name");
+  if (sdf_->HasElement("plugin_name"))
+    plugin_name = sdf_->Get<std::string>("plugin_name");
   // Read plugin custom frame if specified
-  if (sdf->HasElement("plugin_frame"))
-    plugin_frame_ = sdf->Get<std::string>("plugin_frame");
+  if (sdf_->HasElement("plugin_frame"))
+    plugin_frame_ = sdf_->Get<std::string>("plugin_frame");
 
   // Initialize the FreeFlyerPlugin
   InitializePlugin(ns, plugin_name, sdf_);
@@ -226,22 +246,23 @@ void FreeFlyerSensorPlugin::Load(sensors::SensorPtr sensor, sdf::ElementPtr sdf)
 }
 
 // Get the sensor world
-physics::WorldPtr FreeFlyerSensorPlugin::GetWorld() {
+gz::sim::Entity FreeFlyerSensorPlugin::GetWorld() {
   return world_;
 }
 
 // Get the sensor model
-physics::ModelPtr FreeFlyerSensorPlugin::GetModel() {
+std::shared_ptr<gz::sim::Model> FreeFlyerSensorPlugin::GetModel() {
   return model_;
 }
 
 // Manage the extrinsics
 bool FreeFlyerSensorPlugin::ExtrinsicsCallback(
   geometry_msgs::TransformStamped const* tf) {
+/*
   // A tf nullptr means no transform is required
   if (tf) {
     // Handle the transform for all sensor types
-    ignition::math::Pose3d pose(
+    gz::math::Pose3d pose(
       tf->transform.translation.x,
       tf->transform.translation.y,
       tf->transform.translation.z,
@@ -266,23 +287,16 @@ bool FreeFlyerSensorPlugin::ExtrinsicsCallback(
       tf->transform.rotation.z);
     pose_temp = pose_temp * rot_90_x;
     pose_temp = pose_temp * rot_90_z;
-    pose = ignition::math::Pose3d(
+    pose = gz::math::Pose3d(
       tf->transform.translation.x,
       tf->transform.translation.y,
       tf->transform.translation.z,
       pose_temp.w(), pose_temp.x(), pose_temp.y(), pose_temp.z());
-    #if GAZEBO_MAJOR_VERSION > 7
-    ignition::math::Pose3d tf_bs = pose;
-    ignition::math::Pose3d tf_wb = model_->WorldPose();
-    ignition::math::Pose3d tf_ws = tf_bs + tf_wb;
-    ignition::math::Pose3d world_pose(tf_bs + tf_wb);
-    #else
-    math::Pose tf_bs = pose;
-    math::Pose tf_wb = model_->GetWorldPose();
-    math::Pose tf_ws = tf_bs + tf_wb;
-    ignition::math::Pose3d world_pose(tf_ws.pos.x, tf_ws.pos.y,
-      tf_ws.pos.z, tf_ws.rot.w, tf_ws.rot.x, tf_ws.rot.y, tf_ws.rot.z);
-    #endif
+
+    gz::math::Pose3d tf_bs = pose;
+    gz::math::Pose3d tf_wb = model_->WorldPose();
+    gz::math::Pose3d tf_ws = tf_bs + tf_wb;
+    gz::math::Pose3d world_pose(tf_bs + tf_wb);
 
     // In the case of a camera update the camera world pose
     if (sensor_->Type() == "camera") {
@@ -313,15 +327,14 @@ bool FreeFlyerSensorPlugin::ExtrinsicsCallback(
       else
         return false;
     }
-  }
+  }*/
   // Success
   return true;
 }
 
 // Compute the transform from sensor to world coordinates
-#if GAZEBO_MAJOR_VERSION > 7
-Eigen::Affine3d SensorToWorld(ignition::math::Pose3d const& world_pose,
-                              ignition::math::Pose3d const& sensor_pose) {
+Eigen::Affine3d SensorToWorld(gz::math::Pose3d const& world_pose,
+                              gz::math::Pose3d const& sensor_pose) {
     Eigen::Affine3d body_to_world
       = (Eigen::Translation3d(world_pose.Pos().X(),
                               world_pose.Pos().Y(),
@@ -330,18 +343,6 @@ Eigen::Affine3d SensorToWorld(ignition::math::Pose3d const& world_pose,
                             world_pose.Rot().X(),
                             world_pose.Rot().Y(),
                             world_pose.Rot().Z()));
-#else
-Eigen::Affine3d SensorToWorld(gazebo::math::Pose const& world_pose,
-                              ignition::math::Pose3d const& sensor_pose) {
-    Eigen::Affine3d body_to_world
-      = (Eigen::Translation3d(world_pose.pos.x,
-                              world_pose.pos.y,
-                              world_pose.pos.z) *
-         Eigen::Quaterniond(world_pose.rot.w,
-                            world_pose.rot.x,
-                            world_pose.rot.y,
-                            world_pose.rot.z));
-#endif
     Eigen::Affine3d sensor_to_body
       = (Eigen::Translation3d(sensor_pose.Pos().X(),
                               sensor_pose.Pos().Y(),
@@ -352,7 +353,7 @@ Eigen::Affine3d SensorToWorld(gazebo::math::Pose const& world_pose,
                             sensor_pose.Rot().Z()));
     return body_to_world * sensor_to_body;
 }
-
+/*
 void FillCameraInfo(rendering::CameraPtr camera, sensor_msgs::CameraInfo & msg) {
   msg.width = camera->ImageWidth();
   msg.height = camera->ImageHeight();
@@ -403,6 +404,10 @@ void FillCameraInfo(rendering::CameraPtr camera, sensor_msgs::CameraInfo & msg) 
   } else {
     msg.d = {0.0, 0.0, 0.0, 0.0, 0.0};
   }
-}
+}*/
 
-}  // namespace gazebo
+} // namespace system
+
+} // namespace sim
+ 
+}  // namespace gz

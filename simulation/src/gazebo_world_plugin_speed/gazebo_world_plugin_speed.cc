@@ -16,56 +16,50 @@
  * under the License.
  */
 
-#include <rclcpp/rclcpp.hpp>
-#include <gazebo_ros/node.hpp>
+#include <gz/plugin/Register.hh>
+#include <gz/sim/System.hh>
+#include <gz/sim/World.hh>
 
-#include <gazebo/gazebo.hh>
-#include <gazebo/common/common.hh>
-#include <gazebo/physics/physics.hh>
+namespace astrobee_gazebo {
 
-namespace gazebo {
-
-class WorldPluginSpeed : public WorldPlugin {
- public:
-  // Constructor
-  WorldPluginSpeed() {}
-
-  // Destructor
-  ~WorldPluginSpeed() {}
-
-  void Load(physics::WorldPtr world, sdf::ElementPtr sdf) {
-    world_ = world;
-    // Get nodehandle based on the model.
-    nh_ = gazebo_ros::Node::Get(sdf);
-
+class WorldPluginSpeed : 
+ public gz::sim::System,
+ public gz::sim::ISystemConfigure
+{
+  public: void Configure(
+                const gz::sim::Entity &_entity,
+                const std::shared_ptr<const sdf::Element> &_sdf,
+                gz::sim::EntityComponentManager &_ecm,
+                gz::sim::EventManager &_eventManager) override
+  {
+    world_.reset( new gz::sim::World(_entity));
+ 
     // Query the simulation speed
-    rclcpp::Parameter simulation_speed_param;
     double simulation_speed = 1.0;
-    nh_->declare_parameter("simulation_speed", 1.0);
-    if (nh_->get_parameter("simulation_speed", simulation_speed_param)) {
-      simulation_speed = simulation_speed_param.as_double();
-    } else {
-      gzwarn << "Sim speed not specified. Trying real-time." << std::endl;
-      return;
-    }
+
+    auto sdf_clone = _sdf->Clone();
+
+    if (sdf_clone->HasElement("simulation_speed"))
+      simulation_speed = sdf_clone->GetElement("simulation_speed")->Get<float>();
 
     simulation_speed *= 125;
     // Set the simulation speed
-    gzmsg << "Setting target update rate to " << simulation_speed << std::endl;
-    #if GAZEBO_MAJOR_VERSION > 7
-    physics::PhysicsEnginePtr engine = world->Physics();
-    #else
-    physics::PhysicsEnginePtr engine = world->GetPhysicsEngine();
-    #endif
-    engine->SetRealTimeUpdateRate(simulation_speed);
+    //gzmsg << "Setting target update rate to " << simulation_speed << std::endl;
+    //physics::PhysicsEnginePtr engine = world->Physics();
+    //engine->SetRealTimeUpdateRate(simulation_speed);
+    
   }
 
- private:
-  gazebo_ros::Node::SharedPtr nh_;
-  physics::WorldPtr world_;
-};
 
-// Register this plugin with the simulator
-GZ_REGISTER_WORLD_PLUGIN(WorldPluginSpeed)
+ protected:
+  std::shared_ptr<gz::sim::World> world_;
 
-}   // namespace gazebo
+}; // class WorldPluginSpeed
+
+}   // namespace astrobee_gazebo
+
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::WorldPluginSpeed,
+  gz::sim::System,
+  astrobee_gazebo::WorldPluginSpeed::ISystemConfigure
+)

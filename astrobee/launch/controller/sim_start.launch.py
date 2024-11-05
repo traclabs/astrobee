@@ -22,7 +22,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument("world", default_value="iss"),     # Robot namespace
-        DeclareLaunchArgument("sviz",    default_value="false"),    # Robot pose
+        DeclareLaunchArgument("sviz",    default_value="true"),    # Robot pose
         DeclareLaunchArgument("vmware",  default_value="true"),    # Robot description
         DeclareLaunchArgument("speed",   default_value="1"),       # Robot description
         DeclareLaunchArgument("debug",   default_value="false"),   # Robot description

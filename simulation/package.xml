@@ -21,7 +21,9 @@
   <build_depend>tf2_ros</build_depend>
   <build_depend>tf2_msgs</build_depend>
   <build_depend>tf2_eigen</build_depend>
-  <build_depend>gazebo_ros</build_depend>
+  <build_depend>ros_gz</build_depend>
+  <build_depend>gz_sensors_vendor</build_depend>
+  <build_depend>gz_rendering_vendor</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>ff_msgs</build_depend>
   <build_depend>ff_hw_msgs</build_depend>
@@ -37,7 +39,7 @@
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>tf2_msgs</exec_depend>
   <exec_depend>tf2_eigen</exec_depend>
-  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>ros_gz</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>ff_msgs</exec_depend>
   <exec_depend>ff_hw_msgs</exec_depend>

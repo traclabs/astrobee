@@ -47,14 +47,10 @@ typedef msg::CameraInfo CameraInfo;
 }  // namespace sensor_msgs
 
 // Gazebo includes
-#include <gazebo_ros/node.hpp>
-#include <gazebo/common/common.hh>
-#include <gazebo/physics/physics.hh>
-#include <gazebo/sensors/sensors.hh>
-#if GAZEBO_MAJOR_VERSION <= 7
-#include <gazebo/math/gzmath.hh>
-#endif
-#include <gazebo/rendering/rendering.hh>
+#include <gz/sim/System.hh>
+#include <gz/sim/Model.hh>
+#include <gz/sim/Sensor.hh>
+//#include <gz/rendering/rendering.hh>
 
 // Eigen includes
 #include <Eigen/Geometry>
@@ -64,7 +60,11 @@ typedef msg::CameraInfo CameraInfo;
 #include <thread>
 #include <memory>
 
-namespace gazebo {
+namespace gz {
+
+namespace sim {
+
+namespace system {
 
 // Convenience wrapper around a model plugin
 class FreeFlyerPlugin : public ff_util::FreeFlyerComponent {
@@ -111,7 +111,11 @@ class FreeFlyerPlugin : public ff_util::FreeFlyerComponent {
 };
 
 // Convenience wrapper around a model plugin
-class FreeFlyerModelPlugin : public FreeFlyerPlugin, public ModelPlugin {
+class FreeFlyerModelPlugin : public FreeFlyerPlugin, 
+      public gz::sim::System,
+      public gz::sim::ISystemConfigure,
+      public gz::sim::ISystemPostUpdate,
+      public gz::sim::ISystemPreUpdate {
  public:
   // Constructor
   explicit FreeFlyerModelPlugin(std::string const& plugin_name,
@@ -119,37 +123,53 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin, public ModelPlugin {
 
   // Destructor
   virtual ~FreeFlyerModelPlugin();
+ 
+  void Configure(
+                const gz::sim::Entity &_entity,
+                const std::shared_ptr<const sdf::Element> &_element,
+                gz::sim::EntityComponentManager &_ecm,
+                gz::sim::EventManager &_eventManager) override;
 
- protected:
-  // Called when the model is loaded
-  virtual void Load(physics::ModelPtr model, sdf::ElementPtr sdf);
+  virtual void PreUpdate(const gz::sim::UpdateInfo &_info,
+                gz::sim::EntityComponentManager &_ecm) = 0;
 
+  virtual void PostUpdate(const gz::sim::UpdateInfo &_info,
+                const gz::sim::EntityComponentManager &_ecm) = 0; 
+  
+  protected:
+                       
   // Get the model link
-  physics::LinkPtr GetLink();
+  gz::sim::Entity GetLink();
 
   // Get the model world
-  physics::WorldPtr GetWorld();
+  gz::sim::Entity GetWorld();
 
   // Get the model
-  physics::ModelPtr GetModel();
+  std::shared_ptr<gz::sim::Model> GetModel();
 
   // Callback when the model has loaded
-  virtual void LoadCallback(NodeHandle &nh,
-    physics::ModelPtr model, sdf::ElementPtr sdf) = 0;
+  virtual void LoadCallback(NodeHandle &nh, 
+      std::shared_ptr<gz::sim::Model> model, sdf::ElementPtr sdf) = 0;
 
   // Manage the extrinsics based on the sensor type
   virtual bool ExtrinsicsCallback(geometry_msgs::TransformStamped const* tf);
 
  private:
   sdf::ElementPtr sdf_;
-  physics::LinkPtr link_;
-  physics::WorldPtr world_;
-  physics::ModelPtr model_;
+  gz::sim::Entity link_;
+  gz::sim::Entity world_;
+  std::shared_ptr<gz::sim::Model> model_;
 };
 
 
 // Convenience wrapper around a sensor plugin
-class FreeFlyerSensorPlugin : public FreeFlyerPlugin, public SensorPlugin {
+
+class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
+      public gz::sim::System,
+      public gz::sim::ISystemConfigure,
+      public gz::sim::ISystemPostUpdate,
+      public gz::sim::ISystemPreUpdate
+ {
  public:
   // Constructor
   explicit FreeFlyerSensorPlugin(std::string const& plugin_name,
@@ -158,47 +178,58 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin, public SensorPlugin {
   // Destructor
   virtual ~FreeFlyerSensorPlugin();
 
+  void Configure(
+                const gz::sim::Entity &_entity,
+                const std::shared_ptr<const sdf::Element> &_element,
+                gz::sim::EntityComponentManager &_ecm,
+                gz::sim::EventManager &_eventManager) override;
+
+  virtual void PreUpdate(const gz::sim::UpdateInfo &_info,
+                gz::sim::EntityComponentManager &_ecm) = 0;
+
+  virtual void PostUpdate(const gz::sim::UpdateInfo &_info,
+                const gz::sim::EntityComponentManager &_ecm) = 0; 
+
+
  protected:
-  // Called when the sensor is loaded
-  void Load(sensors::SensorPtr sensor, sdf::ElementPtr sdf);
 
   // Get the sensor world
-  physics::WorldPtr GetWorld();
+  gz::sim::Entity GetWorld();
 
   // Get the sensor model
-  physics::ModelPtr GetModel();
+  std::shared_ptr<gz::sim::Model> GetModel();
 
   // Get the type of the sensor
   std::string GetRotationType();
 
   // Callback when the sensor has loaded
   virtual void LoadCallback(NodeHandle &nh,
-    sensors::SensorPtr sensor, sdf::ElementPtr sdf) = 0;
+    std::shared_ptr<gz::sim::Sensor> sensor, sdf::ElementPtr sdf) = 0;
 
   // Manage the extrinsics based on the sensor type
   virtual bool ExtrinsicsCallback(geometry_msgs::TransformStamped const* tf);
 
  private:
-  sensors::SensorPtr sensor_;
-  physics::WorldPtr world_;
-  physics::ModelPtr model_;
+  std::shared_ptr<gz::sim::Sensor> sensor_;
+  gz::sim::Entity world_;
+  std::shared_ptr<gz::sim::Model> model_;
   sdf::ElementPtr sdf_;
 };
 
 // Utility functions
 
 // Find the transform from the sensor to the world
-#if GAZEBO_MAJOR_VERSION > 7
-Eigen::Affine3d SensorToWorld(ignition::math::Pose3d const& world_pose,
-                              ignition::math::Pose3d const& sensor_pose);
-#else
-Eigen::Affine3d SensorToWorld(gazebo::math::Pose const& world_pose,
-                              ignition::math::Pose3d const& sensor_pose);
-#endif
+Eigen::Affine3d SensorToWorld(gz::math::Pose3d const& world_pose,
+                              gz::math::Pose3d const& sensor_pose);
 
 // Read the camera info
-void FillCameraInfo(rendering::CameraPtr camera, sensor_msgs::CameraInfo & info_msg);
+//void FillCameraInfo(rendering::CameraPtr camera, sensor_msgs::CameraInfo & info_msg);
 
-}  // namespace gazebo
+}  // namespace systems
+
+}  // namespace sim
+
+}  // namespace gz
+
 
 #endif  // ASTROBEE_GAZEBO_ASTROBEE_GAZEBO_H_

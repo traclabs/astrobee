@@ -16,12 +16,16 @@
 # under the License.
 
 from utilities.utilities import *
-
+from launch.substitutions import PathJoinSubstitution
 
 def generate_launch_description():
-    world_file = [get_path("worlds", "astrobee_gazebo"), "/", LaunchConfiguration('world'), ".world"]
+
     config_file = ["--ros-args ", "--params-file ", get_path("config", "astrobee_gazebo"), "/", "params.yaml"]
     # extra_gazebo_args = ["--ros-args", "--params-file", config_file]
+    pkg_astrobee_gazebo = get_package_share_directory(
+        'astrobee_gazebo')
+    world_filename = PythonExpression(["'", LaunchConfiguration("world"), "' + '.sdf'"])
+    world_file = PathJoinSubstitution([pkg_astrobee_gazebo, 'worlds', world_filename])
     return LaunchDescription([
         DeclareLaunchArgument("gui", default_value="true"),
         DeclareLaunchArgument("speed",   default_value="1"),
@@ -35,19 +39,33 @@ def generate_launch_description():
 # TODO(@mgouveia): Not sure what to do about the speed, I think I'll have to pass it to
 # the plugin through sdf robot description since I can't set the parameter here
 
+# ANA FIX THIS
+#                                'verbose': LaunchConfiguration('debug'),   # Debug a node set
+#                                'physics': LaunchConfiguration('physics'), # SIM IP address
+#                                'extra_gazebo_args': config_file,
+
+
         IncludeLaunchDescription(
-            get_launch_file( 'launch/gzserver.launch.py', 'gazebo_ros'),
-            launch_arguments = {
-                                'world':   world_file,      # Execution context
-                                'verbose': LaunchConfiguration('debug'),   # Debug a node set
-                                'physics': LaunchConfiguration('physics'), # SIM IP address
-                                'extra_gazebo_args': config_file,
-                                }.items(),
+            get_launch_file( 'launch/gz_sim.launch.py', 'ros_gz_sim'),
+            launch_arguments = [
+               ('gz_args', [
+                   world_file,
+                   ' -r',
+                   ' -v 4', 
+                   ' -s'
+               ])
+            ]   
         ),
+      
         IncludeLaunchDescription(
-            get_launch_file( 'launch/gzclient.launch.py', 'gazebo_ros'),
-            launch_arguments = {'verbose':   LaunchConfiguration('debug'),      # Debug a node set
-                                }.items(),
+            get_launch_file( 'launch/gz_sim.launch.py', 'ros_gz_sim'),
+            launch_arguments = [
+               ('gz_args', [
+                   ' -g',
+                   ' -v 4'
+               ])
+            ],
             condition=IfCondition(LaunchConfiguration('gui'))
-        ),
+        ),        
+
     ])
