@@ -49,7 +49,9 @@ typedef msg::CameraInfo CameraInfo;
 // Gazebo includes
 #include <gz/sim/System.hh>
 #include <gz/sim/Model.hh>
+#include <gz/sim/Link.hh>
 #include <gz/sim/Sensor.hh>
+#include <gz/sim/components/Sensor.hh>
 //#include <gz/rendering/rendering.hh>
 
 // Eigen includes
@@ -60,11 +62,7 @@ typedef msg::CameraInfo CameraInfo;
 #include <thread>
 #include <memory>
 
-namespace gz {
-
-namespace sim {
-
-namespace system {
+namespace astrobee_gazebo {
 
 // Convenience wrapper around a model plugin
 class FreeFlyerPlugin : public ff_util::FreeFlyerComponent {
@@ -96,17 +94,18 @@ class FreeFlyerPlugin : public ff_util::FreeFlyerComponent {
   // Manage the extrinsics based on the sensor type
   void SetupExtrinsics();
 
-  // Custom callback queue to avoid contention between the global callback
-  // queue and gazebo update work.
-  // void CallbackThread();
-
   // Child classes need access
   std::string robot_name_, plugin_name_, plugin_frame_, parent_frame_;
   NodeHandle nh_;
   std::shared_ptr<tf2_ros::Buffer> buffer_;
   std::shared_ptr<tf2_ros::TransformListener> listener_;
-  // ros::CallbackQueue callback_queue_;
-  std::thread thread_;
+  
+  // Spin node based on: https://github.com/ros-controls/gz_ros2_control/blob/rolling/gz_ros2_control/src/gz_ros2_control_plugin.cpp
+  // Thread where the executor will spin
+  std::thread thread_executor_spin_;
+  // Executor to spin the controller
+  rclcpp::executors::MultiThreadedExecutor::SharedPtr executor_;
+  
   ff_util::FreeFlyerTimer timer_;
 };
 
@@ -130,16 +129,20 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin,
                 gz::sim::EntityComponentManager &_ecm,
                 gz::sim::EventManager &_eventManager) override;
 
-  virtual void PreUpdate(const gz::sim::UpdateInfo &_info,
-                gz::sim::EntityComponentManager &_ecm) = 0;
+  void PreUpdate(const gz::sim::UpdateInfo &_info,
+                 gz::sim::EntityComponentManager &_ecm);
+
+  virtual void PreUpdate_(const gz::sim::UpdateInfo &_info,
+                 gz::sim::EntityComponentManager &_ecm) {}
 
   virtual void PostUpdate(const gz::sim::UpdateInfo &_info,
-                const gz::sim::EntityComponentManager &_ecm) = 0; 
+                const gz::sim::EntityComponentManager &_ecm) {}; 
+
   
   protected:
                        
-  // Get the model link
-  gz::sim::Entity GetLink();
+  // Get the model's canonical link
+  std::shared_ptr<gz::sim::Link> GetLink();
 
   // Get the model world
   gz::sim::Entity GetWorld();
@@ -148,17 +151,19 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin,
   std::shared_ptr<gz::sim::Model> GetModel();
 
   // Callback when the model has loaded
-  virtual void LoadCallback(NodeHandle &nh, 
-      std::shared_ptr<gz::sim::Model> model, sdf::ElementPtr sdf) = 0;
+  virtual void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) = 0;
 
   // Manage the extrinsics based on the sensor type
   virtual bool ExtrinsicsCallback(geometry_msgs::TransformStamped const* tf);
 
- private:
+
+ protected:
   sdf::ElementPtr sdf_;
-  gz::sim::Entity link_;
   gz::sim::Entity world_;
+  std::shared_ptr<gz::sim::Link> link_;
   std::shared_ptr<gz::sim::Model> model_;
+  bool update_extrinsics_;
+  gz::math::Pose3d extrinsics_pose_;
 };
 
 
@@ -184,11 +189,15 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
                 gz::sim::EntityComponentManager &_ecm,
                 gz::sim::EventManager &_eventManager) override;
 
-  virtual void PreUpdate(const gz::sim::UpdateInfo &_info,
-                gz::sim::EntityComponentManager &_ecm) = 0;
+  void PreUpdate(const gz::sim::UpdateInfo &_info,
+                gz::sim::EntityComponentManager &_ecm);
+
+  virtual void PreUpdate_(const gz::sim::UpdateInfo &_info,
+                gz::sim::EntityComponentManager &_ecm) {};
 
   virtual void PostUpdate(const gz::sim::UpdateInfo &_info,
-                const gz::sim::EntityComponentManager &_ecm) = 0; 
+                const gz::sim::EntityComponentManager &_ecm) {}; 
+
 
 
  protected:
@@ -203,17 +212,19 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
   std::string GetRotationType();
 
   // Callback when the sensor has loaded
-  virtual void LoadCallback(NodeHandle &nh,
-    std::shared_ptr<gz::sim::Sensor> sensor, sdf::ElementPtr sdf) = 0;
+  virtual void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) = 0;
 
   // Manage the extrinsics based on the sensor type
   virtual bool ExtrinsicsCallback(geometry_msgs::TransformStamped const* tf);
 
  private:
-  std::shared_ptr<gz::sim::Sensor> sensor_;
+  gz::sim::Entity sensor_entity_;
+  //std::shared_ptr<gz::sim::Sensor> sensor_;
   gz::sim::Entity world_;
   std::shared_ptr<gz::sim::Model> model_;
   sdf::ElementPtr sdf_;
+  bool update_extrinsics_;
+  gz::math::Pose3d extrinsics_pose_;
 };
 
 // Utility functions
@@ -225,11 +236,7 @@ Eigen::Affine3d SensorToWorld(gz::math::Pose3d const& world_pose,
 // Read the camera info
 //void FillCameraInfo(rendering::CameraPtr camera, sensor_msgs::CameraInfo & info_msg);
 
-}  // namespace systems
-
-}  // namespace sim
-
-}  // namespace gz
+}  // namespace astrobee_gazebo
 
 
 #endif  // ASTROBEE_GAZEBO_ASTROBEE_GAZEBO_H_

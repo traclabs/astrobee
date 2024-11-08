@@ -18,6 +18,8 @@
 
 // Gazebo includes
 #include <astrobee_gazebo/astrobee_gazebo.h>
+#include <gz/sim/Util.hh>
+#include <gz/plugin/Register.hh>
 
 // Tf2 includes
 #include <tf2_ros/transform_broadcaster.h>
@@ -36,7 +38,7 @@ typedef msg::TwistStamped TwistStamped;
 // STL includes
 #include <string>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 // This class is a plugin that calls the GNC autocode to predict
 // the force to be applied to the rigid body
@@ -51,23 +53,22 @@ class GazeboModelPluginTruth : public FreeFlyerModelPlugin {
 
  protected:
   // Called when the plugin is loaded into the simulator
-  void LoadCallback(NodeHandle &nh,
-    physics::ModelPtr model, sdf::ElementPtr sdf) {
+  void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) {
     // If we specify a frame name different to our sensor tag name
-    if (sdf->HasElement("rate"))
-      rate_ = sdf->Get<double>("rate");
-    if (sdf->HasElement("parent"))
-      parent_ = sdf->Get<std::string>("parent");
-    if (sdf->HasElement("child"))
-      child_ = sdf->Get<std::string>("child");
-    if (sdf->HasElement("pose"))
-      pose_ = sdf->Get<bool>("pose");
-    if (sdf->HasElement("twist"))
-      twist_ = sdf->Get<bool>("twist");
-    if (sdf->HasElement("tf"))
-      tf_ = sdf->Get<bool>("tf");
-    if (sdf->HasElement("static"))
-      static_ = sdf->Get<bool>("static");
+    if (sdf_->HasElement("rate"))
+      rate_ = sdf_->Get<double>("rate");
+    if (sdf_->HasElement("parent"))
+      parent_ = sdf_->Get<std::string>("parent");
+    if (sdf_->HasElement("child"))
+      child_ = sdf_->Get<std::string>("child");
+    if (sdf_->HasElement("pose"))
+      pose_ = sdf_->Get<bool>("pose");
+    if (sdf_->HasElement("twist"))
+      twist_ = sdf_->Get<bool>("twist");
+    if (sdf_->HasElement("tf"))
+      tf_ = sdf_->Get<bool>("tf");
+    if (sdf_->HasElement("static"))
+      static_ = sdf_->Get<bool>("static");
 
     // Setup TF2 message
     msg_.header.frame_id = parent_;
@@ -77,26 +78,22 @@ class GazeboModelPluginTruth : public FreeFlyerModelPlugin {
     tf_broadcaster_ =
       std::make_unique<tf2_ros::TransformBroadcaster>(*nh);
 
+    // Enable velocity checks
+    // (by default it seems Gazebo does not publish links' velocities,
+    // so we have to explicitly request them to be published if using twist=true
+    GetLink()->EnableVelocityChecks(_ecm, true);
+
     // If we are
     if (static_) {
       msg_.header.stamp = GetTimeNow();
-      #if GAZEBO_MAJOR_VERSION > 7
-        msg_.transform.translation.x = GetModel()->WorldPose().Pos().X();
-        msg_.transform.translation.y = GetModel()->WorldPose().Pos().Y();
-        msg_.transform.translation.z = GetModel()->WorldPose().Pos().Z();
-        msg_.transform.rotation.x = GetModel()->WorldPose().Rot().X();
-        msg_.transform.rotation.y = GetModel()->WorldPose().Rot().Y();
-        msg_.transform.rotation.z = GetModel()->WorldPose().Rot().Z();
-        msg_.transform.rotation.w = GetModel()->WorldPose().Rot().W();
-      #else
-        msg_.transform.translation.x = GetModel()->GetWorldPose().pos.x;
-        msg_.transform.translation.y = GetModel()->GetWorldPose().pos.y;
-        msg_.transform.translation.z = GetModel()->GetWorldPose().pos.z;
-        msg_.transform.rotation.x = GetModel()->GetWorldPose().rot.x;
-        msg_.transform.rotation.y = GetModel()->GetWorldPose().rot.y;
-        msg_.transform.rotation.z = GetModel()->GetWorldPose().rot.z;
-        msg_.transform.rotation.w = GetModel()->GetWorldPose().rot.w;
-      #endif
+      gz::math::Pose3d pose = gz::sim::worldPose(model_->Entity(), _ecm);
+      msg_.transform.translation.x = pose.Pos().X();
+      msg_.transform.translation.y = pose.Pos().Y();
+      msg_.transform.translation.z = pose.Pos().Z();
+      msg_.transform.rotation.x = pose.Rot().X();
+      msg_.transform.rotation.y = pose.Rot().Y();
+      msg_.transform.rotation.z = pose.Rot().Z();
+      msg_.transform.rotation.w = pose.Rot().W();
       tf_broadcaster_->sendTransform(msg_);
       return;
     }
@@ -124,92 +121,92 @@ class GazeboModelPluginTruth : public FreeFlyerModelPlugin {
       last_time_ = msg_.header.stamp;
     }
 
-    #if GAZEBO_MAJOR_VERSION > 7
+    std::lock_guard<std::mutex> guard(mutex_data_);
+
+    if(!model_pose_ || !model_linear_vel_ || !model_angular_vel_)
+      return;    
+
     if (tf_ && publish_tf) {
-      msg_.transform.translation.x = GetModel()->WorldPose().Pos().X();
-      msg_.transform.translation.y = GetModel()->WorldPose().Pos().Y();
-      msg_.transform.translation.z = GetModel()->WorldPose().Pos().Z();
-      msg_.transform.rotation.x = GetModel()->WorldPose().Rot().X();
-      msg_.transform.rotation.y = GetModel()->WorldPose().Rot().Y();
-      msg_.transform.rotation.z = GetModel()->WorldPose().Rot().Z();
-      msg_.transform.rotation.w = GetModel()->WorldPose().Rot().W();
+      msg_.transform.translation.x = model_pose_.value().Pos().X();
+      msg_.transform.translation.y = model_pose_.value().Pos().Y();
+      msg_.transform.translation.z = model_pose_.value().Pos().Z();
+      msg_.transform.rotation.x = model_pose_.value().Rot().X();
+      msg_.transform.rotation.y = model_pose_.value().Rot().Y();
+      msg_.transform.rotation.z = model_pose_.value().Rot().Z();
+      msg_.transform.rotation.w = model_pose_.value().Rot().W();
       tf_broadcaster_->sendTransform(msg_);
     }
     // Pose
     if (pose_) {
       ros_truth_pose_.header = msg_.header;
-      ros_truth_pose_.pose.position.x = GetModel()->WorldPose().Pos().X();
-      ros_truth_pose_.pose.position.y = GetModel()->WorldPose().Pos().Y();
-      ros_truth_pose_.pose.position.z = GetModel()->WorldPose().Pos().Z();
-      ros_truth_pose_.pose.orientation.x = GetModel()->WorldPose().Rot().X();
-      ros_truth_pose_.pose.orientation.y = GetModel()->WorldPose().Rot().Y();
-      ros_truth_pose_.pose.orientation.z = GetModel()->WorldPose().Rot().Z();
-      ros_truth_pose_.pose.orientation.w = GetModel()->WorldPose().Rot().W();
+      ros_truth_pose_.pose.position.x = model_pose_.value().Pos().X();
+      ros_truth_pose_.pose.position.y = model_pose_.value().Pos().Y();
+      ros_truth_pose_.pose.position.z = model_pose_.value().Pos().Z();
+      ros_truth_pose_.pose.orientation.x = model_pose_.value().Rot().X();
+      ros_truth_pose_.pose.orientation.y = model_pose_.value().Rot().Y();
+      ros_truth_pose_.pose.orientation.z = model_pose_.value().Rot().Z();
+      ros_truth_pose_.pose.orientation.w = model_pose_.value().Rot().W();
       pub_truth_pose_->publish(ros_truth_pose_);
     }
     // Twist
     if (twist_) {
       ros_truth_twist_.header = msg_.header;
-      ros_truth_twist_.twist.linear.x = GetModel()->WorldLinearVel().X();
-      ros_truth_twist_.twist.linear.y = GetModel()->WorldLinearVel().Y();
-      ros_truth_twist_.twist.linear.z = GetModel()->WorldLinearVel().Z();
-      ros_truth_twist_.twist.angular.x = GetModel()->RelativeAngularVel().X();
-      ros_truth_twist_.twist.angular.y = GetModel()->RelativeAngularVel().Y();
-      ros_truth_twist_.twist.angular.z = GetModel()->RelativeAngularVel().Z();
+      ros_truth_twist_.twist.linear.x = model_linear_vel_.value().X();
+      ros_truth_twist_.twist.linear.y = model_linear_vel_.value().Y();
+      ros_truth_twist_.twist.linear.z = model_linear_vel_.value().Z();
+      ros_truth_twist_.twist.angular.x = model_angular_vel_.value().X();
+      ros_truth_twist_.twist.angular.y = model_angular_vel_.value().Y();
+      ros_truth_twist_.twist.angular.z = model_angular_vel_.value().Z();
       pub_truth_twist_->publish(ros_truth_twist_);
     }
-    #else
-    if (tf_ && publish_tf) {
-      msg_.transform.translation.x = GetModel()->GetWorldPose().pos.x;
-      msg_.transform.translation.y = GetModel()->GetWorldPose().pos.y;
-      msg_.transform.translation.z = GetModel()->GetWorldPose().pos.z;
-      msg_.transform.rotation.x = GetModel()->GetWorldPose().rot.x;
-      msg_.transform.rotation.y = GetModel()->GetWorldPose().rot.y;
-      msg_.transform.rotation.z = GetModel()->GetWorldPose().rot.z;
-      msg_.transform.rotation.w = GetModel()->GetWorldPose().rot.w;
-      tf_broadcaster_->sendTransform(msg_);
-    }
-    // Pose
-    if (pose_) {
-      ros_truth_pose_.header = msg_.header;
-      ros_truth_pose_.pose.position.x = GetModel()->GetWorldPose().pos.x;
-      ros_truth_pose_.pose.position.y = GetModel()->GetWorldPose().pos.y;
-      ros_truth_pose_.pose.position.z = GetModel()->GetWorldPose().pos.z;
-      ros_truth_pose_.pose.orientation.x = GetModel()->GetWorldPose().rot.x;
-      ros_truth_pose_.pose.orientation.y = GetModel()->GetWorldPose().rot.y;
-      ros_truth_pose_.pose.orientation.z = GetModel()->GetWorldPose().rot.z;
-      ros_truth_pose_.pose.orientation.w = GetModel()->GetWorldPose().rot.w;
-      pub_truth_pose_->publish(ros_truth_pose_);
-    }
-    // Twist
-    if (twist_) {
-      ros_truth_twist_.header = msg_.header;
-      ros_truth_twist_.twist.linear.x = GetModel()->GetWorldLinearVel().x;
-      ros_truth_twist_.twist.linear.y = GetModel()->GetWorldLinearVel().y;
-      ros_truth_twist_.twist.linear.z = GetModel()->GetWorldLinearVel().z;
-      ros_truth_twist_.twist.angular.x = GetModel()->GetRelativeAngularVel().x;
-      ros_truth_twist_.twist.angular.y = GetModel()->GetRelativeAngularVel().y;
-      ros_truth_twist_.twist.angular.z = GetModel()->GetRelativeAngularVel().z;
-      pub_truth_twist_->publish(ros_truth_twist_);
-    }
-    #endif
+    
   }
+
+  void PreUpdate(const gz::sim::UpdateInfo &_info,
+                 gz::sim::EntityComponentManager &_ecm) 
+  {
+  }
+
+  void PostUpdate(const gz::sim::UpdateInfo &_info,
+                  const gz::sim::EntityComponentManager &_ecm) 
+  {
+     std::lock_guard<std::mutex> guard(mutex_data_);
+     model_pose_ = GetLink()->WorldPose(_ecm);  
+     model_linear_vel_ = GetLink()->WorldLinearVelocity(_ecm);
+     model_angular_vel_ = GetLink()->WorldAngularVelocity(_ecm);
+  }                
+
 
  private:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   double rate_;
   bool tf_, pose_, twist_, static_;
   std::string parent_, child_;
+  
+  // Storing data
+  std::optional<gz::math::Vector3d> model_linear_vel_;
+  std::optional<gz::math::Vector3d> model_angular_vel_;
+  std::optional<gz::math::Pose3d> model_pose_;
+  std::mutex mutex_data_;
+  
+  // Publishing to ROS2 side
   geometry_msgs::TransformStamped msg_;
   geometry_msgs::PoseStamped ros_truth_pose_;
   geometry_msgs::TwistStamped ros_truth_twist_;
+  
   rclcpp::Publisher<geometry_msgs::PoseStamped>::SharedPtr pub_truth_pose_;
   rclcpp::Publisher<geometry_msgs::TwistStamped>::SharedPtr pub_truth_twist_;
   ff_util::FreeFlyerTimer timer_;
   rclcpp::Time last_time_;
 };
 
-// Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboModelPluginTruth)
+}   // namespace astrobee_gazebo
 
-}   // namespace gazebo
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboModelPluginTruth,
+  gz::sim::System,
+  astrobee_gazebo::GazeboModelPluginTruth::ISystemConfigure,
+  astrobee_gazebo::GazeboModelPluginTruth::ISystemPreUpdate,
+  astrobee_gazebo::GazeboModelPluginTruth::ISystemPostUpdate 
+)

@@ -23,11 +23,12 @@
 
 // Gazebo includes
 #include <astrobee_gazebo/astrobee_gazebo.h>
+#include <gz/plugin/Register.hh>
 
 // STL includes
 #include <string>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 FF_DEFINE_LOGGER("gazebo_model_plugin_empty");
 
@@ -40,17 +41,33 @@ class GazeboModelPluginHeartbeat : public FreeFlyerModelPlugin {
 
  protected:
   // Called when the plugin is loaded into the simulator
-  void LoadCallback(NodeHandle& nh,
-    physics::ModelPtr model, sdf::ElementPtr sdf) {
-    }
+  void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) {
+
+  }
 
   // Manage the extrinsics based on the sensor type
   bool ExtrinsicsCallback(geometry_msgs::TransformStamped const* tf) {
     return true;
   }
+  
+  void PreUpdate(const gz::sim::UpdateInfo &_info,
+                gz::sim::EntityComponentManager &_ecm) {
+  }
+
+  void PostUpdate(const gz::sim::UpdateInfo &_info,
+                const gz::sim::EntityComponentManager &_ecm) {
+               
+  } 
+  
 };
 
-// Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboModelPluginHeartbeat)
+}   // namespace astrobee_gazebo
 
-}   // namespace gazebo
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboModelPluginHeartbeat,
+  gz::sim::System,
+  astrobee_gazebo::GazeboModelPluginHeartbeat::ISystemConfigure,
+  astrobee_gazebo::GazeboModelPluginHeartbeat::ISystemPreUpdate,
+  astrobee_gazebo::GazeboModelPluginHeartbeat::ISystemPostUpdate 
+)

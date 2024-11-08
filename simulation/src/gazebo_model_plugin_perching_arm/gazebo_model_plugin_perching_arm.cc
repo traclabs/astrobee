@@ -45,7 +45,7 @@ typedef srv::CalibrateGripper CalibrateGripper;
 // STL includes
 #include <string>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 FF_DEFINE_LOGGER("gazebo_model_plugin_perching_arm");
 
@@ -102,26 +102,30 @@ class GazeboModelPluginPerchingArm : public FreeFlyerModelPlugin {
   static constexpr double RPM_TO_RADS_PER_S     = 0.1047198;
 
   // Called when the plugin is loaded into the simulator
-  void LoadCallback(NodeHandle &nh, physics::ModelPtr model,
-    sdf::ElementPtr sdf) {
+  void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) {
     // Get parameters
-    if (sdf->HasElement("bay"))
-      bay_ = sdf->Get<std::string>("bay");
-    if (sdf->HasElement("rate"))
-      rate_ = sdf->Get<double>("rate");
+    if (sdf_->HasElement("bay"))
+      bay_ = sdf_->Get<std::string>("bay");
+    if (sdf_->HasElement("rate"))
+      rate_ = sdf_->Get<double>("rate");
     double prox = PROXIMAL_STOWED;
-    if (sdf->HasElement("proximal"))
-      prox = sdf->Get<double>("proximal");
+    if (sdf_->HasElement("proximal"))
+      prox = sdf_->Get<double>("proximal");
     double dist = DISTAL_STOWED;
-    if (sdf->HasElement("distal"))
-      dist = sdf->Get<double>("distal");
+    if (sdf_->HasElement("distal"))
+      dist = sdf_->Get<double>("distal");
     double grip = GRIPPER_CLOSED;
-    if (sdf->HasElement("gripper"))
-      grip = sdf->Get<double>("gripper");
+    if (sdf_->HasElement("gripper"))
+      grip = sdf_->Get<double>("gripper");
 
     // Set the initial joint positions
-    model->GetJoint(bay_+"_arm_proximal_joint")->SetPosition(0, prox);
-    model->GetJoint(bay_+"_arm_distal_joint")->SetPosition(0, dist);
+    auto prox_entity = GetModel()->JointByName(_ecm, bay_+"_arm_proximal_joint");
+    auto dist_entity = GetModel()->JointByName(_ecm, bay_+"_arm_distal_joint");
+    auto prox_joint = gz::sim::Joint(prox_entity);
+    prox_joint->ResetPosition(_ecm, std::vector<double>{prox});
+    
+    auto dist_joint = gz::sim::Joint(dist_entity);
+    dist_joint->ResetPosition(_ecm, std::vector<double>{dist});
     SetGripperPosition(grip);
 
     // Setup the eight PID controllers used in this driver
@@ -150,21 +154,21 @@ class GazeboModelPluginPerchingArm : public FreeFlyerModelPlugin {
     // We're going to publish all joint states plus one composite state. The
     // gripper states are used by rviz to print how the gripper appears. The
     // composite state is used by the high level driver to monitor progress.
-    joints_.push_back(GetModel()->GetJoint(
-      bay_+"_arm_proximal_joint"));
-    joints_.push_back(GetModel()->GetJoint(
-      bay_+"_arm_distal_joint"));
-    joints_.push_back(GetModel()->GetJoint(
-      bay_+"_gripper_left_proximal_joint"));
-    joints_.push_back(GetModel()->GetJoint(
-      bay_+"_gripper_left_distal_joint"));
-    joints_.push_back(GetModel()->GetJoint(
-      bay_+"_gripper_right_proximal_joint"));
-    joints_.push_back(GetModel()->GetJoint(
-      bay_+"_gripper_right_distal_joint"));
+    joints_.push_back(GetModel()->JointByName(
+      _ecm, bay_+"_arm_proximal_joint"));
+    joints_.push_back(GetModel()->JointByName(
+      _ecm, bay_+"_arm_distal_joint"));
+    joints_.push_back(GetModel()->JointByName(
+      _ecm, bay_+"_gripper_left_proximal_joint"));
+    joints_.push_back(GetModel()->JointByName(
+      _ecm, bay_+"_gripper_left_distal_joint"));
+    joints_.push_back(GetModel()->JointByName(
+      _ecm, bay_+"_gripper_right_proximal_joint"));
+    joints_.push_back(GetModel()->JointByName(
+      _ecm, bay_+"_gripper_right_distal_joint"));
 
     // Avoid resizing in each callback
-    msg_.header.frame_id =  GetModel()->GetName();
+    msg_.header.frame_id =  GetModel()->Name(_ecm);
     msg_.name.resize(joints_.size() + 1);
     msg_.position.resize(joints_.size() + 1);
     msg_.velocity.resize(joints_.size() + 1);
@@ -225,15 +229,9 @@ class GazeboModelPluginPerchingArm : public FreeFlyerModelPlugin {
     double value = 0.0;
     switch (type) {
     case POSITION: {
-      #if GAZEBO_MAJOR_VERSION > 7
         double lower = joint->LowerLimit();
         double upper = joint->UpperLimit();
         value = (joint->Position() - lower) / (upper - lower);
-      #else
-        double lower = joint->GetLowerLimit(0).Radian();
-        double upper = joint->GetUpperLimit(0).Radian();
-        value = (joint->GetAngle(0).Radian() - lower) / (upper - lower);
-      #endif
 
       break;
     }
@@ -254,13 +252,8 @@ class GazeboModelPluginPerchingArm : public FreeFlyerModelPlugin {
   void SetGripperJointGoal(std::string const& name, double position) {
     physics::JointPtr joint = GetModel()->GetJoint(name);
     // Get the joint limits
-    #if GAZEBO_MAJOR_VERSION > 7
     double lower = joint->LowerLimit();
     double upper = joint->UpperLimit();
-    #else
-    double lower = joint->GetLowerLimit(0).Radian();
-    double upper = joint->GetUpperLimit(0).Radian();
-    #endif
     // Calculate the correct joint angle based on the position (0 - 100)
     double value = lower + position * (upper - lower);
     GetModel()->GetJointController()->SetPositionTarget(
@@ -288,13 +281,8 @@ class GazeboModelPluginPerchingArm : public FreeFlyerModelPlugin {
   // Set the joint angle based on a gripper position from 0 to 100
   void SetGripperJointPosition(std::string const& name, double position) {
     physics::JointPtr joint = GetModel()->GetJoint(name);
-    #if GAZEBO_MAJOR_VERSION > 7
-      double lower = joint->LowerLimit();
-      double upper = joint->UpperLimit();
-    #else
-      double lower = joint->GetLowerLimit(0).Radian();
-      double upper = joint->GetUpperLimit(0).Radian();
-    #endif
+    double lower = joint->LowerLimit();
+    double upper = joint->UpperLimit();
     double value = lower + position * (upper - lower);
     joint->SetPosition(0, value);
   }
@@ -345,11 +333,7 @@ class GazeboModelPluginPerchingArm : public FreeFlyerModelPlugin {
     size_t i = 0;
     for (; i < joints_.size(); i++) {
       msg_.name[i] = joints_[i]->GetName();
-      #if GAZEBO_MAJOR_VERSION > 7
-        msg_.position[i] = joints_[i]->Position();
-      #else
-        msg_.position[i] = joints_[i]->GetAngle(0).Radian();
-      #endif
+      msg_.position[i] = joints_[i]->Position();
       msg_.velocity[i] = joints_[i]->GetVelocity(0);
       msg_.effort[i] = joints_[i]->GetForce(0);
     }
@@ -432,22 +416,30 @@ class GazeboModelPluginPerchingArm : public FreeFlyerModelPlugin {
   rclcpp::Subscription<sensor_msgs::JointState>::SharedPtr sub_;       // Joint goal subscriber
   rclcpp::Service<ff_hw_msgs::SetJointMaxVelocity>::SharedPtr srv_p_;  // Set max pan velocity
   rclcpp::Service<ff_hw_msgs::SetJointMaxVelocity>::SharedPtr srv_t_;  // Set max tilt velcoity
-  physics::Joint_V joints_;                                            // List of joints in system
+  std::vector<gz::sim::Entity> joints_;                                            // List of joints in system
   sensor_msgs::JointState msg_;                                        // Joint state message
   double grip_;                                                        // Joint state message
-  common::PID pid_prox_p_;                                             // PID : arm proximal position
-  common::PID pid_dist_p_;                                             // PID : arm distal position
-  common::PID pid_gl_prox_p_;                                          // PID : gripper left proximal position
-  common::PID pid_gl_dist_p_;                                          // PID : gripper left distal position
-  common::PID pid_gr_prox_p_;                                          // PID : gripper right proximal position
-  common::PID pid_gr_dist_p_;                                          // PID : gripper right distal position
+  gz::math::PID pid_prox_p_;                                             // PID : arm proximal position
+  gz::math::PID pid_dist_p_;                                             // PID : arm distal position
+  gz::math::PID pid_gl_prox_p_;                                          // PID : gripper left proximal position
+  gz::math::PID pid_gl_dist_p_;                                          // PID : gripper left distal position
+  gz::math::PID pid_gr_prox_p_;                                          // PID : gripper right proximal position
+  gz::math::PID pid_gr_dist_p_;                                          // PID : gripper right distal position
   rclcpp::Service<ff_hw_msgs::SetEnabled>::SharedPtr srv_ps_;          // Enable/Disable the proximal joint servo
   rclcpp::Service<ff_hw_msgs::SetEnabled>::SharedPtr srv_ds_;          // Enable/Disable the distal   joint servo
   rclcpp::Service<ff_hw_msgs::SetEnabled>::SharedPtr srv_gs_;          // Enable/Disable the gripper  joint servo
   rclcpp::Service<ff_hw_msgs::CalibrateGripper>::SharedPtr srv_c_;     // Calibrate gripper
 };
 
-// Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboModelPluginPerchingArm)
+}   // namespace astrobee_gazebo
 
-}   // namespace gazebo
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboModelPluginPerchingArm,
+  gz::sim::System,
+  astrobee_gazebo::GazeboModelPluginPerchingArm::ISystemConfigure,
+  astrobee_gazebo::GazeboModelPluginPerchingArm::ISystemPreUpdate,
+  astrobee_gazebo::GazeboModelPluginPerchingArm::ISystemPostUpdate 
+)
+
+

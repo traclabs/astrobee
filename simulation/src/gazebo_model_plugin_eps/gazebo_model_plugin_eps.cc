@@ -21,6 +21,11 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+// Gazebo
+#include <gz/plugin/Register.hh>
+#include <gz/transport/Node.hh>
+#include <gz/msgs/empty.pb.h>
+
 // Standard messages
 #include <sensor_msgs/msg/battery_state.hpp>
 #include <sensor_msgs/msg/temperature.hpp>
@@ -79,12 +84,13 @@ typedef msg::Header Header;
 #include <string>
 #include <thread>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 FF_DEFINE_LOGGER("gazebo_model_plugin_eps");
 
 using FSM = ff_util::FSM;
-
+using namespace std::chrono_literals;
+  
 /*
   Provides a simple EPS plugin for helping with the the docking procedure.
   Like the EPS, it publishes a dock state. To do this is it first determines
@@ -121,7 +127,8 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
       this, std::placeholders::_1, std::placeholders::_2)),
     rate_(10.0), distance_near_(0.05), distance_far_(0.05), delay_(5.0),
     lock_(false), battery_capacity_(3.4), battery_charge_(3.0),
-    battery_discharge_rate_(0.005) {
+    battery_discharge_rate_(0.005),
+    update_(true) {
       // In an unknown state, if we are sensed to be near or far from a berth
       // then update to either a docked or undocked state.
       fsm_.Add(UNKNOWN, SENSE_NEAR | SENSE_FAR,
@@ -210,31 +217,29 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
 
   // Destructor
   ~GazeboModelPluginEps() {
-    #if GAZEBO_MAJOR_VERSION > 7
-    update_.reset();
-    #else
-    event::Events::DisconnectWorldUpdateEnd(update_);
-    #endif
+    update_ = false;
   }
 
  protected:
   // Called when the plugin is loaded into the simulator
-  void LoadCallback(NodeHandle &nh,
-    physics::ModelPtr model, sdf::ElementPtr sdf) {
-
+  void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm)
+  {
+    // Save model name
+    model_name_ = model_->Name(_ecm);
+    
     // Initialize Transform lookup
     buffer_.reset(new tf2_ros::Buffer(nh->get_clock()));
     listener_.reset(new tf2_ros::TransformListener(*buffer_));
 
     // Get parameters
-    if (sdf->HasElement("rate"))
-      rate_ = sdf->Get<double>("rate");
-    if (sdf->HasElement("distance_near"))
-      distance_near_ = sdf->Get<double>("distance_near");
-    if (sdf->HasElement("distance_far"))
-      distance_far_ = sdf->Get<double>("distance_far");
-    if (sdf->HasElement("delay"))
-      delay_ = sdf->Get<double>("delay");
+    if (sdf_->HasElement("rate"))
+      rate_ = sdf_->Get<double>("rate");
+    if (sdf_->HasElement("distance_near"))
+      distance_near_ = sdf_->Get<double>("distance_near");
+    if (sdf_->HasElement("distance_far"))
+      distance_far_ = sdf_->Get<double>("distance_far");
+    if (sdf_->HasElement("delay"))
+      delay_ = sdf_->Get<double>("delay");
     // Setup telemetry publishers
     pub_dock_state_ = FF_CREATE_PUBLISHER(nh, ff_hw_msgs::EpsDockStateStamped, TOPIC_HARDWARE_EPS_DOCK_STATE, 1);
     pub_housekeeping_ = FF_CREATE_PUBLISHER(nh, ff_hw_msgs::EpsHousekeeping, TOPIC_HARDWARE_EPS_HOUSEKEEPING, 1);
@@ -268,34 +273,31 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
     // Create timer to publish battery states
     telem_timer_.createTimer(5.0,
       std::bind(&GazeboModelPluginEps::TelemetryCallback, this), nh_, false, true);
-     // Defer the extrinsics setup to allow plugins to load
-    update_ = event::Events::ConnectWorldUpdateEnd(
-      std::bind(&GazeboModelPluginEps::BerthCallback, this));
     // Initialize battery states
     // state_tl_.header.stamp = ros::Time::now();
     state_tl_.location = ff_hw_msgs::EpsBatteryLocation::TOP_LEFT;
-    state_tl_.present = sdf->Get<bool>("battery_top_left");
+    state_tl_.present = sdf_->Get<bool>("battery_top_left");
     state_tl_.capacity = battery_capacity_;
     state_tl_.charge = battery_charge_;
     state_tl_.percentage = state_tl_.charge / state_tl_.capacity;
     battery_state_pub_tl_->publish(state_tl_);
     // state_tr_.header.stamp = ros::Time::now();
     state_tr_.location = ff_hw_msgs::EpsBatteryLocation::TOP_RIGHT;
-    state_tr_.present = sdf->Get<bool>("battery_top_right");
+    state_tr_.present = sdf_->Get<bool>("battery_top_right");
     state_tr_.capacity = battery_capacity_;
     state_tr_.charge = battery_charge_;
     state_tr_.percentage = state_tr_.charge / state_tl_.capacity;
     battery_state_pub_tr_->publish(state_tr_);
     // state_bl_.header.stamp = ros::Time::now();
     state_bl_.location = ff_hw_msgs::EpsBatteryLocation::BOTTOM_LEFT;
-    state_bl_.present = sdf->Get<bool>("battery_bottom_left");
+    state_bl_.present = sdf_->Get<bool>("battery_bottom_left");
     state_bl_.capacity = battery_capacity_;
     state_bl_.charge = battery_charge_;
     state_bl_.percentage = state_bl_.charge / state_bl_.capacity;
     battery_state_pub_bl_->publish(state_bl_);
     // state_br_.header.stamp = ros::Time::now();
     state_br_.location = ff_hw_msgs::EpsBatteryLocation::BOTTOM_RIGHT;
-    state_br_.present = sdf->Get<bool>("battery_bottom_right");
+    state_br_.present = sdf_->Get<bool>("battery_bottom_right");
     state_br_.capacity = battery_capacity_;
     state_br_.charge = battery_charge_;
     state_br_.percentage = state_br_.charge /state_br_.capacity;
@@ -391,8 +393,23 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
     FF_DEBUG_STREAM("State changed to " << str);
   }
 
-  // Manage the extrinsics based on the sensor type
-  void BerthCallback() {
+  // Defer the extrinsics setup to allow plugins to load
+  void PostUpdate(const gz::sim::UpdateInfo &_info,
+                  const gz::sim::EntityComponentManager &_ecm) override 
+  { 
+    if(update_)
+      BerthCallback();    
+
+   // Get model pose
+   mutex_data_.lock();
+   model_pose_ = GetLink()->WorldPose(_ecm);
+   mutex_data_.unlock();
+   
+  }
+
+  // Manage the extrinsics based on the sensor type  
+  void BerthCallback()
+  {
     // Create a buffer and listener for TF2 transforms
     static geometry_msgs::TransformStamped tf;
     // Get extrinsics from framestore
@@ -401,7 +418,7 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
       tf = buffer_->lookupTransform(
         "world", "dock/berth1/complete", ros::Time(0));
       // Handle the transform for all sensor types
-      berths_["dock/berth1/complete"] = ignition::math::Pose3d(
+      berths_["dock/berth1/complete"] = gz::math::Pose3d(
         tf.transform.translation.x,
         tf.transform.translation.y,
         tf.transform.translation.z,
@@ -413,7 +430,7 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
       tf = buffer_->lookupTransform(
         "world", "dock/berth2/complete", ros::Time(0));
       // Handle the transform for all sensor types
-      berths_["dock/berth2/complete"] = ignition::math::Pose3d(
+      berths_["dock/berth2/complete"] = gz::math::Pose3d(
         tf.transform.translation.x,
         tf.transform.translation.y,
         tf.transform.translation.z,
@@ -422,11 +439,7 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
         tf.transform.rotation.y,
         tf.transform.rotation.z);
       // Kill the connection when we have a dock pose
-      #if GAZEBO_MAJOR_VERSION > 7
-      update_.reset();
-      #else
-      event::Events::DisconnectWorldUpdateEnd(update_);
-      #endif
+      update_ = false;
       // Once we have berth locations start timer for checking dock status
       timer_update_.start();
     // If we have an exception we need to quietly wait for transform(s)
@@ -436,34 +449,32 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
   // Create a virtual joint to lock the freeflyer to the berth
   void Lock(bool enable) {
     if (enable) {
-      // We are not guaranteed to have a dock yet, so we need to check to see
-      // that the model pointer is valid. If it is valid, then we to quietly
-      // ignore locking for the time being.
-      #if GAZEBO_MAJOR_VERSION > 7
-      physics::ModelPtr dock = GetWorld()->ModelByName("dock");
-      #else
-      physics::ModelPtr dock = GetWorld()->GetModel("dock");
-      #endif
-      if (dock == nullptr)
-        return;
-      // By this point we are guaranteed to have a dock
-      #if GAZEBO_MAJOR_VERSION > 7
-      joint_ = GetWorld()->Physics()->CreateJoint("fixed", GetModel());
-      #else
-      joint_ = GetWorld()->GetPhysicsEngine()->CreateJoint("fixed", GetModel());
-      #endif
-      joint_->Attach(GetModel()->GetLink(), dock->GetLink());
+      // Send a request to lock/attach
+      gz::transport::Node node;
+      std::string attach_topic = "/model/" + model_name_ + "/detachable_joint/attach";
+      auto attachPub = node.Advertise<gz::msgs::Empty>(attach_topic);
+      attachPub.Publish(gz::msgs::Empty());
+      std::this_thread::sleep_for(250ms);                                   
       // If we have an air carriage, stop colliding with anything
-      physics::LinkPtr link = GetModel()->GetLink("body");
-      if (link)
-        link->SetCollideMode("none");
-    } else if (joint_) {
-      joint_->Detach();
-      joint_->Fini();
+      // ANA MIGRATION HACK: CANNOT DO THIS YET IN LATEST GAZEBO
+      //Link link = GetModel()->GetLink("body");
+      //if (link)
+      //  link->SetCollideMode("none");
+    } else {
+ 
+      // Send a request to detach
+      gz::transport::Node node;
+      
+      std::string detach_topic = "/model/" + model_name_ + "/detachable_joint/attach";
+      auto pub = node.Advertise<gz::msgs::Empty>(detach_topic);
+      pub.Publish(gz::msgs::Empty());
+      std::this_thread::sleep_for(250ms);
+   
       // If we have an air carriage, start colliding with everything
-      physics::LinkPtr link = GetModel()->GetLink("body");
-      if (link)
-        link->SetCollideMode("all");
+      // ANA MIGRATION HACK: CANNOT DO THIS YET IN LATEST GAZEBO
+      //Link link = GetModel()->GetLink("body");
+      //if (link)
+      //  link->SetCollideMode("all");
     }
   }
 
@@ -475,13 +486,17 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
     bool near = false;
     bool far = true;
     for (nearest_ = berths_.begin(); nearest_ != berths_.end(); nearest_++) {
-      #if GAZEBO_MAJOR_VERSION > 7
-      double distance = GetModel()->WorldPose().Pos().Distance(
+      
+      gz::math::Pose3d world_pose;
+      mutex_data_.lock();
+      if(!model_pose_)
+        return; // Is this correct? ANA MIGRATION CHECK
+        
+      world_pose = model_pose_.value(); 
+      mutex_data_.unlock();
+      
+      double distance = world_pose.Pos().Distance(
         nearest_->second.Pos());
-      #else
-      double distance = GetModel()->GetWorldPose().Ign().Pos().Distance(
-        nearest_->second.Pos());
-      #endif
 
       // There should always only be one dock that we are close to
       if (distance < distance_near_) {
@@ -704,15 +719,17 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
 
  private:
   ff_util::FSM fsm_;
+  std::string model_name_;
   double rate_, distance_near_, distance_far_ , delay_;
   bool lock_;
   double battery_capacity_, battery_charge_, battery_discharge_rate_;
-  event::ConnectionPtr update_;
-  std::map<std::string, ignition::math::Pose3d> berths_;
-  std::map<std::string, ignition::math::Pose3d>::iterator nearest_;
-  ignition::math::Vector3d force_;
-  physics::JointPtr joint_;
+ 
+  std::map<std::string, gz::math::Pose3d> berths_;
+  std::map<std::string, gz::math::Pose3d>::iterator nearest_;
+  gz::math::Vector3d force_;
+    
   ff_util::FreeFlyerTimer timer_update_, timer_delay_, telem_timer_;
+  bool update_;
   rclcpp::Publisher<ff_hw_msgs::EpsDockStateStamped>::SharedPtr pub_dock_state_;
   rclcpp::Publisher<ff_hw_msgs::EpsHousekeeping>::SharedPtr pub_housekeeping_;
   rclcpp::Publisher<ff_hw_msgs::EpsPowerState>::SharedPtr pub_power_;
@@ -728,9 +745,17 @@ class GazeboModelPluginEps : public FreeFlyerModelPlugin {
 
   std::shared_ptr<tf2_ros::Buffer> buffer_;
   std::shared_ptr<tf2_ros::TransformListener> listener_;
+  std::optional<gz::math::Pose3d> model_pose_;
+  std::mutex mutex_data_;
 };
 
-// Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboModelPluginEps)
+}   // namespace astrobee_gazebo
 
-}   // namespace gazebo
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboModelPluginEps,
+  gz::sim::System,
+  astrobee_gazebo::GazeboModelPluginEps::ISystemConfigure,
+  astrobee_gazebo::GazeboModelPluginEps::ISystemPreUpdate,
+  astrobee_gazebo::GazeboModelPluginEps::ISystemPostUpdate 
+)

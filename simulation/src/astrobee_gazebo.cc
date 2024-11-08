@@ -23,11 +23,7 @@
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
 
-namespace gz {
-
-namespace sim {
-
-namespace system {
+namespace astrobee_gazebo {
 
 FF_DEFINE_LOGGER("gazebo");
 
@@ -41,7 +37,8 @@ FreeFlyerPlugin::FreeFlyerPlugin(std::string const& plugin_name,
 // Destructor
 FreeFlyerPlugin::~FreeFlyerPlugin() {
   // nh_ff_.shutdown();
-  thread_.join();
+  this->executor_->cancel();
+  this->thread_executor_spin_.join();
 }
 
 // Some plugins might want the world as the parent frame
@@ -52,7 +49,7 @@ void FreeFlyerPlugin::SetParentFrame(std::string const& parent) {
 // Load function
 void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::string const& plugin_name,
                                        sdf::ElementPtr sdf) {
-  gzwarn << "Starting plugin " << plugin_name_ << plugin_name << std::endl;
+  gzwarn << "Starting plugin " << plugin_name_ << ": "<<plugin_name << std::endl;
   robot_name_ = robot_name;
 
   // Ensure that ROS is setup
@@ -61,16 +58,20 @@ void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::strin
      rclcpp::init(0, nullptr);  
   }
   // Get nodehandle based on the model.
-  auto node_name = sdf->Get<std::string>("node_name");
-  nh_ = rclcpp::Node::make_shared(node_name);
+  nh_ = rclcpp::Node::make_shared(plugin_name, robot_name);
+  
+  // Start a thread to spin the node
+  this->executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+  this->executor_->add_node(nh_);
+  auto spin = [this]() { this->executor_->spin(); };
+  this->thread_executor_spin_ = std::thread(spin);
+  
   
   // Initialize ROS node for Gazebo
   FreeFlyerComponent::FreeFlyerComponentGazeboInit(nh_, plugin_name);
   FF_DEBUG_STREAM("Loading " << plugin_name_  << plugin_name << " on robot " << robot_name_);
 
   // Get nodehandle based on the model name.
-  // nh_.setCallbackQueue(&callback_queue_);
-  // thread_ = std::thread(&FreeFlyerPlugin::CallbackThread, this);
   buffer_.reset(new tf2_ros::Buffer(nh_->get_clock()));
   listener_.reset(new tf2_ros::TransformListener(*buffer_));
 
@@ -83,12 +84,6 @@ void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::strin
   timer_.createTimer(5.0,
       std::bind(&FreeFlyerPlugin::SetupExtrinsics, this), nh_);
 }
-
-// Service the callback thread
-// void FreeFlyerPlugin::CallbackThread() {
-//   while (nh_.ok())
-//     callback_queue_.callAvailable(ros::WallDuration(0.01));
-// }
 
 // Poll for extrinsics until found
 void FreeFlyerPlugin::SetupExtrinsics() {
@@ -126,23 +121,27 @@ FreeFlyerModelPlugin::FreeFlyerModelPlugin(std::string const& plugin_name,
     FreeFlyerPlugin::FreeFlyerPlugin(
       plugin_name, plugin_frame, send_heartbeats) {
 
-  link_ = gz::sim::kNullEntity;
+  link_ = nullptr;
   world_ = gz::sim::kNullEntity;
   model_ = nullptr;
+  update_extrinsics_ = false;
 }
 
 // Destructor
 FreeFlyerModelPlugin::~FreeFlyerModelPlugin() {}
 
 // Auto-called when Gazebo loads the plugin
-void FreeFlyerModelPlugin::Configure(const gz::sim::Entity &_entity,
+void FreeFlyerModelPlugin::Configure(const gz::sim::Entity &_model_entity,
                          const std::shared_ptr<const sdf::Element> &_sdf,
                          gz::sim::EntityComponentManager &_ecm,
                          gz::sim::EventManager &_eventMgr) {
+  
   sdf_   = _sdf->Clone();
-  //link_  = model->GetLink();
+  model_.reset( new gz::sim::Model(_model_entity) );
+  
+  auto link_entity = model_->CanonicalLink(_ecm);
+  link_.reset( new gz::sim::Link(link_entity) );
   //world_ = model->GetWorld();
-  //model_ = gz::sim::Model(_entity);
 
   // Read namespace
   std::string ns = model_->Name(_ecm);
@@ -151,23 +150,34 @@ void FreeFlyerModelPlugin::Configure(const gz::sim::Entity &_entity,
 
   // Read plugin custom name if specified
   std::string plugin_name = "";
-  if (_sdf->HasElement("plugin_name"))
-    plugin_name = _sdf->Get<std::string>("plugin_name");
+  if (sdf_->HasElement("plugin_name"))
+    plugin_name = sdf_->Get<std::string>("plugin_name");
   // Read plugin custom frame if specified
-  if (_sdf->HasElement("plugin_frame"))
-    plugin_frame_ = _sdf->Get<std::string>("plugin_frame");
+  if (sdf_->HasElement("plugin_frame"))
+    plugin_frame_ = sdf_->Get<std::string>("plugin_frame");
 
   // Initialize the FreeFlyerPlugin
   InitializePlugin(ns, plugin_name, sdf_);
 
   // Now load the rest of the plugin
-  LoadCallback(nh_, model_, sdf_);
+  LoadCallback(nh_, _ecm);
 }
 
+void FreeFlyerModelPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
+                gz::sim::EntityComponentManager &_ecm)
+{
 
+  if(update_extrinsics_)
+  {
+     model_->SetWorldPoseCmd(_ecm, extrinsics_pose_);
+     update_extrinsics_ = false;
+  }
+
+  PreUpdate_(_info, _ecm);
+}
 
 // Get the model link
-gz::sim::Entity FreeFlyerModelPlugin::GetLink() {
+std::shared_ptr<gz::sim::Link> FreeFlyerModelPlugin::GetLink() {
   return link_;
 }
 
@@ -187,7 +197,7 @@ bool FreeFlyerModelPlugin::ExtrinsicsCallback(
   // A tf nullptr means no transform is required
   if (tf) {
     // Handle the transform for all sensor types
-    gz::math::Pose3d pose(
+    extrinsics_pose_ = gz::math::Pose3d(
       tf->transform.translation.x,
       tf->transform.translation.y,
       tf->transform.translation.z,
@@ -196,7 +206,7 @@ bool FreeFlyerModelPlugin::ExtrinsicsCallback(
       tf->transform.rotation.y,
       tf->transform.rotation.z);
     // Set the model pose
-    //model_->SetWorldPoseCmd(_ecm, pose);
+    update_extrinsics_ = true;
   }
   // Success
   return true;
@@ -208,7 +218,9 @@ bool FreeFlyerModelPlugin::ExtrinsicsCallback(
 FreeFlyerSensorPlugin::FreeFlyerSensorPlugin(std::string const& plugin_name,
   std::string const& plugin_frame, bool send_heartbeats) :
     FreeFlyerPlugin::FreeFlyerPlugin(
-      plugin_name, plugin_frame, send_heartbeats) {}
+      plugin_name, plugin_frame, send_heartbeats) {
+  update_extrinsics_  = false;      
+}
 
 // Destructor
 FreeFlyerSensorPlugin::~FreeFlyerSensorPlugin() {}
@@ -218,8 +230,18 @@ void FreeFlyerSensorPlugin::Configure(const gz::sim::Entity &_entity,
                          const std::shared_ptr<const sdf::Element> &_sdf,
                          gz::sim::EntityComponentManager &_ecm,
                          gz::sim::EventManager &_eventMgr) {
-  //sensor_ = sensor;
+
   sdf_ = _sdf->Clone();
+  
+  if(!_ecm.Component<gz::sim::components::Sensor>(_entity))
+  { 
+   printf("Error, this plugin should be attached to a sensor!!!!! \n");
+   return;
+  }
+
+  sensor_entity_ = _entity; 
+  //sensor_ = new gz::sim::Sensor(sensor_entity);
+
   //world_ = gazebo::physics::get_world(sensor->WorldName());
   
   // Store pointer to model
@@ -242,7 +264,7 @@ void FreeFlyerSensorPlugin::Configure(const gz::sim::Entity &_entity,
   InitializePlugin(ns, plugin_name, sdf_);
 
   // Now load the rest of the plugin
-  LoadCallback(nh_, sensor_, sdf_);
+  LoadCallback(nh_, _ecm);
 }
 
 // Get the sensor world
@@ -254,6 +276,20 @@ gz::sim::Entity FreeFlyerSensorPlugin::GetWorld() {
 std::shared_ptr<gz::sim::Model> FreeFlyerSensorPlugin::GetModel() {
   return model_;
 }
+
+
+void FreeFlyerSensorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
+                                      gz::sim::EntityComponentManager &_ecm)
+{
+  if(update_extrinsics_)
+  {
+     //model_->SetWorldPoseCmd(_ecm, extrinsics_pose_);
+     update_extrinsics_ = false;
+  }
+
+  PreUpdate_(_info, _ecm);
+}
+
 
 // Manage the extrinsics
 bool FreeFlyerSensorPlugin::ExtrinsicsCallback(
@@ -299,7 +335,7 @@ bool FreeFlyerSensorPlugin::ExtrinsicsCallback(
     gz::math::Pose3d world_pose(tf_bs + tf_wb);
 
     // In the case of a camera update the camera world pose
-    if (sensor_->Type() == "camera") {
+    if (gz::sim::entityTypeId(sensor_entity_, ecm_) == gz::sim::components::Camera::typeId) {
       sensors::CameraSensorPtr sensor
         = std::dynamic_pointer_cast<sensors::CameraSensor>(sensor_);
       if (sensor && sensor->Camera())
@@ -309,9 +345,9 @@ bool FreeFlyerSensorPlugin::ExtrinsicsCallback(
     }
 
     // In the case of a wide angle camera update the camera world pose
-    if (sensor_->Type() == "wideanglecamera") {
-      std::shared_ptr<sensors::WideAngleCameraSensor> sensor =
-        std::dynamic_pointer_cast<sensors::WideAngleCameraSensor>(sensor_);
+    if (gz::sim::entityTypeId(sensor_entity_, ecm)  == gz::sim::components::WideAngleCamera::typeId) {
+      std::shared_ptr<sensors::WideAngleCameraSensor> sensor = gz::sim::components::WideAngleCamera(sensor_entity_);
+        //std::dynamic_pointer_cast<sensors::WideAngleCameraSensor>(sensor_);
       if (sensor && sensor->Camera())
         sensor->Camera()->SetWorldPose(world_pose);
       else
@@ -319,7 +355,7 @@ bool FreeFlyerSensorPlugin::ExtrinsicsCallback(
     }
 
     // In the case of a depth camera update the depth camera pose
-    if (sensor_->Type() == "depth") {
+    if (gz::sim::entityTypeId(sensor_entity_, ecm)  == gz::sim::components::DepthCamera::typeId) {
       sensors::DepthCameraSensorPtr sensor =
         std::dynamic_pointer_cast<sensors::DepthCameraSensor>(sensor_);
       if (sensor && sensor->DepthCamera())
@@ -406,8 +442,4 @@ void FillCameraInfo(rendering::CameraPtr camera, sensor_msgs::CameraInfo & msg) 
   }
 }*/
 
-} // namespace system
-
-} // namespace sim
- 
-}  // namespace gz
+} // namespace astrobee_gazebo

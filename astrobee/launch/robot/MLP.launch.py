@@ -23,18 +23,18 @@ def generate_launch_description():
 
     return LaunchDescription([
         # Update the environment variables relating to absolute paths
-        SetEnvironmentVariable(name="ASTROBEE_ROBOT",         condition=LaunchConfigurationNotEquals("mlp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_ROBOT",         condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("mlp"), "local")),
                                value=os.getenv("ASTROBEE_ROBOT", LaunchConfiguration("robot"))),
-        SetEnvironmentVariable(name="ASTROBEE_WORLD",         condition=LaunchConfigurationNotEquals("mlp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_WORLD",         condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("mlp"), "local")),
                                value=os.getenv("ASTROBEE_WORLD", LaunchConfiguration("world"))),
-        SetEnvironmentVariable(name="ASTROBEE_CONFIG_DIR",    condition=LaunchConfigurationNotEquals("mlp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_CONFIG_DIR",    condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("mlp"), "local")),
                                value=os.getenv("ASTROBEE_CONFIG_DIR", "/opt/astrobee/config")),
-        SetEnvironmentVariable(name="ASTROBEE_RESOURCE_DIR",  condition=LaunchConfigurationNotEquals("mlp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_RESOURCE_DIR",  condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("mlp"), "local")),
                                value=os.getenv("ASTROBEE_RESOURCE_DIR", "/res")),
-        SetEnvironmentVariable(name="ROSCONSOLE_CONFIG_FILE", condition=LaunchConfigurationNotEquals("mlp", "local"),
+        SetEnvironmentVariable(name="ROSCONSOLE_CONFIG_FILE", condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("mlp"), "local")),
                                value=os.getenv("ROSCONSOLE_CONFIG_FILE", "/res/logging.config")),
         
-        SetEnvironmentVariable(name="ROS_HOSTNAME", condition=LaunchConfigurationNotEquals("mlp", "local"),
+        SetEnvironmentVariable(name="ROS_HOSTNAME", condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("mlp"), "local")),
                                value=LaunchConfiguration("mlp")),
 
 
@@ -74,7 +74,8 @@ def generate_launch_description():
             #     remappings=[('/image', '/burgerimage')],
             #     parameters=[{'history': 'keep_last'}],
             #     extra_arguments=[{'use_intra_process_comms': True}])
-            ]
+            ],
+            output=LaunchConfiguration("output")
         ),
         ComposableNodeContainer(
         name='mlp_localization',
@@ -96,7 +97,8 @@ def generate_launch_description():
             #     remappings=[('/image', '/burgerimage')],
             #     parameters=[{'history': 'keep_last'}],
             #     extra_arguments=[{'use_intra_process_comms': True}])
-            ]
+            ],
+        output=LaunchConfiguration("output")    
         ),
         ComposableNodeContainer(
         name='mlp_graph_localization',
@@ -231,7 +233,8 @@ def generate_launch_description():
                 name='mapper',
                 parameters=[{'use_sim_time': True}],
                 extra_arguments=[{'use_intra_process_comms': False}]),
-            ]
+            ],
+        output=LaunchConfiguration("output")    
         ),
         ComposableNodeContainer(
         name='mlp_management',

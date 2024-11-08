@@ -61,9 +61,9 @@ def generate_launch_description():
                            condition=IfCondition(LaunchConfiguration("perch"))),
         # Default is using JPM Berth 1, for Berth 2 use: '9.817 -10.312 4.293 1 0 0 0'
         launch_arg("pose", default_value="9.816 -9.806 4.293 0 0 0",
-                           condition=LaunchConfigurationEquals("world", "iss")),
+                           condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "iss"))),
         launch_arg("pose", default_value="0 0 -0.7 0 0 0",
-                           condition=LaunchConfigurationEquals("world", "granite")),
+                           condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "granite"))),
         # Multi-robot simulation
         launch_arg("honey", default_value="false", description="Insert honey robot"),
         launch_arg("bumble", default_value="false", description="Insert bumble robot"),
@@ -125,7 +125,7 @@ def generate_launch_description():
         # Launch a recorder for this robot
         IncludeLaunchDescription(
             get_launch_file("launch/controller/bagrecord.launch.py"),
-            condition=LaunchConfigurationNotEquals("rec", ""),
+            condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("rec"), "")),
             launch_arguments={"bag": LaunchConfiguration("rec")}.items(),
         ),
         #   <!-- Allow the simulator to be optionally launched remotely-->
@@ -135,18 +135,18 @@ def generate_launch_description():
         # Update the environment variables relating to absolute paths
         SetEnvironmentVariable(name="ASTROBEE_CONFIG_DIR",
                                value=os.getenv("ASTROBEE_CONFIG_DIR", "/home/astrobee/native/config"),
-                               condition=LaunchConfigurationNotEquals("sim", "local")),
+                               condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("sim"), "local"))),
         SetEnvironmentVariable(name="ASTROBEE_RESOURCE_DIR",
                                value=os.getenv("ASTROBEE_RESOURCE_DIR", "/home/astrobee/native/resources"),
-                               condition=LaunchConfigurationNotEquals("sim", "local")),
+                               condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("sim"), "local"))),
         SetEnvironmentVariable(name="ROSCONSOLE_CONFIG_FILE",
                                value=os.getenv("ROSCONSOLE_CONFIG_FILE", "/home/astrobee/native/resources/logging.config"),
-                               condition=LaunchConfigurationNotEquals("sim", "local")),
+                               condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("sim"), "local"))),
 
         SetEnvironmentVariable(name="DISPLAY", value=":0",
-                               condition=LaunchConfigurationNotEquals("sim", "local")),
+                               condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("sim"), "local"))),
         SetEnvironmentVariable(name="ROS_IP", value=LaunchConfiguration("sim"),
-                               condition=LaunchConfigurationNotEquals("sim", "local")),
+                               condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("sim"), "local"))),
         # Start the simulator
         IncludeLaunchDescription(
             get_launch_file("launch/controller/sim_start.launch.py"),

@@ -40,13 +40,6 @@ class GazeboSensorPluginDockCam : public FreeFlyerSensorPlugin {
   GazeboSensorPluginDockCam() : FreeFlyerSensorPlugin("dock_cam", "dock_cam", true), rate_(0.0) {}
 
   ~GazeboSensorPluginDockCam() {
-    if (update_) {
-#if GAZEBO_MAJOR_VERSION > 7
-      update_.reset();
-#else
-      sensor_->DisconnectUpdated(update_);
-#endif
-    }
   }
 
  protected:
@@ -126,10 +119,17 @@ class GazeboSensorPluginDockCam : public FreeFlyerSensorPlugin {
   sensor_msgs::Image msg_;
   rclcpp::Publisher<sensor_msgs::Image>::SharedPtr pub_img_;
   std::shared_ptr<sensors::WideAngleCameraSensor> sensor_;
-  event::ConnectionPtr update_;
   double rate_;
 };
 
-GZ_REGISTER_SENSOR_PLUGIN(GazeboSensorPluginDockCam)
 
-}  // namespace gazebo
+}  // namespace astrobee_gazebo
+
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboSensorPluginDockCam,
+  gz::sim::System,
+  astrobee_gazebo::GazeboSensorPluginDockCam::ISystemConfigure,
+  astrobee_gazebo::GazeboSensorPluginDockCam::ISystemPreUpdate,
+  astrobee_gazebo::GazeboSensorPluginDockCam::ISystemPostUpdate
+)

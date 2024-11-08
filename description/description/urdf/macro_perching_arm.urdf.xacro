@@ -58,7 +58,7 @@
       </collision>
     </link>
     <joint
-      name="${bay}"
+      name="${bay}_fixed_joint"
       type="fixed">
       <origin
         xyz="${xyz}"
@@ -381,26 +381,30 @@
         velocity="0.12" />
     </joint>
     <xacro:if value="${bay == 'top_aft'}">
-      <gazebo>
-        <plugin name="top_aft_perching_arm_ros" filename="libgazebo_model_plugin_perching_arm.so">
+      <!--gazebo>
+        <plugin 
+          name="astrobee_gazebo::GazeboModelPluginPerchingArm" 
+          filename="gazebo_model_plugin_perching_arm">
           <rate>10.0</rate>
           <bay>top_aft</bay>
           <proximal>1.57079632679</proximal>
           <distal>0</distal>
           <gripper>0</gripper>
         </plugin>
-      </gazebo>
+      </gazebo>-->
     </xacro:if>
     <xacro:if value="${bay == 'bot_aft'}">
-      <gazebo>
-        <plugin name="bot_aft_perching_arm_ros" filename="libgazebo_model_plugin_perching_arm.so">
+      <!--<gazebo>
+        <plugin 
+          name="astrobee_gazebo::GazeboModelPluginPerchingArm" 
+          filename="gazebo_model_plugin_perching_arm">
           <rate>10.0</rate>
           <bay>bot_aft</bay>
           <proximal>1.57079632679</proximal>
           <distal>0</distal>
           <gripper>0</gripper>
         </plugin>
-      </gazebo>
+      </gazebo>-->
     </xacro:if>
   </xacro:macro>
 </robot>

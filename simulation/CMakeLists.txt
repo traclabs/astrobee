@@ -98,28 +98,26 @@ target_link_libraries(astrobee_gazebo gz-sensors::gz-sensors gz-rendering::gz-re
 ament_target_dependencies(astrobee_gazebo rclcpp ff_common ff_util ros_gz)
 
 # Create a model plugin for the EPS system
-#add_library(gazebo_model_plugin_eps SHARED
-#  src/gazebo_model_plugin_eps/gazebo_model_plugin_eps.cc
-#)
-#target_link_libraries(gazebo_model_plugin_eps astrobee_gazebo)
-#ament_target_dependencies(gazebo_model_plugin_eps rclcpp ff_hw_msgs tf2 tf2_ros ros_gz )
-#ament_export_libraries(gazebo_model_plugin_eps)
+add_library(gazebo_model_plugin_eps SHARED
+  src/gazebo_model_plugin_eps/gazebo_model_plugin_eps.cc
+)
+target_link_libraries(gazebo_model_plugin_eps astrobee_gazebo)
+ament_target_dependencies(gazebo_model_plugin_eps ff_hw_msgs tf2 tf2_ros )
 
 # Create a model plugin for aerodynamic drag
-#add_library(gazebo_model_plugin_drag SHARED
-#  src/gazebo_model_plugin_drag/gazebo_model_plugin_drag.cc
-#)
-#target_link_libraries(gazebo_model_plugin_drag astrobee_gazebo)
-#ament_target_dependencies(gazebo_model_plugin_drag rclcpp ros_gz )
-#ament_export_libraries(gazebo_model_plugin_drag)
+add_library(gazebo_model_plugin_drag SHARED
+  src/gazebo_model_plugin_drag/gazebo_model_plugin_drag.cc
+)
+target_link_libraries(gazebo_model_plugin_drag astrobee_gazebo)
 
 # Create a model plugin for the ground truth
-#add_library(gazebo_model_plugin_truth SHARED
-#  src/gazebo_model_plugin_truth/gazebo_model_plugin_truth.cc
-#)
-#target_link_libraries(gazebo_model_plugin_truth astrobee_gazebo)
+add_library(gazebo_model_plugin_truth SHARED
+  src/gazebo_model_plugin_truth/gazebo_model_plugin_truth.cc
+)
+target_link_libraries(gazebo_model_plugin_truth astrobee_gazebo)
 #ament_target_dependencies(gazebo_model_plugin_truth rclcpp tf2 tf2_ros ros_gz )
 #ament_export_libraries(gazebo_model_plugin_truth)
+
 
 # Create a model plugin for the propulsion system
 #add_library(gazebo_model_plugin_pmc SHARED
@@ -134,8 +132,7 @@ ament_target_dependencies(astrobee_gazebo rclcpp ff_common ff_util ros_gz)
 #  src/gazebo_model_plugin_perching_arm/gazebo_model_plugin_perching_arm.cc
 #)
 #target_link_libraries(gazebo_model_plugin_perching_arm astrobee_gazebo)
-#ament_target_dependencies(gazebo_model_plugin_perching_arm rclcpp ff_msgs ff_hw_msgs ros_gz )
-#ament_export_libraries(gazebo_model_plugin_perching_arm)
+#ament_target_dependencies(gazebo_model_plugin_perching_arm rclcpp ff_msgs ff_hw_msgs )
 
 # Create a model plugin for the front flashlight
 #add_library(gazebo_model_plugin_flashlight SHARED
@@ -154,12 +151,10 @@ ament_target_dependencies(astrobee_gazebo rclcpp ff_common ff_util ros_gz)
 #ament_export_libraries(gazebo_model_plugin_laser)
 
 # Create a model plugin to publish heartbeats
-#add_library(gazebo_model_plugin_heartbeat SHARED
-#  src/gazebo_model_plugin_heartbeat/gazebo_model_plugin_heartbeat.cc
-#)
-#target_link_libraries(gazebo_model_plugin_heartbeat astrobee_gazebo)
-#ament_target_dependencies(gazebo_model_plugin_heartbeat rclcpp ros_gz )
-#ament_export_libraries(gazebo_model_plugin_heartbeat)
+add_library(gazebo_model_plugin_heartbeat SHARED
+  src/gazebo_model_plugin_heartbeat/gazebo_model_plugin_heartbeat.cc
+)
+target_link_libraries(gazebo_model_plugin_heartbeat astrobee_gazebo)
 
 # Create a model plugin for the signal lights
 #add_library(gazebo_model_plugin_signal_lights SHARED
@@ -176,6 +171,9 @@ ament_target_dependencies(astrobee_gazebo rclcpp ff_common ff_util ros_gz)
 #target_link_libraries(gazebo_sensor_plugin_imu astrobee_gazebo)
 #ament_target_dependencies(gazebo_sensor_plugin_imu rclcpp ros_gz )
 #ament_export_libraries(gazebo_sensor_plugin_imu)
+#target_include_directories( 
+#  gazebo_sensor_plugin_imu PRIVATE include 
+#)
 
 # Create a sensor plugin for the handrail detection algorithm
 #add_library(gazebo_sensor_plugin_handrail_detect SHARED
@@ -239,11 +237,6 @@ add_library(gazebo_world_plugin_speed SHARED
 )
 target_link_libraries(gazebo_world_plugin_speed gz-sim::gz-sim)
 
-#target_include_directories( 
-#  gazebo_world_plugin_speed PRIVATE include 
-#)
-
-
 # Create a system plugin for the client gui
 #add_library(gazebo_system_plugin_client SHARED
 #  src/gazebo_system_plugin_client/gazebo_system_plugin_client.cc
@@ -268,14 +261,14 @@ ament_export_include_directories(include)
 ## Install
 install(TARGETS
   astrobee_gazebo
-#  gazebo_model_plugin_eps
-#  gazebo_model_plugin_drag
-#  gazebo_model_plugin_truth
+  gazebo_model_plugin_eps
+  gazebo_model_plugin_drag
+  gazebo_model_plugin_truth
 #  gazebo_model_plugin_pmc
 #  gazebo_model_plugin_perching_arm
 #  gazebo_model_plugin_flashlight
 #  gazebo_model_plugin_laser
-#  gazebo_model_plugin_heartbeat
+  gazebo_model_plugin_heartbeat
 #  gazebo_model_plugin_signal_lights
 #  gazebo_sensor_plugin_imu
 #  gazebo_sensor_plugin_depth_cam

@@ -40,7 +40,7 @@ def generate_launch_description():
             name="astrobee_state_publisher",
             parameters=[{'robot_description': ParameterValue(granite_robot_description) }],
             arguments=[granite_urdf],
-            condition=LaunchConfigurationEquals("world", "granite")
+            condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "granite"))
         ),
         # Granite robot description
         Node(
@@ -50,7 +50,7 @@ def generate_launch_description():
             name="astrobee_state_publisher",
             parameters=[{'robot_description': ParameterValue(iss_robot_description) }],
             arguments=[iss_urdf],
-            condition=LaunchConfigurationEquals("world", "iss")
+            condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "iss"))
         ),
         # Granite robot description
         Node(

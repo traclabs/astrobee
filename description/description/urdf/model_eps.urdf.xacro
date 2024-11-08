@@ -19,7 +19,10 @@
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <gazebo>
-    <plugin name="eps_ros" filename="libgazebo_model_plugin_eps.so">
+    <plugin 
+      name="astrobee_gazebo::GazeboModelPluginEps" 
+      filename="gazebo_model_plugin_eps">
+      <plugin_name>eps_plugin</plugin_name>
       <rate>10.0</rate>                    <!-- Rate at which dock state checked  -->
       <distance_near>0.04</distance_near>  <!-- Threshold distance for magnetism  -->
       <distance_far>0.05</distance_far>    <!-- Threshold distance for magnetism  -->
@@ -29,5 +32,14 @@
       <battery_bottom_left>false</battery_bottom_left>
       <battery_bottom_right>false</battery_bottom_right>
     </plugin>
+    
+    <plugin 
+        filename="gz-sim-detachable-joint-system"
+        name="gz::sim::systems::DetachableJoint">
+        <parent_link>body</parent_link>
+        <child_model>dock</child_model>
+        <child_link>body</child_link>
+    </plugin>
+    
   </gazebo>
 </robot>

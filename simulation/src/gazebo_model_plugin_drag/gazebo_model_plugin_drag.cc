@@ -18,8 +18,10 @@
 
 // Gazebo includes
 #include <astrobee_gazebo/astrobee_gazebo.h>
+#include <gz/sim/Util.hh>
+#include <gz/plugin/Register.hh>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 // This class is a plugin that calls the GNC autocode to predict
 // the forced to be applied to the rigid body
@@ -29,73 +31,69 @@ class GazeboModelPluginDrag : public FreeFlyerModelPlugin {
     coefficient_(1.05), area_(0.092903), density_(1.225) {}
 
   ~GazeboModelPluginDrag() {
-    #if GAZEBO_MAJOR_VERSION > 7
-    update_.reset();
-    #else
-    event::Events::DisconnectWorldUpdateBegin(update_);
-    #endif
   }
 
  protected:
   // Called when the plugin is loaded into the simulator
-  void LoadCallback(NodeHandle &nh, physics::ModelPtr model, sdf::ElementPtr sdf) {
+  void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) {
     // Drag coefficient
-    if (sdf->HasElement("coefficient"))
-      coefficient_ = sdf->Get<double>("coefficient");
+    if (sdf_->HasElement("coefficient"))
+      coefficient_ = sdf_->Get<double>("coefficient");
     // Cross-sectional area
-    if (sdf->HasElement("area"))
-      area_ = sdf->Get<double>("area");
+    if (sdf_->HasElement("area"))
+      area_ = sdf_->Get<double>("area");
     // Air density
-    if (sdf->HasElement("density"))
-      density_ = sdf->Get<double>("density");
-    // Called before each iteration of simulated world update
-    #if GAZEBO_MAJOR_VERSION > 7
-    next_tick_ = GetWorld()->SimTime();
-    #else
-    next_tick_ = GetWorld()->GetSimTime();
-    #endif
-    update_ = event::Events::ConnectWorldUpdateBegin(
-      std::bind(&GazeboModelPluginDrag::WorldUpdateCallback, this));
+    if (sdf_->HasElement("density"))
+      density_ = sdf_->Get<double>("density");
   }
 
   // Called on simulation reset
   void Reset() {
-    #if GAZEBO_MAJOR_VERSION > 7
-    next_tick_ = GetWorld()->SimTime();
-    #else
-    next_tick_ = GetWorld()->GetSimTime();
-    #endif
   }
 
-  // Called on each sensor update event
-  void WorldUpdateCallback() {
+  // Called on each sensor update event  
+  void PreUpdate(const gz::sim::UpdateInfo &_info,
+                 gz::sim::EntityComponentManager &_ecm) 
+  {
     // Calculate drag
-    #if GAZEBO_MAJOR_VERSION > 7
-    drag_ = GetLink()->RelativeLinearVel();
+    //drag_ = GetLink()->RelativeLinearVel(); // ANA HACK - Check if this works
+    std::optional<gz::math::Vector3d> linvel = GetLink()->WorldLinearVelocity(_ecm, gz::math::Vector3d(0, 0, 0));
+    if(!linvel)
+      return;
+    
+    drag_ = linvel.value();
+    
     vel_ = drag_.Length();
-    #else
-    drag_ = GetLink()->GetRelativeLinearVel();
-    vel_ = drag_.GetLength();
-    #endif
     drag_ = -0.5 * coefficient_ * area_ * density_
            * vel_ * vel_ * drag_.Normalize();
 
     // Apply the force and torque to the model
-    GetLink()->AddRelativeForce(drag_);
+    GetLink()->AddWorldForce(_ecm, drag_, gz::math::Vector3d(0,0,0) ); //AddRelativeForce(drag_); // ANA HACK - Check if this work
+
   }
+
+  void PostUpdate(const gz::sim::UpdateInfo &_info,
+                  const gz::sim::EntityComponentManager &_ecm) 
+  {
+  }                
+
 
  private:
   double coefficient_, area_, density_, vel_;              // Drag parameters
-  common::Time next_tick_;
-#if GAZEBO_MAJOR_VERSION > 7
-  ignition::math::Vector3d drag_;
-#else
-  math::Vector3 drag_;
-#endif
-  event::ConnectionPtr update_;
+  gz::math::Vector3d drag_;
 };
 
-// Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboModelPluginDrag)
-
 }   // namespace gazebo
+
+
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboModelPluginDrag,
+  gz::sim::System,
+  astrobee_gazebo::GazeboModelPluginDrag::ISystemConfigure,
+  astrobee_gazebo::GazeboModelPluginDrag::ISystemPreUpdate,
+  astrobee_gazebo::GazeboModelPluginDrag::ISystemPostUpdate 
+)
+
+
+

@@ -29,8 +29,6 @@ from launch.actions import (
 )
 from launch.conditions import (
     IfCondition,
-    LaunchConfigurationEquals,
-    LaunchConfigurationNotEquals,
     UnlessCondition,
 )
 from launch.launch_description_sources import PythonLaunchDescriptionSource
@@ -41,6 +39,8 @@ from launch.substitutions import (
     LaunchConfiguration,
     PythonExpression,
     TextSubstitution,
+    EqualsSubstitution,
+    NotEqualsSubstitution
 )
 from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode, ParameterValue

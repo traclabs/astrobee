@@ -25,9 +25,9 @@ def generate_launch_description():
         DeclareLaunchArgument("robot", default_value=os.getenv("ASTROBEE_ROBOT", "sim")),
         DeclareLaunchArgument("world", default_value=os.getenv("ASTROBEE_WORLD", "iss")),
         DeclareLaunchArgument("pose",  default_value="9.92 -9.54 4.50 0 0 0",
-                                       condition=LaunchConfigurationEquals("world", "iss")),
+                                       condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "iss"))),
         DeclareLaunchArgument("pose",  default_value="9.92 -9.54 4.50 0 0 0",
-                                       condition=LaunchConfigurationEquals("world", "granite")),
+                                       condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "granite"))),
 
         # Make sure all environment variables are set for controller
         # Override the robot and world environment variables all the time. The

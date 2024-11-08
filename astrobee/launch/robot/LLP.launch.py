@@ -22,19 +22,19 @@ from utilities.utilities import *
 def generate_launch_description():
 
     return LaunchDescription([
-        SetEnvironmentVariable(name="ASTROBEE_ROBOT",         condition=LaunchConfigurationNotEquals("llp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_ROBOT",         condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "local")),
                                value=os.getenv("ASTROBEE_ROBOT", LaunchConfiguration("robot"))),
-        SetEnvironmentVariable(name="ASTROBEE_WORLD",         condition=LaunchConfigurationNotEquals("llp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_WORLD",         condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "local")),
                                value=os.getenv("ASTROBEE_WORLD", LaunchConfiguration("world"))),
-        SetEnvironmentVariable(name="ASTROBEE_CONFIG_DIR",    condition=LaunchConfigurationNotEquals("llp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_CONFIG_DIR",    condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "local")),
                                value=os.getenv("ASTROBEE_CONFIG_DIR", "/opt/astrobee/config")),
-        SetEnvironmentVariable(name="ASTROBEE_RESOURCE_DIR",  condition=LaunchConfigurationNotEquals("llp", "local"),
+        SetEnvironmentVariable(name="ASTROBEE_RESOURCE_DIR",  condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "local")),
                                value=os.getenv("ASTROBEE_RESOURCE_DIR", "/res")),
-        SetEnvironmentVariable(name="ROSCONSOLE_CONFIG_FILE", condition=LaunchConfigurationNotEquals("llp", "local"),
+        SetEnvironmentVariable(name="ROSCONSOLE_CONFIG_FILE", condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "local")),
                                value=os.getenv("ROSCONSOLE_CONFIG_FILE", "/res/logging.config")),
 
 
-        SetEnvironmentVariable(name="ROS_HOSTNAME", condition=LaunchConfigurationNotEquals("llp", "local"),
+        SetEnvironmentVariable(name="ROS_HOSTNAME", condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "local")),
                                value=LaunchConfiguration("llp")),
 
 

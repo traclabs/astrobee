@@ -66,6 +66,18 @@ def generate_launch_description():
                ])
             ],
             condition=IfCondition(LaunchConfiguration('gui'))
-        ),        
+        ),
+      
+        # Publish the Clock -- Bridge ROS topics and Gazebo messages for establishing communication
+        Node(
+          name="bridge_clock",
+          package='ros_gz_bridge',
+          executable='parameter_bridge',
+          parameters=[{
+              'config_file': os.path.join(pkg_astrobee_gazebo, 'config', 'ros_gz_astrobee_bridge.yaml'),
+              'qos_overrides./tf_static.publisher.durability': 'transient_local',
+          }],
+          output='screen'
+        )                 
 
     ])

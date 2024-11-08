@@ -43,16 +43,22 @@ def launch_setup(context, *args, **kwargs):
     entity = ns
     
   spawn_entity = Node(
-            package='gazebo_ros',
-            executable='spawn_entity.py',
+            package='ros_gz_sim',
+            executable='create',
             name='spawn_astrobee',
             output='screen',
-            arguments=["-topic", topic, "-entity", entity, "-timeout", "30.0",
-                        "-x", LaunchConfiguration("x"), "-y", LaunchConfiguration("y"), "-z", LaunchConfiguration("z"),
-                        "-R", LaunchConfiguration("R"), "-P", LaunchConfiguration("P"), "-Y", LaunchConfiguration("Y"),
-                        "-robot_namespace", LaunchConfiguration("ns")]
-        )
-  
+            arguments=[
+              "-topic", topic, 
+              "-name", entity, 
+              "-x", LaunchConfiguration("x"), 
+              "-y", LaunchConfiguration("y"), 
+              "-z", LaunchConfiguration("z"),
+              "-R", LaunchConfiguration("R"), 
+              "-P", LaunchConfiguration("P"), 
+              "-Y", LaunchConfiguration("Y")] 
+        )  
+  #"-robot_namespace", LaunchConfiguration("ns")
+
   return [spawn_entity]
 
 def generate_launch_description():
