@@ -40,7 +40,7 @@ typedef srv::SetBool SetBool;
 // STL includes
 #include <string>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 FF_DEFINE_LOGGER("gazebo_sensor_plugin_sparse_map");
 

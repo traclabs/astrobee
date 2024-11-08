@@ -21,6 +21,11 @@
 
 // Sensor plugin interface
 #include <astrobee_gazebo/astrobee_gazebo.h>
+#include <gz/sim/Util.hh>
+#include <gz/sim/components/Camera.hh>
+#include <gz/sim/components/WideAngleCamera.hh>
+#include <gz/sim/components/ParentEntity.hh>
+#include <gz/plugin/Register.hh>
 
 // Messages
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -39,34 +44,33 @@ typedef msg::CameraInfo CameraInfo;
 // STL includes
 #include <string>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 FF_DEFINE_LOGGER("gazebo_sensor_plugin_nav_cam");
 class GazeboSensorPluginNavCam : public FreeFlyerSensorPlugin {
  public:
-  GazeboSensorPluginNavCam() : FreeFlyerSensorPlugin("nav_cam", "nav_cam", true), rate_(0.0) {}
-
+  GazeboSensorPluginNavCam() : FreeFlyerSensorPlugin("nav_cam", "nav_cam", true), rate_(0.0), current_active_rate_(0.0) {}
+	
   ~GazeboSensorPluginNavCam() {
-    if (update_) {
-#if GAZEBO_MAJOR_VERSION > 7
-      update_.reset();
-#else
-      sensor_->DisconnectUpdated(update_);
-#endif
-    }
   }
 
  protected:
   // Called when plugin is loaded into gazebo
-  void LoadCallback(NodeHandle& nh, sensors::SensorPtr sensor, sdf::ElementPtr sdf) {
-    // Get a link to the parent sensor
-    sensor_ = std::dynamic_pointer_cast<sensors::WideAngleCameraSensor>(sensor);
-    if (!sensor_) {
-      gzerr << "GazeboSensorPluginNavCam requires a parent camera sensor.\n";
-      return;
-    }
+  void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) { 
 
-    // Check that we have a mono camera
-    if (sensor_->Camera()->ImageFormat() != "L8") FF_FATAL_STREAM("Camera format must be L8");
+    auto sensor_comp = _ecm.Component<gz::sim::components::WideAngleCamera>(GetSensor());
+    if(!sensor_comp)
+    {
+        gzerr << "Plugin needs to be inside a WideAngleCamera sensor! \n";
+        return;    
+    }
+    std::optional<std::string> topic = sensor_comp->Data().Topic();
+    if(!topic)
+    {
+        gzerr << "Need to define topic for WideAngleCamera!";
+        return;
+    }
+    
+    sensor_topic_ = topic.value();
 
     // Set image constants
     image_msg_.is_bigendian = false;
@@ -104,31 +108,63 @@ class GazeboSensorPluginNavCam : public FreeFlyerSensorPlugin {
 
   // Only send measurements when extrinsics are available
   void OnExtrinsicsReceived(NodeHandle& nh) {
-    // Connect to the camera update event.
-    update_ = sensor_->ConnectUpdated(std::bind(&GazeboSensorPluginNavCam::ImageCallback, this));
+    // Connect to the camera topic.
+    gz_node_.Subscribe(sensor_topic_, &GazeboSensorPluginNavCam::ImageCallback, this);
   }
 
   // Turn camera on or off based on topic subscription
   void ToggleCallback() {
-    if (pub_img_->get_subscription_count() > 0 && rate_ > 0) {
-      sensor_->SetUpdateRate(rate_);
-      sensor_->SetActive(true);
+    
+    double new_rate;
+    if (pub_img_->get_subscription_count() > 0 && rate_ > 0) {      
+      new_rate = rate_;
+      gz_node_.Subscribe(sensor_topic_, &GazeboSensorPluginNavCam::ImageCallback, this);
     } else {
-      sensor_->SetUpdateRate(0.0001);
-      sensor_->SetActive(false);
+      new_rate = 0.0001;  
+      gz_node_.Unsubscribe(sensor_topic_);
     }
+    
+    // Update rate if needed
+    if( current_active_rate_ != new_rate )
+    {
+        setRate(new_rate);
+        current_active_rate_ = new_rate;
+    }
+
+  }
+
+  void setRate(double _new_rate)
+  {
+     gz::msgs::Double req;
+     req.set_data(_new_rate);
+     gz_node_.Request(sensor_topic_ + "/set_rate", req);
   }
 
   // Called when a new image must be rendered
-  void ImageCallback() {
+  void ImageCallback(const gz::msgs::Image &_msg) {
+
+    // Check that camera is mono
+    // ANA MIGRATION HACK -- WHILE THEY FIX THE WIDE ANGLE CAMERA TO BE ABLE TO RUN WITH TYPE L8
+    //if ( _msg.pixel_format_type() != gz::msgs::L_INT8 ) 
+    //	FF_FATAL_STREAM("Camera format must be L_INT8");
+    int num_channels = 1;
+    int octets_per_channel = 1;
+    if( _msg.pixel_format_type() == gz::msgs::L_INT8 )
+    {
+       image_msg_.encoding = sensor_msgs::image_encodings::MONO8;
+       num_channels = 1;
+       octets_per_channel = 1;
+    }
+    else if( _msg.pixel_format_type() == gz::msgs::RGB_INT8)
+    {
+       image_msg_.encoding = sensor_msgs::image_encodings::RGB8;
+       num_channels = 3;
+       octets_per_channel = 1;
+    }
     // Quickly record the current time and current pose before doing other computations
     rclcpp::Time curr_time = GetTimeNow();
-// Publish the nav cam pose
-#if GAZEBO_MAJOR_VERSION > 7
-    Eigen::Affine3d sensor_to_world = SensorToWorld(GetModel()->WorldPose(), sensor_->Pose());
-#else
-    Eigen::Affine3d sensor_to_world = SensorToWorld(GetModel()->GetWorldPose(), sensor_->Pose());
-#endif
+    // Publish the nav cam pose
+    /*Eigen::Affine3d sensor_to_world = SensorToWorld(GetModel()->WorldPose(), sensor_->Pose());
     pose_msg_.header.frame_id = GetFrame();
     pose_msg_.header.stamp = curr_time;  // it is very important to get the time right
     pose_msg_.pose.position.x = sensor_to_world.translation().x();
@@ -139,23 +175,22 @@ class GazeboSensorPluginNavCam : public FreeFlyerSensorPlugin {
     pose_msg_.pose.orientation.x = q.x();
     pose_msg_.pose.orientation.y = q.y();
     pose_msg_.pose.orientation.z = q.z();
-    pub_pose_->publish(pose_msg_);
+    pub_pose_->publish(pose_msg_);*/
 
     // Publish the nav cam intrinsics
     info_msg_.header.frame_id = GetFrame();
     info_msg_.header.stamp = curr_time;            // it is very important to get the time right
-    FillCameraInfo(sensor_->Camera(), info_msg_);  // fill in from the camera pointer
-    pub_info_->publish(info_msg_);
+    //FillCameraInfo(sensor_->Camera(), info_msg_);  // fill in from the camera pointer
+    //pub_info_->publish(info_msg_);
 
-    // Publish the nav cam image
-    image_msg_.header.stamp.sec = sensor_->LastMeasurementTime().sec;
-    image_msg_.header.stamp.nanosec = sensor_->LastMeasurementTime().nsec;
-    image_msg_.height = sensor_->ImageHeight();
-    image_msg_.width = sensor_->ImageWidth();
-    image_msg_.step = image_msg_.width;
+    // Publish the nav cam image  
+    image_msg_.header.stamp.sec = _msg.header().stamp().sec();
+    image_msg_.header.stamp.nanosec = _msg.header().stamp().nsec();
+    image_msg_.height = _msg.height();
+    image_msg_.width = _msg.width();
+    image_msg_.step = _msg.step(); //image_msg_.width; // width * channel * octate_per_channel
     image_msg_.data.resize(image_msg_.step * image_msg_.height);
-    const uint8_t* data_start = reinterpret_cast<const uint8_t*>(sensor_->ImageData());
-    std::copy(data_start, data_start + image_msg_.step * image_msg_.height, image_msg_.data.begin());
+    memcpy(image_msg_.data.data(), _msg.data().c_str(), _msg.data().size());
     pub_img_->publish(image_msg_);
   }
 
@@ -167,11 +202,18 @@ class GazeboSensorPluginNavCam : public FreeFlyerSensorPlugin {
   rclcpp::Publisher<sensor_msgs::Image>::SharedPtr pub_img_;
   rclcpp::Publisher<geometry_msgs::PoseStamped>::SharedPtr pub_pose_;
   rclcpp::Publisher<sensor_msgs::CameraInfo>::SharedPtr pub_info_;
-  std::shared_ptr<sensors::WideAngleCameraSensor> sensor_;
-  event::ConnectionPtr update_;
   double rate_;
+  double current_active_rate_;
 };
 
-GZ_REGISTER_SENSOR_PLUGIN(GazeboSensorPluginNavCam)
+}  // namespace astrobee_gazebo
 
-}  // namespace gazebo
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboSensorPluginNavCam,
+  gz::sim::System,
+  astrobee_gazebo::GazeboSensorPluginNavCam::ISystemConfigure,
+  astrobee_gazebo::GazeboSensorPluginNavCam::ISystemPreUpdate,
+  astrobee_gazebo::GazeboSensorPluginNavCam::ISystemPostUpdate 
+)
+

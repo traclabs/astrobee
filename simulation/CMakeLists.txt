@@ -192,12 +192,11 @@ target_link_libraries(gazebo_model_plugin_heartbeat astrobee_gazebo)
 #ament_export_libraries(gazebo_sensor_plugin_depth_cam)
 
 # Create a sensor plugin for the nav cam
-#add_library(gazebo_sensor_plugin_nav_cam SHARED
-#  src/gazebo_sensor_plugin_nav_cam/gazebo_sensor_plugin_nav_cam.cc
-#)
-#target_link_libraries(gazebo_sensor_plugin_nav_cam astrobee_gazebo)
-#ament_target_dependencies(gazebo_sensor_plugin_nav_cam rclcpp tf2 tf2_ros sensor_msgs geometry_msgs ros_gz )
-#ament_export_libraries(gazebo_sensor_plugin_nav_cam)
+add_library(gazebo_sensor_plugin_nav_cam SHARED
+  src/gazebo_sensor_plugin_nav_cam/gazebo_sensor_plugin_nav_cam.cc
+)
+target_link_libraries(gazebo_sensor_plugin_nav_cam astrobee_gazebo)
+ament_target_dependencies(gazebo_sensor_plugin_nav_cam rclcpp tf2 tf2_ros sensor_msgs geometry_msgs ros_gz )
 
 # Create a sensor plugin for the dock cam
 #add_library(gazebo_sensor_plugin_dock_cam SHARED
@@ -272,7 +271,7 @@ install(TARGETS
 #  gazebo_model_plugin_signal_lights
 #  gazebo_sensor_plugin_imu
 #  gazebo_sensor_plugin_depth_cam
-#  gazebo_sensor_plugin_nav_cam
+  gazebo_sensor_plugin_nav_cam
 #  gazebo_sensor_plugin_dock_cam
 #  gazebo_sensor_plugin_ar_tags
 #  gazebo_sensor_plugin_optical_flow

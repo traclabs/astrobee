@@ -52,6 +52,7 @@ typedef msg::CameraInfo CameraInfo;
 #include <gz/sim/Link.hh>
 #include <gz/sim/Sensor.hh>
 #include <gz/sim/components/Sensor.hh>
+#include <gz/transport/Node.hh>
 //#include <gz/rendering/rendering.hh>
 
 // Eigen includes
@@ -208,6 +209,9 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
   // Get the sensor model
   std::shared_ptr<gz::sim::Model> GetModel();
 
+  // Get sensor entity
+  gz::sim::Entity GetSensor();
+
   // Get the type of the sensor
   std::string GetRotationType();
 
@@ -217,12 +221,17 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
   // Manage the extrinsics based on the sensor type
   virtual bool ExtrinsicsCallback(geometry_msgs::TransformStamped const* tf);
 
+ protected:
+  std::string sensor_topic_;
+  gz::transport::Node gz_node_; 
+
  private:
   gz::sim::Entity sensor_entity_;
-  //std::shared_ptr<gz::sim::Sensor> sensor_;
+  
   gz::sim::Entity world_;
   std::shared_ptr<gz::sim::Model> model_;
   sdf::ElementPtr sdf_;
+  
   bool update_extrinsics_;
   gz::math::Pose3d extrinsics_pose_;
 };

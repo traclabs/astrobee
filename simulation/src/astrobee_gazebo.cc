@@ -18,7 +18,7 @@
 
 #include <gz/sensors/WideAngleCameraSensor.hh>
 #include <astrobee_gazebo/astrobee_gazebo.h>
-
+#include <gz/sim/Util.hh>
 // Transformation helper code
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
@@ -232,15 +232,7 @@ void FreeFlyerSensorPlugin::Configure(const gz::sim::Entity &_entity,
                          gz::sim::EventManager &_eventMgr) {
 
   sdf_ = _sdf->Clone();
-  
-  if(!_ecm.Component<gz::sim::components::Sensor>(_entity))
-  { 
-   printf("Error, this plugin should be attached to a sensor!!!!! \n");
-   return;
-  }
-
   sensor_entity_ = _entity; 
-  //sensor_ = new gz::sim::Sensor(sensor_entity);
 
   //world_ = gazebo::physics::get_world(sensor->WorldName());
   
@@ -277,6 +269,10 @@ std::shared_ptr<gz::sim::Model> FreeFlyerSensorPlugin::GetModel() {
   return model_;
 }
 
+// Get sensor entity
+gz::sim::Entity FreeFlyerSensorPlugin::GetSensor() {
+  return sensor_entity_;
+}
 
 void FreeFlyerSensorPlugin::PreUpdate(const gz::sim::UpdateInfo &_info,
                                       gz::sim::EntityComponentManager &_ecm)

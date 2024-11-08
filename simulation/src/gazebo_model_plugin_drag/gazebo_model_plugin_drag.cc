@@ -94,6 +94,3 @@ GZ_ADD_PLUGIN(
   astrobee_gazebo::GazeboModelPluginDrag::ISystemPreUpdate,
   astrobee_gazebo::GazeboModelPluginDrag::ISystemPostUpdate 
 )
-
-
-
