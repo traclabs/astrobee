@@ -155,21 +155,21 @@ FreeFlyerModelPlugin::FreeFlyerModelPlugin(std::string const& plugin_name,
 FreeFlyerModelPlugin::~FreeFlyerModelPlugin() {}
 
 // Auto-called when Gazebo loads the plugin
-void FreeFlyerModelPlugin::Configure(const gz::sim::Entity &_model_entity,
+void FreeFlyerModelPlugin::Configure(const gz::sim::Entity &_entity,
                          const std::shared_ptr<const sdf::Element> &_sdf,
                          gz::sim::EntityComponentManager &_ecm,
                          gz::sim::EventManager &_eventMgr) {
   
   sdf_   = _sdf->Clone();
-  model_.reset( new gz::sim::Model(_model_entity) );
+
+  model_entity_ = _entity;
+  world_entity_ = gz::sim::kNullEntity;
+  world_entity_ = gz::sim::worldEntity(_ecm);
+
+  model_.reset( new gz::sim::Model(model_entity_) );
+  link_entity_ = model_->CanonicalLink(_ecm);  
+  link_.reset( new gz::sim::Link(link_entity_) );
   
-  auto link_entity = model_->CanonicalLink(_ecm);
-  link_.reset( new gz::sim::Link(link_entity) );
-  
-  world_entity_ = gz::sim::worldEntity(_ecm); // NOTE: For some reason, calling worldEntity(_model, _ecm) didn't work
-  if(world_entity_ == gz::sim::kNullEntity)
-    FF_ERROR("World entity wasn't obtained correctly");
-    
   // Read namespace
   std::string ns = model_->Name(_ecm);
   if (ns == "bsharp")
@@ -265,12 +265,12 @@ void FreeFlyerSensorPlugin::Configure(const gz::sim::Entity &_entity,
                          gz::sim::EventManager &_eventMgr) {
 
   sdf_ = _sdf->Clone();
-  sensor_entity_ = _entity; 
-
-  world_entity_ = gz::sim::worldEntity(sensor_entity_, _ecm);
   
-  // Store pointer to model
-  model_.reset( new gz::sim::Model(_entity));
+  sensor_entity_ = _entity; 
+  world_entity_ = gz::sim::worldEntity(sensor_entity_, _ecm);
+  model_entity_ = gz::sim::topLevelModel(sensor_entity_, _ecm);
+  
+  model_.reset( new gz::sim::Model(model_entity_) );
 
   // Read namespace
   std::string ns = model_->Name(_ecm);
@@ -298,8 +298,8 @@ gz::sim::Entity FreeFlyerSensorPlugin::GetWorld() {
 }
 
 // Get the sensor model
-std::shared_ptr<gz::sim::Model> FreeFlyerSensorPlugin::GetModel() {
-  return model_;
+gz::sim::Entity FreeFlyerSensorPlugin::GetModel() {
+  return model_entity_;
 }
 
 // Get sensor entity

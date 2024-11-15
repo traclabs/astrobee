@@ -167,9 +167,12 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin,
  protected:
   sdf::ElementPtr sdf_;
   gz::sim::Entity world_entity_;
+  gz::sim::Entity model_entity_;
+  gz::sim::Entity link_entity_;  
+  
   std::shared_ptr<gz::sim::Link> link_;
   std::shared_ptr<gz::sim::Model> model_;
-  gz::sim::Entity model_entity_;
+
   bool update_extrinsics_;
   gz::math::Pose3d extrinsics_pose_;
 };
@@ -214,7 +217,7 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
   gz::sim::Entity GetWorld();
 
   // Get the sensor model
-  std::shared_ptr<gz::sim::Model> GetModel();
+  gz::sim::Entity GetModel();
 
   // Get sensor entity
   gz::sim::Entity GetSensor();
@@ -234,7 +237,9 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
 
  private:
   gz::sim::Entity sensor_entity_;
+  gz::sim::Entity model_entity_;
   gz::sim::Entity world_entity_;
+
   std::shared_ptr<gz::sim::Model> model_;
   sdf::ElementPtr sdf_;
   
