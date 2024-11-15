@@ -83,7 +83,7 @@ class GazeboModelPluginDrag : public FreeFlyerModelPlugin {
   gz::math::Vector3d drag_;
 };
 
-}   // namespace gazebo
+}   // namespace astrobee_gazebo
 
 
 // Register this plugin with the simulator
@@ -94,3 +94,7 @@ GZ_ADD_PLUGIN(
   astrobee_gazebo::GazeboModelPluginDrag::ISystemPreUpdate,
   astrobee_gazebo::GazeboModelPluginDrag::ISystemPostUpdate 
 )
+
+GZ_ADD_PLUGIN_ALIAS(astrobee_gazebo::GazeboModelPluginDrag, 
+                    "astrobee_plugin_drag", 
+                    "astrobee_gazebo::GazeboModelPluginDrag")

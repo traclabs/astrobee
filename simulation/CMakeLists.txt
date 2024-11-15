@@ -116,7 +116,6 @@ add_library(gazebo_model_plugin_truth SHARED
 )
 target_link_libraries(gazebo_model_plugin_truth astrobee_gazebo)
 #ament_target_dependencies(gazebo_model_plugin_truth rclcpp tf2 tf2_ros ros_gz )
-#ament_export_libraries(gazebo_model_plugin_truth)
 
 
 # Create a model plugin for the propulsion system
@@ -135,12 +134,11 @@ target_link_libraries(gazebo_model_plugin_truth astrobee_gazebo)
 #ament_target_dependencies(gazebo_model_plugin_perching_arm rclcpp ff_msgs ff_hw_msgs )
 
 # Create a model plugin for the front flashlight
-#add_library(gazebo_model_plugin_flashlight SHARED
-#  src/gazebo_model_plugin_flashlight/gazebo_model_plugin_flashlight.cc
-#)
-#target_link_libraries(gazebo_model_plugin_flashlight astrobee_gazebo)
-#ament_target_dependencies(gazebo_model_plugin_flashlight rclcpp ff_hw_msgs visualization_msgs ros_gz )
-#ament_export_libraries(gazebo_model_plugin_flashlight)
+add_library(gazebo_model_plugin_flashlight SHARED
+  src/gazebo_model_plugin_flashlight/gazebo_model_plugin_flashlight.cc
+)
+target_link_libraries(gazebo_model_plugin_flashlight astrobee_gazebo)
+ament_target_dependencies(gazebo_model_plugin_flashlight ff_hw_msgs visualization_msgs )
 
 # Create a model plugin for the laser
 #add_library(gazebo_model_plugin_laser SHARED
@@ -265,7 +263,7 @@ install(TARGETS
   gazebo_model_plugin_truth
 #  gazebo_model_plugin_pmc
 #  gazebo_model_plugin_perching_arm
-#  gazebo_model_plugin_flashlight
+  gazebo_model_plugin_flashlight
 #  gazebo_model_plugin_laser
   gazebo_model_plugin_heartbeat
 #  gazebo_model_plugin_signal_lights

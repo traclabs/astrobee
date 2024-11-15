@@ -217,3 +217,6 @@ GZ_ADD_PLUGIN(
   astrobee_gazebo::GazeboSensorPluginNavCam::ISystemPostUpdate 
 )
 
+GZ_ADD_PLUGIN_ALIAS(astrobee_gazebo::GazeboSensorPluginNavCam, 
+                    "astrobee_plugin_nav_cam", 
+                    "astrobee_gazebo::GazeboSensorPluginNavCam")

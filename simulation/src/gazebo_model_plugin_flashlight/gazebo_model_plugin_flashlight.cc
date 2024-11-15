@@ -18,6 +18,9 @@
 
 // Gazebo includes
 #include <astrobee_gazebo/astrobee_gazebo.h>
+#include <gz/sim/Util.hh>
+#include <gz/msgs/entity_factory.pb.h>
+#include <gz/plugin/Register.hh>
 
 // Transformation helper code
 #include <tf2_ros/transform_listener.h>
@@ -39,7 +42,7 @@ typedef srv::SetFlashlight SetFlashlight;
 #include <string>
 #include <map>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 FF_DEFINE_LOGGER("gazebo_model_plugin_perching_flashlight");
 
@@ -50,39 +53,66 @@ class GazeboModelPluginFlashlight : public FreeFlyerModelPlugin {
       width_(0.03), height_(0.02), depth_(0.005) {}
 
   ~GazeboModelPluginFlashlight() {
-    if (update_) {
-      update_.reset();
-    }
+
   }
 
  protected:
   // Called when the plugin is loaded into the simulator
-  void LoadCallback(NodeHandle &nh,
-    physics::ModelPtr model, sdf::ElementPtr sdf) {
+  void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) {
     // Get parameters from the SDF
-    if (sdf->HasElement("rate"))
-      rate_ = sdf->Get<double>("rate");
-    if (sdf->HasElement("width"))
-      width_ = sdf->Get<double>("width");
-    if (sdf->HasElement("height"))
-      height_ = sdf->Get<double>("height");
-    if (sdf->HasElement("depth"))
-      depth_ = sdf->Get<double>("depth");
-    if (sdf->HasElement("plugin_frame"))
-      plugin_frame_ = sdf->Get<std::string>("plugin_frame");
+    if (sdf_->HasElement("rate"))
+      rate_ = sdf_->Get<double>("rate");
+    if (sdf_->HasElement("width"))
+      width_ = sdf_->Get<double>("width");
+    if (sdf_->HasElement("height"))
+      height_ = sdf_->Get<double>("height");
+    if (sdf_->HasElement("depth"))
+      depth_ = sdf_->Get<double>("depth");
+    if (sdf_->HasElement("plugin_frame"))
+      plugin_frame_ = sdf_->Get<std::string>("plugin_frame");
+
+    // Service names
+    std::string world_name = "default";
+    
+    std::optional<std::string> world_name_opt = gz::sim::World(world_entity_).Name(_ecm);
+    if( world_name_opt )
+      world_name = world_name_opt.value();
+
+    create_entity_srv_ = "/world/" + world_name + "/create";
+    modify_light_srv_ = "/world/" + world_name + "/light_config";
 
     // Use the message system to toggle visibility of visual elements
-    gz_ = transport::NodePtr(new transport::Node());
-    gz_->Init();
-    pub_visual_ = gz_->Advertise<msgs::Visual>("~/visual");
-    pub_factory_ = gz_->Advertise<msgs::Light>("~/factory/light");
-    pub_light_ = gz_->Advertise<msgs::Light>("~/light/modify");
-
+  
     // For the RVIZ marker array
-    pub_rviz_ = FF_CREATE_PUBLISHER(nh, visualization_msgs::MarkerArray, TOPIC_HARDWARE_LIGHTS_RVIZ, 0);
+    pub_rviz_ = FF_CREATE_PUBLISHER(nh_, visualization_msgs::MarkerArray, TOPIC_HARDWARE_LIGHTS_RVIZ, 0);
 
     // Rotate from the flaslight frame to the visual frame
-    pose_ = ignition::math::Pose3d(0.0, 0, 0, 0.70710678, 0, -0.70710678, 0);
+    pose_ = gz::math::Pose3d(0.0, 0, 0, 0.70710678, 0, -0.70710678, 0);
+
+
+    // Create the visual
+    /*gz::sim::SdfEntityCreator sec(_ecm, _em);
+    sdf::Visual* visual = new sdf::Visual();
+    visual->SetName(GetFrame(plugin_frame_ + "_visual", "_"));
+    //visual->set_parent_name(GetModel()->GetLink()->GetScopedName());
+    sdf::Box box;
+    box.SetSize(gz::math::Vector3d(depth_, width_, height_));
+    sdf::Geom geom; 
+    geom.setBoxShape(box); // do we need to say setTypeAs well?
+    visual->SetGeom(geom);
+    visual->SetType(sdf::GeometryType::BOX);
+    visual->SetCastShadows(false);
+    visual->SetTransparency(1.0);
+    visual->setRawPose(pose_);
+    std::Material material;
+    material.SetScriptName("Astrobee/Flashlight");
+    visual->setMaterial(material);
+    visual->setVisibilityFlags(1); // when non-zero, visible to the camera
+    //visual_.set_is_static(false);
+    //visual_.set_visible(true);
+
+    sec.CreateEntities(visual);*/
+
   }
 
   // Only send measurements when extrinsics are available
@@ -98,7 +128,7 @@ class GazeboModelPluginFlashlight : public FreeFlyerModelPlugin {
       FF_WARN("Flashlight extrinsics are null");
       return false;
     }
-
+    FF_WARN("EXTRINSICS CALLBACK............");
     // Create the rviz marker
     marker_.header.stamp = GetTimeNow();
     marker_.header.frame_id = GetFrame();
@@ -125,7 +155,7 @@ class GazeboModelPluginFlashlight : public FreeFlyerModelPlugin {
     pub_rviz_->publish(msg);
 
     // Aggregate pose
-    pose_ = pose_ + ignition::math::Pose3d(
+    pose_ = pose_ + gz::math::Pose3d(
       tf->transform.translation.x,
       tf->transform.translation.y,
       tf->transform.translation.z,
@@ -135,53 +165,61 @@ class GazeboModelPluginFlashlight : public FreeFlyerModelPlugin {
       tf->transform.rotation.z);
 
     // Create the Gazebo visual
-    visual_.set_name(GetFrame(plugin_frame_ + "_visual", "_"));
-    visual_.set_parent_name(GetModel()->GetLink()->GetScopedName());
-    msgs::Geometry *geometry = visual_.mutable_geometry();
-    geometry->set_type(msgs::Geometry::BOX);
-    msgs::Set(geometry->mutable_box()->mutable_size(),
-      ignition::math::Vector3d(depth_, width_, height_));
-    visual_.mutable_material()->mutable_script()->set_name("Astrobee/Flashlight");
-    msgs::Set(visual_.mutable_pose(), pose_);
-    visual_.set_is_static(false);
-    visual_.set_visible(true);
-    visual_.set_cast_shadows(false);
-    visual_.set_transparency(1.0);
-    pub_visual_->Publish(visual_);
+    // Need to use this pose!! Update
+    //pub_visual_->Publish(visual_);
 
-    // Create the gazebo light
-    light_.set_name(GetFrame(plugin_frame_ + "_front_light", "_"));
-    light_.set_type(msgs::Light::SPOT);
-    light_.set_attenuation_constant(1.0);
-    light_.set_attenuation_linear(0.02);
-    light_.set_attenuation_quadratic(0.0);
-    light_.set_range(10);
-    light_.set_cast_shadows(false);
-    light_.set_spot_inner_angle(0.6);
-    light_.set_spot_outer_angle(2.2);
-    light_.set_spot_falloff(1.0);
+    // Create the gazebo light    
+    light_req_.mutable_light()->set_name(GetFrame(plugin_frame_ + "_front_light", "_"));
+    light_req_.mutable_light()->set_type(gz::msgs::Light::SPOT);
+    light_req_.mutable_light()->set_attenuation_constant(1.0);
+    light_req_.mutable_light()->set_attenuation_linear(0.02);
+    light_req_.mutable_light()->set_attenuation_quadratic(0.0);
+    light_req_.mutable_light()->set_range(10);
+    light_req_.mutable_light()->set_cast_shadows(false);
+    light_req_.mutable_light()->set_spot_inner_angle(0.6);
+    light_req_.mutable_light()->set_spot_outer_angle(2.2);
+    light_req_.mutable_light()->set_spot_falloff(1.0);
 
     // For some reason common::Color stopped existing in later versions
-    #if GAZEBO_MAJOR_VERSION < 11
-    msgs::Set(light_.mutable_diffuse(), common::Color(0.5, 0.5, 0.5, 1));
-    msgs::Set(light_.mutable_specular(), common::Color(0.1, 0.1, 0.1, 1));
-    #endif
-
-    #if GAZEBO_MAJOR_VERSION > 7
-    msgs::Set(light_.mutable_pose(), pose_ +
-       GetModel()->GetLink()->WorldPose());
-    #else
-    msgs::Set(light_.mutable_pose(), pose_ +
-       GetModel()->GetLink()->GetWorldPose().Ign());
-    #endif
-    pub_factory_->Publish(light_);
-
-    // Modify the new entity to be only visible in the GUI
-    update_ = event::Events::ConnectWorldUpdateBegin(std::bind(
-      &GazeboModelPluginFlashlight::WorldUpdateBegin, this));
+    gz::msgs::Set(light_req_.mutable_light()->mutable_diffuse(), gz::math::Color(0.5, 0.5, 0.5, 1));
+    gz::msgs::Set(light_req_.mutable_light()->mutable_specular(), gz::math::Color(0.1, 0.1, 0.1, 1));
+  
+    if(world_pose_)
+    {
+      mutex_data_.lock();
+      gz::msgs::Set(light_req_.mutable_light()->mutable_pose(), 
+                pose_ + world_pose_.value());
+      mutex_data_.unlock();
+    }
+    bool res = sendEntityRequest(create_entity_srv_, light_req_);
 
     // Success
     return true;
+  }
+
+  bool sendEntityRequest(const std::string &_srv_name, 
+                         const gz::msgs::EntityFactory &_req, 
+                         const unsigned int &_timeout = 500)
+  {
+    gz::msgs::Boolean res;
+    bool result;
+  
+    if( gz_node_.Request(_srv_name, _req, _timeout, res, result) )
+    {
+      if(result)
+      {
+        FF_WARN("YES, SUCCESS IN CALLING SERVICE: %s !!!!!!!!!!!!!!1", _srv_name.c_str());
+        return true;
+      }
+      else
+        FF_ERROR("Error ws in result error back");
+    } else
+    {
+      FF_ERROR("ERROR WAS IN CALLING SERVICE: %s", _srv_name.c_str());
+    }
+
+    FF_ERROR("Failed either creating the service or getting false return for entityRequest");
+    return false;
   }
 
   // Called when the laser needs to be toggled
@@ -195,12 +233,12 @@ class GazeboModelPluginFlashlight : public FreeFlyerModelPlugin {
     pub_rviz_->publish(msg);
 
     // Update Gazebo visual
-    visual_.set_transparency(1.0 - marker_.color.a);
-    pub_visual_->Publish(visual_);
+    //visual_.set_transparency(1.0 - marker_.color.a);
+    //pub_visual_->Publish(visual_);
 
     // Update the gazebo light
-    light_.set_attenuation_constant(1.0 - marker_.color.a);
-    pub_light_->Publish(light_);
+    light_req_.mutable_light()->set_attenuation_constant(1.0 - marker_.color.a);
+    sendEntityRequest(modify_light_srv_, light_req_);
 
     // Print response
     res->success = true;
@@ -208,34 +246,64 @@ class GazeboModelPluginFlashlight : public FreeFlyerModelPlugin {
     return true;
   }
 
+
+  virtual void PreUpdate_(const gz::sim::UpdateInfo &_info,
+                 gz::sim::EntityComponentManager &_ecm) override {
+    WorldUpdateBegin();
+  }
+
+  // Modify the new entity to be only visible in the GUI
   // Called when a new entity is created
   void WorldUpdateBegin() {
-    #if GAZEBO_MAJOR_VERSION > 7
-    msgs::Set(light_.mutable_pose(), pose_ +
-       GetModel()->GetLink()->WorldPose());
-    #else
-    msgs::Set(light_.mutable_pose(), pose_ +
-       GetModel()->GetLink()->GetWorldPose().Ign());
-    #endif
-    pub_light_->Publish(light_);
+    if(!world_pose_)
+      return;
+    
+    mutex_data_.lock();
+    gz::math::Pose3d world_pose_now = world_pose_.value();
+    mutex_data_.unlock();
+
+    gz::msgs::Set(light_req_.mutable_light()->mutable_pose(), pose_ +
+       world_pose_now);
+
+    sendEntityRequest(modify_light_srv_, light_req_);
+  }
+
+  virtual void PostUpdate(const gz::sim::UpdateInfo &_info,
+                const gz::sim::EntityComponentManager &_ecm) override {
+
+    mutex_data_.lock();
+    world_pose_ = gz::sim::worldPose(model_entity_, _ecm);
+    mutex_data_.unlock();
   }
 
  private:
   double rate_, width_, height_, depth_;
-  transport::NodePtr gz_;
-  transport::PublisherPtr pub_visual_, pub_factory_, pub_light_;
-  event::ConnectionPtr update_;
+  gz::transport::Node gz_node_; 
   ff_util::FreeFlyerTimer timer_;
   rclcpp::Service<ff_hw_msgs::SetFlashlight>::SharedPtr srv_;
   rclcpp::Publisher<visualization_msgs::MarkerArray>::SharedPtr pub_rviz_;
   visualization_msgs::Marker marker_;
-  msgs::Light light_;
-  msgs::Visual visual_;
-  ignition::math::Pose3d pose_;
+  gz::msgs::EntityFactory light_req_;
+  gz::math::Pose3d pose_;
+  std::optional<gz::math::Pose3d> world_pose_;
+  std::mutex mutex_data_;
   std::string plugin_frame_ = "";
+  std::string create_entity_srv_;
+  std::string modify_light_srv_;
 };
 
-// Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboModelPluginFlashlight )
+}   // namespace astrobee_gazebo
 
-}   // namespace gazebo
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboModelPluginFlashlight,
+  gz::sim::System,
+  astrobee_gazebo::GazeboModelPluginFlashlight::ISystemConfigure,
+  astrobee_gazebo::GazeboModelPluginFlashlight::ISystemPreUpdate,
+  astrobee_gazebo::GazeboModelPluginFlashlight::ISystemPostUpdate 
+)
+
+GZ_ADD_PLUGIN_ALIAS(astrobee_gazebo::GazeboModelPluginFlashlight, 
+                    "astrobee_plugin_flashlight", 
+                    "astrobee_gazebo::GazeboModelPluginFlashlight")
+

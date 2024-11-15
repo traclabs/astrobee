@@ -20,22 +20,22 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <gazebo>
     <plugin 
-      name="astrobee_gazebo::GazeboModelPluginHeartbeat" 
+      name="astrobee_plugin_heartbeat" 
       filename="gazebo_model_plugin_heartbeat">
       <plugin_name>llp_disk_monitor</plugin_name>
     </plugin>
     <plugin 
-      name="astrobee_gazebo::GazeboModelPluginHeartbeat" 
+      name="astrobee_plugin_heartbeat" 
       filename="gazebo_model_plugin_heartbeat">
       <plugin_name>mlp_disk_monitor</plugin_name>
     </plugin>
     <plugin 
-       name="astrobee_gazebo::GazeboModelPluginHeartbeat" 
+       name="astrobee_plugin_heartbeat" 
       filename="gazebo_model_plugin_heartbeat">
       <plugin_name>llp_cpu_mem_monitor</plugin_name>
     </plugin>
     <plugin 
-      name="astrobee_gazebo::GazeboModelPluginHeartbeat" 
+      name="astrobee_plugin_heartbeat" 
       filename="gazebo_model_plugin_heartbeat">
       <plugin_name>mlp_cpu_mem_monitor</plugin_name>
     </plugin>

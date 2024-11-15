@@ -759,3 +759,7 @@ GZ_ADD_PLUGIN(
   astrobee_gazebo::GazeboModelPluginEps::ISystemPreUpdate,
   astrobee_gazebo::GazeboModelPluginEps::ISystemPostUpdate 
 )
+
+GZ_ADD_PLUGIN_ALIAS(astrobee_gazebo::GazeboModelPluginEps, 
+                    "astrobee_plugin_eps", 
+                    "astrobee_gazebo::GazeboModelPluginEps")

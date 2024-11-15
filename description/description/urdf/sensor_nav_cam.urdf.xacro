@@ -41,9 +41,8 @@
         </distortion>
       </camera>
       <plugin 
-        name="astrobee_gazebo::GazeboSensorPluginNavCam" 
+        name="astrobee_plugin_nav_cam" 
         filename="gazebo_sensor_plugin_nav_cam">
-        <plugin_name>nav_cam_plugin</plugin_name>
       </plugin>
       <!--<plugin 
         name="astrobee_gazebo::GazeboSensorPluginSparseMap" 

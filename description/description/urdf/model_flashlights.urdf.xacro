@@ -19,7 +19,9 @@
 
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
   <gazebo>
-    <plugin name="flashlight_front_ros" filename="libgazebo_model_plugin_flashlight.so">
+    <plugin 
+      name="astrobee_plugin_flashlight" 
+      filename="gazebo_model_plugin_flashlight">
       <plugin_name>flashlight_front</plugin_name>
       <plugin_frame>flashlight_front</plugin_frame>
       <rate>10.0</rate>
@@ -27,7 +29,9 @@
       <height>0.02</height>
       <depth>0.03</depth>
     </plugin>
-    <plugin name="flashlight_aft_ros" filename="libgazebo_model_plugin_flashlight.so">
+    <plugin 
+      name="astrobee_plugin_flashlight" 
+      filename="gazebo_model_plugin_flashlight">
       <plugin_name>flashlight_aft</plugin_name>
       <plugin_frame>flashlight_aft</plugin_frame>
       <rate>10.0</rate>

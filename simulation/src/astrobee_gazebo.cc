@@ -46,10 +46,32 @@ void FreeFlyerPlugin::SetParentFrame(std::string const& parent) {
   parent_frame_ = parent;
 }
 
+// Code taken of Node::Get from gazebo_ros/src/node.cpp (classic)
+// NOTE: We didn't copy the namespace part of the code. If you see errors, see the original code
+std::shared_ptr<rclcpp::Node> FreeFlyerPlugin::GetNode(sdf::ElementPtr sdf, const std::string node_name)
+{
+  // Initialize arguments
+  std::string name = "";
+  std::string ns = "/";
+
+  // Get the name of the plugin as the name for the node.
+  if (!sdf->HasAttribute("name")) {
+    FF_WARN("Name of plugin not found.");
+  }
+
+  if (!node_name.empty()) {
+    name = node_name;
+  } else {
+    name = sdf->Get<std::string>("name");
+  }
+
+  return   rclcpp::Node::make_shared(name, ns);
+}
+
 // Load function
 void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::string const& plugin_name,
                                        sdf::ElementPtr sdf) {
-  gzwarn << "Starting plugin " << plugin_name_ << ": "<<plugin_name << std::endl;
+  gzwarn << "Starting plugin: " << plugin_name_ << ": "<<plugin_name << std::endl;
   robot_name_ = robot_name;
 
   // Ensure that ROS is setup
@@ -58,7 +80,7 @@ void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::strin
      rclcpp::init(0, nullptr);  
   }
   // Get nodehandle based on the model.
-  nh_ = rclcpp::Node::make_shared(plugin_name, robot_name);
+  nh_ = GetNode(sdf, plugin_name);
   
   // Start a thread to spin the node
   this->executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
@@ -69,7 +91,7 @@ void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::strin
   
   // Initialize ROS node for Gazebo
   FreeFlyerComponent::FreeFlyerComponentGazeboInit(nh_, plugin_name);
-  FF_DEBUG_STREAM("Loading " << plugin_name_  << plugin_name << " on robot " << robot_name_);
+  FF_DEBUG_STREAM("Loading " << plugin_name_  << " : "<< plugin_name << " on robot " << robot_name_);
 
   // Get nodehandle based on the model name.
   buffer_.reset(new tf2_ros::Buffer(nh_->get_clock()));
@@ -81,12 +103,14 @@ void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::strin
   // Setup(nh_ff_, nh_ff_, plugin_name);
 
   // If we have a frame then defer chainloading until we receive them
+  gzwarn << "Setting up extrinsics for " << plugin_name << std::endl;
   timer_.createTimer(5.0,
       std::bind(&FreeFlyerPlugin::SetupExtrinsics, this), nh_);
 }
 
 // Poll for extrinsics until found
 void FreeFlyerPlugin::SetupExtrinsics() {
+  gzwarn << "Setting up extrinsics... plugin frame: " << plugin_frame_.c_str() << std::endl;
   // If we don't need extrinsics, then don't bother looking...
   if (plugin_frame_.empty()) {
     if (ExtrinsicsCallback(nullptr))
@@ -97,7 +121,7 @@ void FreeFlyerPlugin::SetupExtrinsics() {
   if (parent_frame_.empty())
     parent_frame_ = GetFrame(FRAME_NAME_BODY);
   // Keep trying to find the frame transform
-  try {
+  try { gzwarn << "Should be trying to get transfrom from " << parent_frame_ << " to: " << GetFrame() << std::endl;
     geometry_msgs::TransformStamped tf =
       buffer_->lookupTransform(parent_frame_, GetFrame(), ros::Time(0));
     if (ExtrinsicsCallback(&tf)) {
@@ -122,8 +146,8 @@ FreeFlyerModelPlugin::FreeFlyerModelPlugin(std::string const& plugin_name,
       plugin_name, plugin_frame, send_heartbeats) {
 
   link_ = nullptr;
-  world_ = gz::sim::kNullEntity;
   model_ = nullptr;
+  world_entity_ = gz::sim::kNullEntity;
   update_extrinsics_ = false;
 }
 
@@ -141,8 +165,11 @@ void FreeFlyerModelPlugin::Configure(const gz::sim::Entity &_model_entity,
   
   auto link_entity = model_->CanonicalLink(_ecm);
   link_.reset( new gz::sim::Link(link_entity) );
-  //world_ = model->GetWorld();
-
+  
+  world_entity_ = gz::sim::worldEntity(_ecm); // NOTE: For some reason, calling worldEntity(_model, _ecm) didn't work
+  if(world_entity_ == gz::sim::kNullEntity)
+    FF_ERROR("World entity wasn't obtained correctly");
+    
   // Read namespace
   std::string ns = model_->Name(_ecm);
   if (ns == "bsharp")
@@ -183,13 +210,19 @@ std::shared_ptr<gz::sim::Link> FreeFlyerModelPlugin::GetLink() {
 
 // Get the model world
 gz::sim::Entity FreeFlyerModelPlugin::GetWorld() {
-  return world_;
+  return world_entity_;
 }
 
 // Get the model
 std::shared_ptr<gz::sim::Model> FreeFlyerModelPlugin::GetModel() {
   return model_;
 }
+
+// Get the model
+//gz::sim::Entity FreeFlyerModelPlugin::GetModel() {
+//  return model_entity_;
+//}
+
 
 // Manage the extrinsics based on the sensor type
 bool FreeFlyerModelPlugin::ExtrinsicsCallback(
@@ -234,7 +267,7 @@ void FreeFlyerSensorPlugin::Configure(const gz::sim::Entity &_entity,
   sdf_ = _sdf->Clone();
   sensor_entity_ = _entity; 
 
-  //world_ = gazebo::physics::get_world(sensor->WorldName());
+  world_entity_ = gz::sim::worldEntity(sensor_entity_, _ecm);
   
   // Store pointer to model
   model_.reset( new gz::sim::Model(_entity));
@@ -261,7 +294,7 @@ void FreeFlyerSensorPlugin::Configure(const gz::sim::Entity &_entity,
 
 // Get the sensor world
 gz::sim::Entity FreeFlyerSensorPlugin::GetWorld() {
-  return world_;
+  return world_entity_;
 }
 
 // Get the sensor model

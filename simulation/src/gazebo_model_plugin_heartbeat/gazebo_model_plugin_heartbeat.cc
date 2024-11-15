@@ -71,3 +71,7 @@ GZ_ADD_PLUGIN(
   astrobee_gazebo::GazeboModelPluginHeartbeat::ISystemPreUpdate,
   astrobee_gazebo::GazeboModelPluginHeartbeat::ISystemPostUpdate 
 )
+
+GZ_ADD_PLUGIN_ALIAS(astrobee_gazebo::GazeboModelPluginHeartbeat, 
+                    "astrobee_plugin_heartbeat", 
+                    "astrobee_gazebo::GazeboModelPluginHeartbeat")

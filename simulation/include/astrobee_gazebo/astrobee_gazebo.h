@@ -48,6 +48,7 @@ typedef msg::CameraInfo CameraInfo;
 
 // Gazebo includes
 #include <gz/sim/System.hh>
+#include <gz/sim/World.hh>
 #include <gz/sim/Model.hh>
 #include <gz/sim/Link.hh>
 #include <gz/sim/Sensor.hh>
@@ -94,6 +95,9 @@ class FreeFlyerPlugin : public ff_util::FreeFlyerComponent {
 
   // Manage the extrinsics based on the sensor type
   void SetupExtrinsics();
+
+  // Get node
+  std::shared_ptr<rclcpp::Node> GetNode(sdf::ElementPtr sdf, const std::string node_name = "");
 
   // Child classes need access
   std::string robot_name_, plugin_name_, plugin_frame_, parent_frame_;
@@ -151,6 +155,8 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin,
   // Get the model
   std::shared_ptr<gz::sim::Model> GetModel();
 
+  //gz::sim::Entity GetModel();
+
   // Callback when the model has loaded
   virtual void LoadCallback(NodeHandle &nh, gz::sim::EntityComponentManager &_ecm) = 0;
 
@@ -160,9 +166,10 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin,
 
  protected:
   sdf::ElementPtr sdf_;
-  gz::sim::Entity world_;
+  gz::sim::Entity world_entity_;
   std::shared_ptr<gz::sim::Link> link_;
   std::shared_ptr<gz::sim::Model> model_;
+  gz::sim::Entity model_entity_;
   bool update_extrinsics_;
   gz::math::Pose3d extrinsics_pose_;
 };
@@ -227,8 +234,7 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
 
  private:
   gz::sim::Entity sensor_entity_;
-  
-  gz::sim::Entity world_;
+  gz::sim::Entity world_entity_;
   std::shared_ptr<gz::sim::Model> model_;
   sdf::ElementPtr sdf_;
   

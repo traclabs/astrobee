@@ -210,3 +210,7 @@ GZ_ADD_PLUGIN(
   astrobee_gazebo::GazeboModelPluginTruth::ISystemPreUpdate,
   astrobee_gazebo::GazeboModelPluginTruth::ISystemPostUpdate 
 )
+
+GZ_ADD_PLUGIN_ALIAS(astrobee_gazebo::GazeboModelPluginTruth, 
+                    "astrobee_plugin_truth", 
+                    "astrobee_gazebo::GazeboModelPluginTruth")
