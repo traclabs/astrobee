@@ -18,6 +18,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(astrobee_gazebo)
 
+set(ENABLE_GAZEBO ON)
 if (ENABLE_GAZEBO)
 ## Compile as C++17
 add_compile_options(-std=c++17)
