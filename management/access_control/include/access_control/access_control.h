@@ -40,7 +40,6 @@ namespace ff_msgs {
   typedef msg::CommandConstants CommandConstants;
   typedef msg::CommandStamped CommandStamped;
 }  // namespace ff_msgs
-#include <ff_common/ff_names.h>
 
 #include <cstdint>
 #include <iostream>

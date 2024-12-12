@@ -33,10 +33,11 @@ import multiprocessing
 import os
 
 import numpy as np
-import parameter_sweep_results_plotter
-import average_results
+import rospkg
+
 import config_creator
 import localization_common.utilities as lu
+import parameter_sweep_results_plotter
 import parameter_sweep_utilities
 
 

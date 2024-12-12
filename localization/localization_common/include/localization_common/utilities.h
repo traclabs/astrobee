@@ -43,7 +43,6 @@ namespace ff_msgs {
 typedef msg::GraphState GraphState;
 typedef msg::VisualLandmarks VisualLandmarks;
 typedef msg::CombinedNavState CombinedNavState;
-typedef msg::PoseCovarianceStamped PoseCovarianceStamped; 
 }  // namespace ff_msgs
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -132,7 +131,7 @@ ff_msgs::CombinedNavState CombinedNavStateToMsg(const CombinedNavState& combined
                                                 const PoseCovariance& pose_covariance,
                                                 const Eigen::Matrix3d& velocity_covariance,
                                                 const Eigen::Matrix<double, 6, 6>& imu_bias_covariance,
-                                                const TimestampedSet<PoseCovariance>& correlation_covariances = TimestampedSet<PoseCovariance>(boost::none) );
+                                                const TimestampedSet<PoseCovariance>& correlation_covariances = TimestampedSet<PoseCovariance>());
 
 template <class LocMsgType>
 void CombinedNavStateToLocMsg(const CombinedNavState& combined_nav_state, LocMsgType& loc_msg);

@@ -591,8 +591,10 @@ void AckCallback(ff_msgs::msg::AckStamped::SharedPtr const ack) {
     // Command failed due to bad syntax or an actual failure
     std::cout << "\n" << ack->cmd_id << " command failed! " << ack->message;
     std::cout << "\n";
+
     rclcpp::shutdown();
     exit(1);
+    
     return;
   }
   if (Finished()) {
@@ -758,9 +760,11 @@ int main(int argc, char** argv) {
 
   // Hacky time out
   int count = 0;
+
   std::chrono::nanoseconds nanoseconds(200000000);
   while (nh->count_publishers(TOPIC_MANAGEMENT_ACK) == 0 && !FLAGS_remote) {
     rclcpp::sleep_for(nanoseconds);
+    
     // Only wait 2 seconds
     if (count == 9) {
       std::cout << "No publisher for acks topics. This tool will not work ";
@@ -835,6 +839,7 @@ int main(int argc, char** argv) {
     int dock_count = 0;
     while (nh->count_publishers(TOPIC_BEHAVIORS_DOCKING_STATE) == 0 && !FLAGS_remote) {
       rclcpp::sleep_for(nanoseconds);
+
       // Only wait 2 seconds
       if (dock_count == 9) {
         std::cout << "No publisher for dock state. This tool will not work ";
@@ -851,7 +856,7 @@ int main(int argc, char** argv) {
     rclcpp::Time start_time = nh->now();
 
     // Spin for 3 seconds
-    while (nh->now() - start_time < rclcpp::Duration::from_seconds(3.0))
+    while ( (nh->now() - start_time).seconds() < 3.0)
         loop_rate.sleep();
   }
 

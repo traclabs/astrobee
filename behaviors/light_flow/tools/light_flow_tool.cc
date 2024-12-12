@@ -16,10 +16,8 @@
  * under the License.
  */
 
-#include <ff_hw_msgs/msg/configure_led.hpp>
 #include <ff_hw_msgs/msg/configure_led_group.hpp>
 namespace ff_hw_msgs {
-  typedef msg::ConfigureLED ConfigureLED;
   typedef msg::ConfigureLEDGroup ConfigureLEDGroup;
 }  // namespace ff_hw_msgs
 

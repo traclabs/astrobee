@@ -23,7 +23,7 @@ def generate_launch_description():
         launch_arg("robot",  default_value=os.getenv("ASTROBEE_ROBOT", "sim"),description="Robot name"),
         launch_arg("world",  default_value=os.getenv("ASTROBEE_WORLD", "iss"),
                             description="World name"),
-
+        launch_arg("perch",   default_value="false", description="Start in the perch position"),
         launch_arg("ns",     default_value="",    description="Robot namespace prefix"),
         launch_arg("output", default_value="log", description="Where nodes should log"),
         launch_arg("spurn",  default_value="",    description="Prevent a specific node"),
@@ -39,7 +39,6 @@ def generate_launch_description():
         launch_arg("rec",     default_value="",      description="Record local data "),
         launch_arg("dds",     default_value="true",  description="Enable DDS"),
         launch_arg("gtloc",   default_value="false", description="Use Ground Truth Localizer"),
-        launch_arg("perch",   default_value="false", description="Start in the perch position"),
         # General options
         launch_arg("gviz",   default_value="false",  description="Start GNC visualizer"),
         launch_arg("rviz",   default_value="false",  description="Start Rviz visualization"),
@@ -180,6 +179,17 @@ def generate_launch_description():
             }.items(),
             condition=IfCondition(LaunchConfiguration("default_robot")),
         ),
+        ExecuteProcess(
+             cmd=[[
+                 FindExecutable(name='ros2'),
+                 " service call ",
+                 "/gnc/ekf/init_bias ",
+                 "std_srvs/srv/Empty ",
+                 '"{}"',
+             ]],
+             shell=True,
+             condition=IfCondition(LaunchConfiguration("default_robot"))
+        ),
         # Auto-insert honey at a canned location
         IncludeLaunchDescription(
             get_launch_file("launch/spawn.launch.py"),
@@ -200,6 +210,17 @@ def generate_launch_description():
                 "gtloc" : LaunchConfiguration("gtloc"),      # Use Ground Truth Localizer
             }.items(),
             condition=IfCondition(LaunchConfiguration("honey")),
+        ),
+        ExecuteProcess(
+             cmd=[[
+                 FindExecutable(name='ros2'),
+                 " service call ",
+                 "/honey/gnc/ekf/init_bias ",
+                 "std_srvs/srv/Empty ",
+                 '"{}"',
+             ]],
+             shell=True,
+             condition=IfCondition(LaunchConfiguration("honey"))
         ),
         # Auto-insert bumble at a canned location
         IncludeLaunchDescription(
@@ -222,6 +243,17 @@ def generate_launch_description():
             }.items(),
             condition=IfCondition(LaunchConfiguration("bumble")),
         ),
+        ExecuteProcess(
+             cmd=[[
+                 FindExecutable(name='ros2'),
+                 " service call ",
+                 "/bumble/gnc/ekf/init_bias ",
+                 "std_srvs/srv/Empty ",
+                 '"{}"',
+             ]],
+             shell=True,
+             condition=IfCondition(LaunchConfiguration("bumble"))
+        ),
         # Auto-insert queen at a canned location
         IncludeLaunchDescription(
             get_launch_file("launch/spawn.launch.py"),
@@ -243,15 +275,16 @@ def generate_launch_description():
             }.items(),
             condition=IfCondition(LaunchConfiguration("queen")),
         ),
-        # ExecuteProcess(
-        #     cmd=[[
-        #         FindExecutable(name='ros2'),
-        #         " service call ",
-        #         "/gnc/ekf/init_bias ",
-        #         "/init/bias/msg ",
-        #         '"{}"',
-        #     ]],
-        #     shell=True
-        # )
-        ]
+        ExecuteProcess(
+             cmd=[[
+                 FindExecutable(name='ros2'),
+                 " service call ",
+                 "/queen/gnc/ekf/init_bias ",
+                 "std_srvs/srv/Empty ",
+                 '"{}"',
+             ]],
+             shell=True,
+             condition=IfCondition(LaunchConfiguration("queen"))
+        )
+        
     )

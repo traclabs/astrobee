@@ -143,10 +143,9 @@ install(TARGETS data_to_disk_pub DESTINATION bin)
 install(TARGETS plan_pub DESTINATION bin)
 install(TARGETS simple_move DESTINATION lib/${PROJECT_NAME})
 install(TARGETS teleop_tool RUNTIME DESTINATION lib/${PROJECT_NAME})
-#install(TARGETS zones_pub DESTINATION bin)
+install(TARGETS zones_pub DESTINATION lib/${PROJECT_NAME})
 #install(CODE "execute_process(
 #  COMMAND ln -s ../../bin/data_to_disk_pub share/${PROJECT_NAME}
-#  COMMAND ln -s ../../bin/ekf_switch_mux share/${PROJECT_NAME}
 #  COMMAND ln -s ../../bin/plan_pub share/${PROJECT_NAME}
 #  COMMAND ln -s ../../bin/simple_move share/${PROJECT_NAME}
 #  COMMAND ln -s ../../bin/teleop_tool share/${PROJECT_NAME}

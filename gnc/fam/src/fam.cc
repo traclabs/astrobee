@@ -19,7 +19,6 @@
 #include <fam/fam.h>
 #include <msg_conversions/msg_conversions.h>
 #include <ff_common/ff_names.h>
-#include <ff_hw_msgs/msg/pmc_command.hpp>
 
 #include <Eigen/QR>
 

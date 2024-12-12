@@ -18,8 +18,8 @@
 # under the License.
 
 import numpy as np
-
 import vector3d
+
 # make sure setuptools from pip3 matches apt version
 # you may need to fix it like this: pip3 install setuptools==45.2.0 && pip3 install -U testresources
 

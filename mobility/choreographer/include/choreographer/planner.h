@@ -26,7 +26,6 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 // FSW libraries
-#include <ff_util/ff_component.h>
 #include <ff_common/ff_names.h>
 #include <ff_util/ff_action.h>
 #include <ff_util/ff_service.h>
@@ -224,7 +223,7 @@ class PlannerImplementation : public ff_util::FreeFlyerComponent {
   // called if action and service servers timeout on conenction.
   void InitFault(std::string const& msg ) {
     Error(msg);
-    AssertFault(ff_util::INITIALIZATION_FAILED, msg);
+    AssertFault(ff_util::INITIALIZATION_FAILED, msg, GetTimeNow());
     return;
   }
 

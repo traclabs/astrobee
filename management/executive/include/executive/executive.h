@@ -30,39 +30,40 @@
 #include <ff_hw_msgs/srv/set_enabled.hpp>
 #include <ff_hw_msgs/srv/set_flashlight.hpp>
 
-#include <ff_msgs/action/arm.hpp>
-#include <ff_msgs/action/dock.hpp>
-#include <ff_msgs/action/localization.hpp>
-#include <ff_msgs/action/motion.hpp>
-#include <ff_msgs/action/perch.hpp>
 #include <ff_msgs/msg/ack_completed_status.hpp>
 #include <ff_msgs/msg/ack_stamped.hpp>
 #include <ff_msgs/msg/ack_status.hpp>
 #include <ff_msgs/msg/agent_state_stamped.hpp>
+
+#include <ff_msgs/action/arm.hpp>
 #include <ff_msgs/msg/camera_states_stamped.hpp>
 #include <ff_msgs/msg/command_constants.hpp>
 #include <ff_msgs/msg/command_stamped.hpp>
 #include <ff_msgs/msg/compressed_file.hpp>
 #include <ff_msgs/msg/compressed_file_ack.hpp>
+#include <ff_msgs/srv/configure_camera.hpp>
 #include <ff_msgs/msg/control_command.hpp>
+#include <ff_msgs/action/dock.hpp>
+#include <ff_msgs/srv/enable_camera.hpp>
+#include <ff_msgs/srv/enable_recording.hpp>
 #include <ff_msgs/msg/fault_state.hpp>
 #include <ff_msgs/msg/guest_science_apk.hpp>
 #include <ff_msgs/msg/guest_science_config.hpp>
 #include <ff_msgs/msg/guest_science_state.hpp>
+#include <ff_msgs/action/localization.hpp>
+#include <ff_msgs/action/motion.hpp>
+#include <ff_msgs/action/perch.hpp>
 #include <ff_msgs/msg/plan_status_stamped.hpp>
-#include <ff_msgs/msg/zone.hpp>
-#include <ff_msgs/srv/configure_camera.hpp>
-#include <ff_msgs/srv/enable_camera.hpp>
-#include <ff_msgs/srv/enable_recording.hpp>
+#include <ff_msgs/srv/reset_map.hpp>
 #include <ff_msgs/srv/response_only.hpp>
 #include <ff_msgs/srv/set_data_to_disk.hpp>
+#include <ff_msgs/srv/set_exposure.hpp>
 #include <ff_msgs/srv/set_float.hpp>
 #include <ff_msgs/srv/set_inertia.hpp>
 #include <ff_msgs/srv/set_rate.hpp>
 #include <ff_msgs/srv/set_zones.hpp>
 #include <ff_msgs/srv/unload_load_nodelet.hpp>
-#include <ff_msgs/srv/reset_map.hpp>
-#include <ff_msgs/srv/set_exposure.hpp>
+#include <ff_msgs/msg/zone.hpp>
 
 #include <ff_common/ff_names.h>
 #include <ff_common/ff_ros.h>
@@ -264,8 +265,8 @@ class Executive : public ff_util::FreeFlyerComponent {
   bool StartRecording(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool StopAllMotion(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool StopArm(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
-  bool StopGuestScience(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool StopRecording(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
+  bool StopGuestScience(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool StowArm(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool SwitchLocalization(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
   bool Undock(ff_msgs::msg::CommandStamped::SharedPtr const cmd);
@@ -347,13 +348,13 @@ class Executive : public ff_util::FreeFlyerComponent {
   FreeFlyerServiceClient<ff_hw_msgs::srv::SetEnabled> pmc_enable_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetExposure> set_dock_cam_exposure_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetExposure> set_nav_cam_exposure_client_;
-
   FreeFlyerServiceClient<ff_msgs::srv::SetInertia> set_inertia_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetRate> set_rate_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetDataToDisk> set_data_client_;
   FreeFlyerServiceClient<ff_msgs::srv::ResetMap> reset_map_client_;  
   FreeFlyerServiceClient<ff_msgs::srv::EnableRecording>
                                                       enable_recording_client_;
+  FreeFlyerServiceClient<ff_msgs::srv::ResetMap> reset_map_client_;
   FreeFlyerServiceClient<ff_hw_msgs::srv::ClearTerminate> eps_terminate_client_;
   FreeFlyerServiceClient<ff_msgs::srv::ResponseOnly>
                                     enable_astrobee_intercommunication_client_;
