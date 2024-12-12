@@ -51,6 +51,13 @@ namespace io = boost::iostreams;
 
 FF_DEFINE_LOGGER("plan_pub")
 
+DEFINE_string(compression, "none",
+              "Type of compression [none, deflate, gzip]");
+DEFINE_string(ns, "", "Robot namespace");
+DEFINE_bool(remote, false, "Whether target command is remote robot");
+
+constexpr uintmax_t kMaxSize = 128 * 1024;
+
 rclcpp::Time plan_pub_time;
 
 Publisher<ff_msgs::msg::CommandStamped> command_pub;
@@ -68,15 +75,9 @@ bool ValidateCompression(const char* name, std::string const &value) {
   return false;
 }
 
-DEFINE_string(compression, "none",
-              "Type of compression [none, deflate, gzip]");
-DEFINE_string(ns, "", "Robot namespace");
-DEFINE_bool(remote, false, "Whether target command is remote robot");
-
-constexpr uintmax_t kMaxSize = 128 * 1024;
-
 void on_connect() {
   FF_INFO("subscriber present: sending plan");
+  //cf.header.stamp = ros::Time::now();
   plan_pub->publish(cf);
 }
 
@@ -84,11 +85,10 @@ void on_cf_ack(ff_msgs::msg::CompressedFileAck::SharedPtr const cf_ack) {
   FF_INFO("Got compressed file ack!");
   // compressed file ack is latched so we need to check the timestamp to make
   // sure this plan is being acked
-  // ROS_WARN_STREAM(plan_pub_time << " : " << cf_ack->header.stamp);
-
+  // FF_WARN_STREAM(plan_pub_time << " : " << cf_ack->header.stamp);
   // If remote and in the granite lab, the clocks of the robots might not be
   // properly synchronized because we do it manually
-  if (plan_pub_time <= rclcpp::Time(cf_ack->header.stamp) + rclcpp::Duration::from_seconds(5.0)) {
+  if (plan_pub_time.seconds() <= ( rclcpp::Time(cf_ack->header.stamp) + rclcpp::Duration::from_seconds(5.0)).seconds() ) {
     FF_INFO("Compressed file ack is valid! Sending set plan!");
     ff_msgs::msg::CommandStamped cmd;
     cmd.cmd_name = ff_msgs::msg::CommandConstants::CMD_NAME_SET_PLAN;
@@ -102,11 +102,11 @@ void on_plan_status(ff_msgs::msg::PlanStatusStamped::SharedPtr const ps) {
   FF_INFO("Got plan status!");
   // plan status is latched so we need to check the timestamp to make sure this
   // plan is loaded
-  // ROS_WARN_STREAM(plan_pub_time << " : " << ps->header.stamp);
+  // FF_WARN_STREAM(plan_pub_time << " : " << ps->header.stamp);
 
   // If remote and in the granite lab, the clocks of the robots might not be
   // properly synchronized because we do it manually
-  if (plan_pub_time <= ps->header.stamp + rclcpp::Duration::from_seconds(5.0)) {
+  if (plan_pub_time.seconds() <= ( rclcpp::Time(ps->header.stamp) + rclcpp::Duration::from_seconds(5.0)).seconds() ) {
     ff_msgs::msg::CommandStamped cmd;
     cmd.cmd_name = ff_msgs::msg::CommandConstants::CMD_NAME_RUN_PLAN;
     cmd.subsys_name = "Astrobee";
@@ -126,8 +126,10 @@ void TimerCallback() {
 
 int main(int argc, char** argv) {
   ff_common::InitFreeFlyerApplication(&argc, &argv);
-  rclcpp::init(argc, argv);
-  NodeHandle nh  = std::make_shared<rclcpp::Node>("plan_pub"); // ros::NodeHandle n(std::string("/") + FLAGS_ns);
+
+  rclcpp::init(argc, argv); //ros::init(argc, argv, "plan_pub");
+  NodeHandle nh; // ros::NodeHandle n(std::string("/") + FLAGS_ns); 
+  //ros::Time::waitForValid();
 
   if (!google::RegisterFlagValidator(&FLAGS_compression, &ValidateCompression)) {
     std::cerr << "Failed to register compression flag validator." << std::endl;
@@ -184,6 +186,14 @@ int main(int argc, char** argv) {
                                     ff_msgs::msg::CommandStamped,
                                     TOPIC_COMMAND,
                                     5);
+
+  Subscriber<ff_msgs::msg::CompressedFileAck> cf_ack_sub =
+      FF_CREATE_SUBSCRIBER(nh,
+                           ff_msgs::msg::CompressedFileAck,
+                           TOPIC_MANAGEMENT_EXEC_CF_ACK,
+                           10,
+                           std::bind(&on_cf_ack, std::placeholders::_1));
+
 
   Subscriber<ff_msgs::msg::PlanStatusStamped> plan_status_sub =
       FF_CREATE_SUBSCRIBER(nh,

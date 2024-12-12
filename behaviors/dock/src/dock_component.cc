@@ -353,7 +353,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
     fsm_.Add(STATE::UNDOCKING_WAITING_FOR_SPIN_UP,
       MOTION_FAILED, [this](FSM::Event const& event) -> FSM::State {
         err_ = RESPONSE::PREP_ENABLE_FAILED;
-        err_msg_ = "Spin up was not successful";
+        err_msg_ = "Spin up was not successful. " + err_msg_;
         Prep(ff_msgs::Motion::Goal::OFF);
         return STATE::RECOVERY_WAITING_FOR_SPIN_DOWN;
       });
@@ -425,7 +425,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
     cfg_.AddFile("behaviors/dock.config");
     if (!cfg_.Initialize(nh))
       return AssertFault(ff_util::INITIALIZATION_FAILED,
-                        "Could not start config server");
+                        "Could not start config server", GetTimeNow());
 
     // One shot timer to check if we undock with a timeout
     timer_eps_.createTimer(cfg_.Get<double>("timeout_eps_response"),
@@ -498,13 +498,13 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   // Timeout on a trajectory generation request
   void EnableTimeoutCallback(void) {
     return AssertFault(ff_util::INITIALIZATION_FAILED,
-                       "Could not find enable service");
+                       "Could not find enable service", GetTimeNow());
   }
 
   // Timeout on a trajectory generation request
   void UndockTimeoutCallback(void) {
     return AssertFault(ff_util::INITIALIZATION_FAILED,
-                       "Could not find undock service");
+                       "Could not find undock service", GetTimeNow());
   }
 
   // Ensure all clients are connected

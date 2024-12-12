@@ -174,9 +174,9 @@ TimestampedSet<T>::TimestampedSet(const boost::optional<size_t> max_size) : max_
 
 template <typename T>
 TimestampedSet<T>::TimestampedSet(const std::vector<Time>& timestamps, const std::vector<T>& values,
-                                  const boost::optional<size_t> max_size)
-  : max_size_(max_size) {
-  for (unsigned int i = 0; i < values.size(); ++i) {
+                                  const boost::optional<int> max_size)
+    : max_size_(max_size) {
+  for (long unsigned int i = 0; i < values.size(); ++i) {
     Add(timestamps[i], values[i]);
   }
 }
@@ -186,7 +186,7 @@ bool TimestampedSet<T>::Add(const Time timestamp, const T& value) {
   if (Contains(timestamp)) return false;
   timestamp_value_map_.emplace(timestamp, value);
   // Optionally shrink elements to half of max size if max size exceeded. Removes first half of set.
-  if (max_size_ && size() > *max_size_) {
+  if (max_size_ && size() > (size_t)(*max_size_) ) {
     auto end_it = timestamp_value_map_.begin();
     std::advance(end_it, *max_size_ / 2);
     timestamp_value_map_.erase(timestamp_value_map_.begin(), end_it);
@@ -431,7 +431,7 @@ template <typename T>
 std::pair<typename std::map<Time, T>::const_iterator, typename std::map<Time, T>::const_iterator>
 TimestampedSet<T>::InRangeValues(const Time oldest_allowed_timestamp, const Time latest_allowed_timestamp) {
   auto upper_bound = timestamp_value_map_.upper_bound(latest_allowed_timestamp);
-  auto lower_bound = timestamp_value_map_.lower_bound(oldest_allowed_timestamp);
+  //auto lower_bound = timestamp_value_map_.lower_bound(oldest_allowed_timestamp);
   // No values less than latest allowed time
   if (upper_bound == timestamp_value_map_.cbegin()) return {cend(), cend()};
   return std::make_pair(lower_bound, upper_bound);

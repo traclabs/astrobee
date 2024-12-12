@@ -85,8 +85,6 @@ def get_correctors(
         out[cam] = corrector
     return out
 
-import utilities.utilities
-
 
 def convert_bayer(
     bagfile,

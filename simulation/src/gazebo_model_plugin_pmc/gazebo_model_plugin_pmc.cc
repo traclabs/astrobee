@@ -177,7 +177,7 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
     if (!GetParams()) {
       FF_ERROR("PMC Actuator: Failed to get parameters.");
       AssertFault(ff_util::INITIALIZATION_FAILED,
-                  "Could not get PMC parameters");
+                  "Could not get PMC parameters", GetTimeNow());
     }
 
     // If we specify a frame name different to our sensor tag name
@@ -198,7 +198,7 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
     // Telemetry publisher
     pub_telemetry_ = FF_CREATE_PUBLISHER(nh, ff_hw_msgs::PmcTelemetry, TOPIC_HARDWARE_PMC_TELEMETRY, 1);
 
-    // State publisher as a latched topic
+    // State publisher (as a latest topic?!)
     pub_state_ = FF_CREATE_PUBLISHER(nh, ff_hw_msgs::PmcState, TOPIC_HARDWARE_PMC_STATE, 1);
 
     // Subscibe to PMC commands

@@ -85,7 +85,7 @@ void GroundTruthLocalizerComponent::PoseCallback(const std::shared_ptr<geometry_
   const lc::Time timestamp = lc::TimeFromHeader(pose->header);
   PublishLocState(timestamp);
   heartbeat_.header.stamp = GetTimeNow();
-  // Publish heartbeat for graph localizer and imu augmentor since flight software expects this
+  // Publish heartbeat for graph localizer and pose extrapolator since flight software expects this
   // and this runs in place of them
   heartbeat_.node = NODE_GRAPH_LOC;
   heartbeat_pub_->publish(heartbeat_);

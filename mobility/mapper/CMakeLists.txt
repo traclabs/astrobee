@@ -43,6 +43,10 @@ find_package(octomap REQUIRED)
 
   # message_runtime
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> sync/merge_latest_nasa_develop
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
 find_package(Octomap REQUIRED)
 

@@ -28,7 +28,7 @@ import sys
 
 import pandas as pd
 
-import bag_sweep
+import bag_sweeper
 import localization_common.utilities as lu
 import parameter_sweep_results_plotter
 import parameter_sweeper
