@@ -17,4 +17,4 @@
 #
 
 float64[36] covariance
-time time
+builtin_interfaces/Time time

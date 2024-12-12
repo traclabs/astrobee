@@ -15,7 +15,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 #
-Header header
+std_msgs/Header header
 geometry_msgs/PoseWithCovarianceStamped pose 
 VelocityWithCovariance velocity
 ImuBiasWithCovariance imu_bias

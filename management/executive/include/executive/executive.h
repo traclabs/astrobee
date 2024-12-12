@@ -346,14 +346,14 @@ class Executive : public ff_util::FreeFlyerComponent {
   FreeFlyerServiceClient<ff_hw_msgs::srv::ConfigurePayloadPower>
                                                           payload_power_client_;
   FreeFlyerServiceClient<ff_hw_msgs::srv::SetEnabled> pmc_enable_client_;
-  FreeFlyerServiceClient<ff_hw_msgs::srv::SetExposure> set_dock_cam_exposure_client_;
-  FreeFlyerServiceClient<ff_hw_msgs::srv::SetExposure> set_nav_cam_exposure_client_;
+  FreeFlyerServiceClient<ff_msgs::srv::SetExposure> set_dock_cam_exposure_client_;
+  FreeFlyerServiceClient<ff_msgs::srv::SetExposure> set_nav_cam_exposure_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetInertia> set_inertia_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetRate> set_rate_client_;
   FreeFlyerServiceClient<ff_msgs::srv::SetDataToDisk> set_data_client_;
   FreeFlyerServiceClient<ff_msgs::srv::EnableRecording>
                                                       enable_recording_client_;
-  FreeFlyerServiceClient<ff_msgs::srv::ResetMap> reset_map_client_
+  FreeFlyerServiceClient<ff_msgs::srv::ResetMap> reset_map_client_;
   FreeFlyerServiceClient<ff_hw_msgs::srv::ClearTerminate> eps_terminate_client_;
   FreeFlyerServiceClient<ff_msgs::srv::ResponseOnly>
                                     enable_astrobee_intercommunication_client_;

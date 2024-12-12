@@ -1697,7 +1697,7 @@ bool Executive::AutoReturn(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
     // command is received without a berth, set it to 0
     if (cmd->args.size() != 1) {
       cmd->args.resize(1);
-      cmd->args[0].data_type = ff_msgs::CommandArg::DATA_TYPE_INT;
+      cmd->args[0].data_type = ff_msgs::msg::CommandArg::DATA_TYPE_INT;
       cmd->args[0].i = 1;
     }
     if (!FillDockGoal(cmd, true)) {
@@ -2650,7 +2650,7 @@ bool Executive::SetEnableReplan(
 }
 
 bool Executive::SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
-  NODELET_INFO("Executive executing set exposure command!");
+  FF_INFO("Executive executing set exposure command!");
   std::string err_msg = "";
   uint8_t completed_status = ff_msgs::msg::AckCompletedStatus::EXEC_FAILED;
   bool successful = false;
