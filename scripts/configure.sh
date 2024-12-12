@@ -272,8 +272,6 @@ canonicalize()
     esac
 }
 
-args_copy=("$@")
-
 # Start the real work here...
 parse_args $@
 
@@ -319,81 +317,7 @@ if [[ $native_build == 1 && $armhf_build == 1 ]] ; then
     install_path=""
 fi
 
-if [ $skip_autogen == 0 ] ; then
-    if [[ "$workspace_path" == "" ]]; then
-        workspace_path="."
-    fi
-    workspace_path=`canonicalize "${workspace_path}"`
 
-    autogen_path=`canonicalize "${autogen_path}"`
-
-    if [[ "${ROS_VERSION}" == "1" ]]; then
-        build_cmd=catkin
-        extras_cmd=build
-        source_folder=devel
-    elif [[ "${ROS_VERSION}" == "2" ]]; then
-        build_cmd=colcon
-        extras_cmd="build --packages-select"
-        source_folder=install
-    else
-        echo "ROS_VERSION environment variable must be set to '1' or '2' for autogen!"
-        exit 1
-    fi
-
-    if [[ "$SHELL" == *"zsh"* ]]; then
-        shell="zsh"
-    elif [[ "$SHELL" == *"bash"* ]]; then
-        shell="bash"
-    elif [[ "$SHELL" == *"sh"* ]]; then
-        shell="sh"
-    else
-        echo "Shell not supported!"
-        exit 1
-    fi
-
-    echo "installing git pre-commit hook..."
-    # this can't be done in the autogen folder which lacks a .git subfolder
-    cp "${ff_path}/scripts/git/pre-commit" "${ff_path}/.git/hooks"
-
-    echo "running autogen_ros_version_src.py to configure ROS version..."
-    "${ff_path}/scripts/build/autogen_ros_version_src.py" --checkout-dir="${ff_path}" --autogen-dir="${autogen_path}"
-
-    echo "running child instance of configure.sh in new autogen location..."
-    "${autogen_path}/scripts/configure.sh" -Z "${args_copy[@]}"
-
-    if [[ "${ROS_VERSION}" == "1" ]]; then
-        echo "child configure.sh complete, picking up CMAKE_PREFIX_PATH..."
-        # it should have been possible to pick up the extended
-        # CMAKE_PREFIX_PATH by sourcing .bashrc here, but when tested that
-        # mysteriously failed. instead copy/paste the path setup from
-        # below. this is needed before invoking 'catkin build'.
-        cmake_astrobee_path=`catkin locate -s`/cmake
-        if [[ ":$CMAKE_PREFIX_PATH:" != *":${cmake_astrobee_path}:"* ]]; then CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH:+"$CMAKE_PREFIX_PATH:"}${cmake_astrobee_path}"; fi
-    fi
-
-    echo "doing minimal build (just astrobee package) to force creation of ${source_folder}/setup.sh..."
-    echo ${build_cmd} ${extras_cmd} astrobee
-    ${build_cmd} ${extras_cmd} astrobee
-
-    echo "adding alias to ${source_folder}/setup.${shell} so ${build_cmd} runs autogen first on subsequent runs..."
-    cat >>"${workspace_path}/${source_folder}/setup.${shell}" << EOF
-
-${build_cmd}_function () {
-    echo "Symlinking..."
-    echo 'ROS_VERSION=${ROS_VERSION} "${ff_path}/scripts/build/autogen_ros_version_src.py" --checkout-dir="${ff_path}" --autogen-dir="${autogen_path}"'
-    ROS_VERSION=${ROS_VERSION} "${ff_path}/scripts/build/autogen_ros_version_src.py" -v --checkout-dir="${ff_path}" --autogen-dir="${autogen_path}"
-    \\${build_cmd} "\$@"
-}
-
-alias ${build_cmd}=${build_cmd}_function
-EOF
-
-    echo "(to suppress alias that invokes autogen, run \\${build_cmd} instead of ${build_cmd})"
-
-    exit 0
-fi
-
-<<<<<<< HEAD
 if [[ "${ROS_VERSION}" == "1" ]]; then
     if [ $native_build == 1 ] ; then
         echo "configuring for native linux..."
@@ -458,25 +382,3 @@ else  # begin ROS2 version
     echo "completing the rest of the configuration is up to you!"
 
 fi  # end ROS2 version
-=======
-if [ $armhf_build == 1 ] ; then
-    echo "configuring for armhf..."
-    catkin init
-    armhf_opts="-DCMAKE_TOOLCHAIN_FILE=${ff_path}/scripts/build/ubuntu_cross.cmake -DARMHF_ROS_DISTRO=${ros_version} -DCATKIN_ENABLE_TESTING=off"
-    use_ctc=" -DUSE_CTC=on"
-    enable_gazebo=""
-    build_loc_rviz_plugins=""
-    catkin profile add ${profile:-armhf}
-    catkin profile set ${profile:-armhf}
-    catkin config --extend $ARMHF_CHROOT_DIR/opt/ros/$ros_version \
-        --build-space ${workspace_path:-armhf/}build \
-        --install-space ${install_path:-${workspace_path:-armhf/}}opt/astrobee \
-        --devel-space ${workspace_path:-armhf/}devel \
-        --log-space ${workspace_path:-armhf/}logs \
-        --install \
-        --skiplist astrobee_handrail_8_5 astrobee_handrail_21_5 astrobee_handrail_30 astrobee_handrail_41_5 astrobee_iss astrobee_granite \
-            astrobee_dock astrobee_freeflyer astrobee_gazebo localization_rviz_plugins ground_dds_ros_bridge \
-        --cmake-args -DARMHF_CHROOT_DIR=$ARMHF_CHROOT_DIR ${armhf_opts} ${use_ctc} ${enable_gazebo} ${build_loc_rviz_plugins} ${extra_opts} \
-            -DCMAKE_BUILD_TYPE=Release
-fi
->>>>>>> upstream/develop

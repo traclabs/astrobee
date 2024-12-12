@@ -62,7 +62,6 @@ this needs to be done everytime you restart vscode, and enables the screen forwa
 This runs inside the Docker container:
 
 ```bash
-<<<<<<< HEAD
 cd $ASTROBEE_WS
 source /opt/ros/rolling/setup.bash
 colcon build --symlink-install
@@ -72,9 +71,6 @@ coldon test-result --verbose
 
 For testing, you can alternatively use the script to produces better debug output if there is a failed test:
 ```bash
-=======
-catkin build
->>>>>>> upstream/develop
 ./scripts/run_tests.sh
 ```
 

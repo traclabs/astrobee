@@ -268,7 +268,6 @@ if [ "$astrobee_quick" = "true" ]; then
     build astrobee_quick "${revision}-" "quick-"
 fi
 
-<<<<<<< HEAD
 if [ "$rolling" = "true" ]; then
     build ros2/ros2_base "${revision}-" "rolling_base-"
     build ros2/ros2_rolling_deb "${revision}-" "rolling-"
@@ -278,10 +277,8 @@ if [ "$build_astrobee_ros2" = "true" ]; then
     build ros2/ros2_astrobee "${revision}-" "ros2-"
 fi
 
-=======
 # When we publish the base, we always want it
 # to rewrite the latest for future use
->>>>>>> upstream/develop
 if [ "$push_astrobee_base" = "true" ]; then
     push astrobee_base "latest-" "base-"
 fi
