@@ -1693,11 +1693,6 @@ bool Executive::AutoReturn(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
   } else {
     successful = true;
     cmd->cmd_name = "dock";
-<<<<<<< HEAD
-    cmd->args.resize(1);
-    cmd->args[0].data_type = ff_msgs::msg::CommandArg::DATA_TYPE_INT;
-    cmd->args[0].i = 1;
-=======
     // The berth number was added to the command after GDS development. If the
     // command is received without a berth, set it to 0
     if (cmd->args.size() != 1) {
@@ -1705,7 +1700,6 @@ bool Executive::AutoReturn(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
       cmd->args[0].data_type = ff_msgs::CommandArg::DATA_TYPE_INT;
       cmd->args[0].i = 1;
     }
->>>>>>> upstream/develop
     if (!FillDockGoal(cmd, true)) {
       return false;
     }
@@ -2655,15 +2649,10 @@ bool Executive::SetEnableReplan(
   return false;
 }
 
-<<<<<<< HEAD
-bool Executive::SetFlashlightBrightness(
-                            ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
-  FF_INFO("Executive executing set flashlight brightness command!");
-=======
-bool Executive::SetExposure(ff_msgs::CommandStampedPtr const& cmd) {
+bool Executive::SetExposure(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
   NODELET_INFO("Executive executing set exposure command!");
   std::string err_msg = "";
-  uint8_t completed_status = ff_msgs::AckCompletedStatus::EXEC_FAILED;
+  uint8_t completed_status = ff_msgs::msg::AckCompletedStatus::EXEC_FAILED;
   bool successful = false;
   // Only change the exposure if astrobee isn't moving
   if (!FailCommandIfMoving(cmd)) {
@@ -2672,13 +2661,13 @@ bool Executive::SetExposure(ff_msgs::CommandStampedPtr const& cmd) {
 
   // Check to make sure command is formatted as expected
   if (cmd->args.size() != 2 ||
-      cmd->args[0].data_type != ff_msgs::CommandArg::DATA_TYPE_STRING ||
-      cmd->args[1].data_type != ff_msgs::CommandArg::DATA_TYPE_FLOAT) {
+      cmd->args[0].data_type != ff_msgs::msg::CommandArg::DATA_TYPE_STRING ||
+      cmd->args[1].data_type != ff_msgs::msg::CommandArg::DATA_TYPE_FLOAT) {
     err_msg = "Malformed arguments for set exposure command!";
-    completed_status = ff_msgs::AckCompletedStatus::BAD_SYNTAX;
+    completed_status = ff_msgs::msg::AckCompletedStatus::BAD_SYNTAX;
   } else {
-    ff_msgs::SetExposure set_exposure_srv;
-    set_exposure_srv.request.exposure = cmd->args[1].f;
+    ff_util::FreeFlyerService<ff_msgs::srv::SetExposure> set_exposure_srv;
+    set_exposure_srv.request->exposure = cmd->args[1].f;
     if (cmd->args[0].s == CommandConstants::PARAM_NAME_CAMERA_NAME_DOCK) {
       // Check to make sure the dock camera exposure service is valid
       if (!set_dock_cam_exposure_client_.exists()) {
@@ -2689,9 +2678,9 @@ bool Executive::SetExposure(ff_msgs::CommandStampedPtr const& cmd) {
         if (!set_dock_cam_exposure_client_.call(set_exposure_srv)) {
           err_msg = "Failed to set dock cam exposure.";
         } else {
-          if (set_exposure_srv.response.success) {
+          if (set_exposure_srv.response->success) {
             successful = true;
-            completed_status = ff_msgs::AckCompletedStatus::OK;
+            completed_status = ff_msgs::msg::AckCompletedStatus::OK;
           }
         }
       }
@@ -2705,9 +2694,9 @@ bool Executive::SetExposure(ff_msgs::CommandStampedPtr const& cmd) {
         if (!set_nav_cam_exposure_client_.call(set_exposure_srv)) {
           err_msg = "Failed to set nav cam exposure.";
         } else {
-          if (set_exposure_srv.response.success) {
+          if (set_exposure_srv.response->success) {
             successful = true;
-            completed_status = ff_msgs::AckCompletedStatus::OK;
+            completed_status = ff_msgs::msg::AckCompletedStatus::OK;
           }
         }
       }
@@ -2715,7 +2704,7 @@ bool Executive::SetExposure(ff_msgs::CommandStampedPtr const& cmd) {
       successful = false;
       err_msg = "The fsw can only set the exposure for the nav and dock camera";
       err_msg += ". Not the " + cmd->args[0].s + " camera.";
-      completed_status = ff_msgs::AckCompletedStatus::EXEC_FAILED;
+      completed_status = ff_msgs::msg::AckCompletedStatus::EXEC_FAILED;
     }
   }
 
@@ -2723,9 +2712,10 @@ bool Executive::SetExposure(ff_msgs::CommandStampedPtr const& cmd) {
   return successful;
 }
 
-bool Executive::SetFlashlightBrightness(ff_msgs::CommandStampedPtr const& cmd) {
-  NODELET_INFO("Executive executing set flashlight brightness command!");
->>>>>>> upstream/develop
+bool Executive::SetFlashlightBrightness(
+                            ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
+  FF_INFO("Executive executing set flashlight brightness command!");
+
   bool successful = true;
   uint8_t completed_status = ff_msgs::msg::AckCompletedStatus::OK;
   std::string err_msg = "";
@@ -2880,33 +2870,28 @@ bool Executive::SetInertia(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
   return false;
 }
 
-<<<<<<< HEAD
-bool Executive::SetOperatingLimits(
-                            ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
-  FF_INFO("Executive executing set operating limits command!");
-=======
-bool Executive::SetMap(ff_msgs::CommandStampedPtr const& cmd) {
-  NODELET_INFO("Executive executing set map command!");
+bool Executive::SetMap(ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
+  FF_INFO("Executive executing set map command!");
   if (FailCommandIfMoving(cmd)) {
     if (cmd->args.size() != 1 ||
-        cmd->args[0].data_type != ff_msgs::CommandArg::DATA_TYPE_STRING) {
+        cmd->args[0].data_type != ff_msgs::msg::CommandArg::DATA_TYPE_STRING) {
       state_->AckCmd(cmd->cmd_id,
-                     ff_msgs::AckCompletedStatus::BAD_SYNTAX,
+                     ff_msgs::msg::AckCompletedStatus::BAD_SYNTAX,
                      "Malformed arguments for set map command!");
       return false;
     }
 
-    ff_msgs::ResetMap map_srv;
+    ff_util::FreeFlyerService<ff_msgs::srv::ResetMap> map_srv;
     // Extract map path and name
-    map_srv.request.map_file = cmd->args[0].s;
+    map_srv.request->map_file = cmd->args[0].s;
 
-    if (!CheckServiceExists(reset_map_client_, "Reset map", cmd->cmd_id)) {
+    if (!CheckServiceExists(reset_map_client_.exists(), "Reset map", cmd->cmd_id)) {
       return false;
     }
 
     if (!reset_map_client_.call(map_srv)) {
       state_->AckCmd(cmd->cmd_id,
-                     ff_msgs::AckCompletedStatus::EXEC_FAILED,
+                     ff_msgs::msg::AckCompletedStatus::EXEC_FAILED,
                      "Reset map service returned false!");
       return false;
     }
@@ -2918,9 +2903,10 @@ bool Executive::SetMap(ff_msgs::CommandStampedPtr const& cmd) {
   return false;
 }
 
-bool Executive::SetOperatingLimits(ff_msgs::CommandStampedPtr const& cmd) {
-  NODELET_INFO("Executive executing set operating limits command!");
->>>>>>> upstream/develop
+bool Executive::SetOperatingLimits(
+                            ff_msgs::msg::CommandStamped::SharedPtr const cmd) {
+  FF_INFO("Executive executing set operating limits command!");
+
   if (FailCommandIfMoving(cmd)) {
     if (cmd->args.size() != 7 ||
         cmd->args[0].data_type != ff_msgs::msg::CommandArg::DATA_TYPE_STRING ||
@@ -3982,34 +3968,22 @@ void Executive::Initialize(NodeHandle &nh) {
 
   sci_cam_enable_client_.Create(nh_, SERVICE_MANAGEMENT_SCI_CAM_ENABLE);
 
-<<<<<<< HEAD
   set_inertia_client_.Create(nh_, SERVICE_MOBILITY_SET_INERTIA);
-=======
-  set_dock_cam_exposure_client_ = nh_.serviceClient<ff_msgs::SetExposure>(
-                                          std::string(TOPIC_HARDWARE_DOCK_CAM) +
+
+  set_dock_cam_exposure_client_.Create(nh_, std::string(TOPIC_HARDWARE_DOCK_CAM) +
                                           std::string(SERVICE_SET_EXPOSURE));
 
-  set_nav_cam_exposure_client_ = nh_.serviceClient<ff_msgs::SetExposure>(
-                                          std::string(TOPIC_HARDWARE_NAV_CAM) +
+  set_nav_cam_exposure_client_.Create(nh_, std::string(TOPIC_HARDWARE_NAV_CAM) +
                                           std::string(SERVICE_SET_EXPOSURE));
 
-  set_inertia_client_ = nh_.serviceClient<ff_msgs::SetInertia>(
-                                                  SERVICE_MOBILITY_SET_INERTIA);
->>>>>>> upstream/develop
 
   set_rate_client_.Create(nh_, SERVICE_COMMUNICATIONS_DDS_SET_TELEM_RATES);
 
   set_data_client_.Create(nh_, SERVICE_MANAGEMENT_DATA_BAGGER_SET_DATA_TO_DISK);
 
-<<<<<<< HEAD
-  enable_recording_client_.Create(nh_,
-=======
-  reset_map_client_ = nh_.serviceClient<ff_msgs::ResetMap>(
-                                                SERVICE_LOCALIZATION_RESET_MAP);
+  reset_map_client_.Create(nh_, SERVICE_LOCALIZATION_RESET_MAP);
 
-  enable_recording_client_ = nh_.serviceClient<ff_msgs::EnableRecording>(
->>>>>>> upstream/develop
-                              SERVICE_MANAGEMENT_DATA_BAGGER_ENABLE_RECORDING);
+  enable_recording_client_.Create(nh_, SERVICE_MANAGEMENT_DATA_BAGGER_ENABLE_RECORDING);
 
   eps_terminate_client_.Create(nh_, SERVICE_HARDWARE_EPS_CLEAR_TERMINATE);
 

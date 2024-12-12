@@ -173,15 +173,10 @@ template <typename T>
 TimestampedSet<T>::TimestampedSet(const boost::optional<int> max_size) : max_size_(max_size) {}
 
 template <typename T>
-<<<<<<< HEAD
-TimestampedSet<T>::TimestampedSet(const std::vector<Time>& timestamps, const std::vector<T>& values) {
-  for (unsigned int i = 0; i < values.size(); ++i) {
-=======
 TimestampedSet<T>::TimestampedSet(const std::vector<Time>& timestamps, const std::vector<T>& values,
                                   const boost::optional<int> max_size)
     : max_size_(max_size) {
   for (int i = 0; i < values.size(); ++i) {
->>>>>>> upstream/develop
     Add(timestamps[i], values[i]);
   }
 }

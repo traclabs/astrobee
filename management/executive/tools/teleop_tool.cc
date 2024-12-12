@@ -591,12 +591,10 @@ void AckCallback(ff_msgs::msg::AckStamped::SharedPtr const ack) {
     // Command failed due to bad syntax or an actual failure
     std::cout << "\n" << ack->cmd_id << " command failed! " << ack->message;
     std::cout << "\n";
-<<<<<<< HEAD
+
     rclcpp::shutdown();
-=======
-    ros::shutdown();
     exit(1);
->>>>>>> upstream/develop
+    
     return;
   }
   if (Finished()) {
@@ -762,14 +760,11 @@ int main(int argc, char** argv) {
 
   // Hacky time out
   int count = 0;
-<<<<<<< HEAD
+
   std::chrono::nanoseconds nanoseconds(200000000);
-  while (nh->count_publishers(TOPIC_MANAGEMENT_ACK) == 0) {
+  while (nh->count_publishers(TOPIC_MANAGEMENT_ACK) == 0 && !FLAGS_remote) {
     rclcpp::sleep_for(nanoseconds);
-=======
-  while (ack_sub.getNumPublishers() == 0 && !FLAGS_remote) {
-    ros::Duration(0.2).sleep();
->>>>>>> upstream/develop
+    
     // Only wait 2 seconds
     if (count == 9) {
       std::cout << "No publisher for acks topics. This tool will not work ";

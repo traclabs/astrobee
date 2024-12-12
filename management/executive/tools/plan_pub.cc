@@ -53,6 +53,8 @@ FF_DEFINE_LOGGER("plan_pub")
 
 DEFINE_string(compression, "none",
               "Type of compression [none, deflate, gzip]");
+DEFINE_string(ns, "", "Robot namespace");
+DEFINE_bool(remote, false, "Whether target command is remote robot");
 
 constexpr uintmax_t kMaxSize = 128 * 1024;
 
@@ -73,27 +75,11 @@ bool ValidateCompression(const char* name, std::string const &value) {
   return false;
 }
 
-<<<<<<< HEAD
+
 void on_connect() {
   FF_INFO("subscriber present: sending plan");
+  //cf.header.stamp = ros::Time::now();
   plan_pub->publish(cf);
-=======
-DEFINE_string(compression, "none",
-              "Type of compression [none, deflate, gzip]");
-DEFINE_string(ns, "", "Robot namespace");
-DEFINE_bool(remote, false, "Whether target command is remote robot");
-
-constexpr uintmax_t kMaxSize = 128 * 1024;
-
-ros::Publisher command_pub;
-ros::Time plan_pub_time;
-
-void on_connect(ros::SingleSubscriberPublisher const& sub,
-                ff_msgs::CompressedFile &cf) {
-  ROS_INFO("subscriber present: sending plan");
-  cf.header.stamp = ros::Time::now();
-  sub.publish(cf);
->>>>>>> upstream/develop
 }
 
 void on_cf_ack(ff_msgs::msg::CompressedFileAck::SharedPtr const cf_ack) {

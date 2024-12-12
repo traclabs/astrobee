@@ -20,12 +20,9 @@
 #define LOCALIZATION_COMMON_UTILITIES_H_
 
 #include <config_reader/config_reader.h>
-<<<<<<< HEAD
-=======
-#include <ff_msgs/CombinedNavState.h>
-#include <ff_msgs/GraphVIOState.h>
-#include <ff_msgs/VisualLandmarks.h>
->>>>>>> upstream/develop
+#include <ff_msgs/msg/combined_nav_state.hpp>
+#include <ff_msgs/msg/graph_VIO_state.hpp>
+#include <ff_msgs/msg/visual_landmarks.hpp>
 #include <localization_common/combined_nav_state.h>
 #include <localization_common/combined_nav_state_covariances.h>
 #include <localization_common/pose_with_covariance.h>

@@ -79,14 +79,8 @@ rclcpp_components_register_nodes(executive "executive::Executive")
 
 ## Declare a C++ executable: data_to_disk_pub
 add_executable(data_to_disk_pub tools/data_to_disk_pub.cc)
-<<<<<<< HEAD
 ament_target_dependencies(data_to_disk_pub rclcpp ff_common ff_msgs Boost)
 target_link_libraries(data_to_disk_pub executive gflags)
-=======
-add_dependencies(data_to_disk_pub ${catkin_EXPORTED_TARGETS})
-target_link_libraries(data_to_disk_pub
-  executive gflags ${catkin_LIBRARIES})
->>>>>>> upstream/develop
 
 ## Declare a C++ executable: plan_pub
 add_executable(plan_pub tools/plan_pub.cc)

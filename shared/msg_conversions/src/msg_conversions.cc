@@ -319,14 +319,11 @@ Eigen::Isometry3d LoadEigenTransform(config_reader::ConfigReader& config, const 
                                      const std::string& prefix) {
   Eigen::Vector3d body_t_sensor;
   Eigen::Quaterniond body_Q_sensor;
-<<<<<<< HEAD
-  if (!msg_conversions::config_read_transform(&config, transform_config_name.c_str(), &body_t_sensor, &body_Q_sensor))
-    FF_FATAL_STREAM("Unspecified transform config: " << transform_config_name);
-=======
+
   if (!msg_conversions::config_read_transform(&config, (prefix + transform_config_name).c_str(), &body_t_sensor,
                                               &body_Q_sensor))
-    ROS_FATAL_STREAM("Unspecified transform config: " << prefix + transform_config_name);
->>>>>>> upstream/develop
+    FF_FATAL_STREAM("Unspecified transform config: " << prefix + transform_config_name);
+
   Eigen::Isometry3d body_T_sensor = Eigen::Isometry3d::Identity();
   body_T_sensor.translation() = body_t_sensor;
   body_T_sensor.linear() = body_Q_sensor.toRotationMatrix();
@@ -335,54 +332,39 @@ Eigen::Isometry3d LoadEigenTransform(config_reader::ConfigReader& config, const 
 
 float LoadFloat(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   float val;
-<<<<<<< HEAD
-  if (!config.GetReal(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
-=======
   if (!config.GetReal((prefix + config_name).c_str(), &val))
-    ROS_FATAL_STREAM("Failed to load " << prefix + config_name);
->>>>>>> upstream/develop
+    FF_FATAL_STREAM("Failed to load " << prefix + config_name);
+
   return val;
 }
 
 double LoadDouble(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   double val;
-<<<<<<< HEAD
-  if (!config.GetReal(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
-=======
   if (!config.GetReal((prefix + config_name).c_str(), &val))
-    ROS_FATAL_STREAM("Failed to load " << prefix + config_name);
->>>>>>> upstream/develop
+    FF_FATAL_STREAM("Failed to load " << prefix + config_name);
+
   return val;
 }
 
 int LoadInt(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   int val;
-<<<<<<< HEAD
-  if (!config.GetInt(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
-=======
-  if (!config.GetInt((prefix + config_name).c_str(), &val)) ROS_FATAL_STREAM("Failed to load " << prefix + config_name);
->>>>>>> upstream/develop
+  if (!config.GetInt((prefix + config_name).c_str(), &val)) FF_FATAL_STREAM("Failed to load " << prefix + config_name);
+
   return val;
 }
 
 bool LoadBool(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   bool val;
-<<<<<<< HEAD
-  if (!config.GetBool(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
-=======
   if (!config.GetBool((prefix + config_name).c_str(), &val))
-    ROS_FATAL_STREAM("Failed to load " << prefix + config_name);
->>>>>>> upstream/develop
+    FF_FATAL_STREAM("Failed to load " << prefix + config_name);
+
   return val;
 }
 
 std::string LoadString(config_reader::ConfigReader& config, const std::string& config_name, const std::string& prefix) {
   std::string val;
-<<<<<<< HEAD
-  if (!config.GetStr(config_name.c_str(), &val)) FF_FATAL_STREAM("Failed to load " << config_name);
-=======
-  if (!config.GetStr((prefix + config_name).c_str(), &val)) ROS_FATAL_STREAM("Failed to load " << prefix + config_name);
->>>>>>> upstream/develop
+  if (!config.GetStr((prefix + config_name).c_str(), &val)) FF_FATAL_STREAM("Failed to load " << prefix + config_name);
+
   return val;
 }
 

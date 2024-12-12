@@ -167,18 +167,6 @@ bool CpuMemMonitor::ReadParams() {
   config_reader::ConfigReader::Table processor_config(&config_params_,
                                                       processor_name_.c_str());
 
-<<<<<<< HEAD
-  // get udpate pid frequency
-  if (!processor_config.GetPosReal("update_pid_hz", &update_pid_hz_)) {
-    err_msg = "CPU monitor: Update PID frequency not specified for " +
-                                                                processor_name_;
-    FF_ERROR_STREAM(err_msg);
-    this->AssertFault(ff_util::INITIALIZATION_FAILED, err_msg);
-    return false;
-  }
-
-=======
->>>>>>> upstream/develop
   // get udpate stats frequency
   if (!processor_config.GetPosReal("update_freq_hz", &update_freq_hz_)) {
     err_msg = "CPU monitor: Update frequency not specified for " +
@@ -254,18 +242,6 @@ bool CpuMemMonitor::ReadParams() {
     FF_ERROR_STREAM(err_msg);
     this->AssertFault(ff_util::INITIALIZATION_FAILED, err_msg);
   }
-<<<<<<< HEAD
-  for (int i = 0; i < nodes.GetSize(); i++) {
-    config_reader::ConfigReader::Table node;
-    if (!nodes.GetTable(i + 1, &node)) {
-      FF_ERROR_STREAM("Could not get node table");
-      return false;
-    }
-    std::string name;
-    if (node.GetStr("name", &name)) {
-      NODELET_DEBUG_STREAM("Read node " << name);
-      nodes_pid_.insert(std::pair<std::string, int>(name, 0));
-=======
   if (nodes_pid_.size() == 0) {  // modifying nodes while running not supported
     for (int i = 0; i < nodes.GetSize(); i++) {
       config_reader::ConfigReader::Table node;
@@ -278,7 +254,6 @@ bool CpuMemMonitor::ReadParams() {
         NODELET_DEBUG_STREAM("Read node " << name);
         nodes_pid_.insert(std::pair<std::string, int>(name, 0));
       }
->>>>>>> upstream/develop
     }
   }
   return true;

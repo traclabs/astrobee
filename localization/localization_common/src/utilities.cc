@@ -21,13 +21,10 @@
 #include <localization_common/utilities.h>
 #include <msg_conversions/msg_conversions.h>
 
-<<<<<<< HEAD
-=======
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Quaternion.h>
-#include <ros/package.h>
+#include <geometry_msgs/msg/point.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
 
->>>>>>> upstream/develop
 #include <cstdlib>
 #include <string>
 
@@ -99,7 +96,7 @@ void LoadGraphVIOConfig(config_reader::ConfigReader& config, const std::string& 
 }
 
 void SetEnvironmentConfigs(const std::string& world, const std::string& robot_config_file) {
-  const std::string astrobee_configs_path = ros::package::getPath("astrobee");
+  const std::string astrobee_configs_path = ament_index_cpp::get_package_share_directory("astrobee");
   const std::string full_robot_config_file = "config/robots/" + robot_config_file;
   setenv("ASTROBEE_RESOURCE_DIR", (astrobee_configs_path + "/resources").c_str(), true);
   setenv("ASTROBEE_CONFIG_DIR", (astrobee_configs_path + "/config").c_str(), true);
