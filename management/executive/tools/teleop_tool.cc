@@ -837,13 +837,9 @@ int main(int argc, char** argv) {
                           std::bind(&DockStateCallback, std::placeholders::_1));
     // Hacky time out
     int dock_count = 0;
-<<<<<<< HEAD
-    while (nh->count_publishers(TOPIC_BEHAVIORS_DOCKING_STATE) == 0) {
+    while (nh->count_publishers(TOPIC_BEHAVIORS_DOCKING_STATE) == 0 && !FLAGS_remote) {
       rclcpp::sleep_for(nanoseconds);
-=======
-    while (dock_sub.getNumPublishers() == 0 && !FLAGS_remote) {
-      ros::Duration(0.2).sleep();
->>>>>>> upstream/develop
+
       // Only wait 2 seconds
       if (dock_count == 9) {
         std::cout << "No publisher for dock state. This tool will not work ";
@@ -853,21 +849,17 @@ int main(int argc, char** argv) {
       dock_count++;
     }
   }
-<<<<<<< HEAD
-  
-=======
 
   // If remote, spin for seconds
   if (FLAGS_remote) {
-    ros::Rate loop_rate(10);
-    ros::Time start_time = ros::Time::now();
+    rclcpp::Rate loop_rate(10);
+    rclcpp::Time start_time = nh->now();
 
     // Spin for 3 seconds
-    while (ros::Time::now() - start_time < ros::Duration(3.0))
+    while ( (nh->now() - start_time).seconds() < 3.0)
         loop_rate.sleep();
   }
 
->>>>>>> upstream/develop
   if (!SendNextCommand()) {
     return 1;
   }
