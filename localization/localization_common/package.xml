@@ -23,13 +23,14 @@
   <build_depend>config_reader</build_depend>
   <build_depend>msg_conversions</build_depend>
   <build_depend>ff_msgs</build_depend>
+  <build_depend>ff_common</build_depend>  
 
   <exec_depend>astrobee</exec_depend>
   <exec_depend>camera</exec_depend>
   <exec_depend>config_reader</exec_depend>
   <exec_depend>msg_conversions</exec_depend>
   <exec_depend>ff_msgs</exec_depend>
-
+  <exec_depend>ff_common</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

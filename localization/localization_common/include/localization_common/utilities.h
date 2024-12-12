@@ -21,7 +21,7 @@
 
 #include <config_reader/config_reader.h>
 #include <ff_msgs/msg/combined_nav_state.hpp>
-#include <ff_msgs/msg/graph_VIO_state.hpp>
+#include <ff_msgs/msg/graph_vio_state.hpp>
 #include <ff_msgs/msg/visual_landmarks.hpp>
 #include <localization_common/combined_nav_state.h>
 #include <localization_common/combined_nav_state_covariances.h>
@@ -41,6 +41,7 @@
 namespace ff_msgs {
 typedef msg::GraphState GraphState;
 typedef msg::VisualLandmarks VisualLandmarks;
+typedef msg::CombinedNavState CombinedNavState;
 }  // namespace ff_msgs
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -129,7 +130,7 @@ ff_msgs::CombinedNavState CombinedNavStateToMsg(const CombinedNavState& combined
                                                 const PoseCovariance& pose_covariance,
                                                 const Eigen::Matrix3d& velocity_covariance,
                                                 const Eigen::Matrix<double, 6, 6>& imu_bias_covariance,
-                                                const TimestampedSet<PoseCovariance>& correlation_covariances = {});
+                                                const TimestampedSet<PoseCovariance>& correlation_covariances = TimestampedSet<PoseCovariance>());
 
 template <class LocMsgType>
 void CombinedNavStateToLocMsg(const CombinedNavState& combined_nav_state, LocMsgType& loc_msg);

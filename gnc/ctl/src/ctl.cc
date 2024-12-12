@@ -351,7 +351,7 @@ void Control::Initialize(void) {
 
 void Control::ReadParams(config_reader::ConfigReader* config) {
   if (!config->GetReal("tun_vel_gain", &tun_vel_gain))
-    ROS_FATAL("Unspecified tun_vel_gain.");
+    FF_FATAL("Unspecified tun_vel_gain.");
   Eigen::Vector3d temp;
   if (!msg_conversions::config_read_vector(config, "tun_accel_gain", &temp))
     FF_FATAL("Unspecified tun_accel_gain.");

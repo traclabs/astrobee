@@ -297,5 +297,7 @@ install(DIRECTORY launch
 
 # pluginlib_export_plugin_description_file(astrobee_gazebo gazebo_astrobee_plugins.xml)
 
+
 ament_package()
-# endif (ENABLE_GAZEBO)
+
+endif (ENABLE_GAZEBO)

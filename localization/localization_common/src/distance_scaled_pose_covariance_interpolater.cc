@@ -27,7 +27,7 @@ PoseCovariance DistanceScaledPoseCovarianceInterpolater::Interpolate(const PoseW
                                                                      const PoseWithCovariance& b,
                                                                      const Time& timestamp_a, const Time& timestamp_b) {
   const Eigen::Isometry3d relative_pose = a.pose.inverse() * b.pose;
-  const double translation_norm = relative_pose.translation().norm();
+  //const double translation_norm = relative_pose.translation().norm(); // -Werror=unused-variable
   const double orientation_angle = Eigen::AngleAxisd(relative_pose.linear()).angle();
   Eigen::Matrix<double, 6, 6> relative_covariance = Eigen::Matrix<double, 6, 6>::Zero();
   // Set translation part of covariance using translation norm

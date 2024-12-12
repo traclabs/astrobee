@@ -1163,13 +1163,13 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
       path.poses.push_back(ps);
     }
 
-    pub_segment_.publish(path);
+    pub_segment_->publish(path);
 
     // Initialize timers
-    tolerance_pos_timer_ = ros::Time::now();
-    tolerance_att_timer_ = ros::Time::now();
-    tolerance_vel_timer_ = ros::Time::now();
-    tolerance_omega_timer_ = ros::Time::now();
+    tolerance_pos_timer_ = GetTimeNow();
+    tolerance_att_timer_ = GetTimeNow();
+    tolerance_vel_timer_ = GetTimeNow();
+    tolerance_omega_timer_ = GetTimeNow();
 
     // Success!
     return true;

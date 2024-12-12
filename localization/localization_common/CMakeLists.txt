@@ -28,13 +28,13 @@ set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclcpy REQUIRED)
 
 find_package(astrobee REQUIRED)
 find_package(camera REQUIRED)
 find_package(config_reader REQUIRED)
 find_package(msg_conversions REQUIRED)
 find_package(ff_msgs REQUIRED)
+find_package(ff_common REQUIRED)
 
 # Find GTSAM
 find_package(GTSAM REQUIRED)
@@ -45,6 +45,11 @@ find_package(Eigen3 REQUIRED)
 # Allow other packages to use python scripts from this package
 ament_python_install_package(${PROJECT_NAME})
 
+# Install Python executables
+#install(PROGRAMS
+#  scripts/py_node.py
+#  DESTINATION lib/${PROJECT_NAME}
+#)
 
 ###########
 ## Build ##
@@ -75,7 +80,7 @@ add_library(${PROJECT_NAME} SHARED
   src/utilities.cc
 )
 target_link_libraries(${PROJECT_NAME} gtsam ${OpenCV_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME} rclcpp astrobee ff_msgs config_reader camera msg_conversions)
+ament_target_dependencies(${PROJECT_NAME} rclcpp astrobee ff_msgs config_reader camera msg_conversions ff_common)
 ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 if(BUILD_TESTING)
