@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright (c) 2017, United States Government, as represented by the
 # Administrator of the National Aeronautics and Space Administration.
@@ -29,9 +29,9 @@ import multiprocessing
 import os
 import sys
 
-import localization_common.utilities as lu
 import multiprocessing_helpers
-import utilities
+
+import localization_common.utilities as lu
 
 
 class GroundtruthParams(object):
@@ -39,20 +39,14 @@ class GroundtruthParams(object):
         self,
         bagfile,
         base_surf_map,
-        maps_directory,
         loc_map,
-        config_path,
-        world,
         image_topic,
         robot_name,
         use_image_features,
     ):
         self.bagfile = bagfile
         self.base_surf_map = base_surf_map
-        self.maps_directory = maps_directory
         self.loc_map = loc_map
-        self.config_path = config_path
-        self.world = world
         self.image_topic = image_topic
         self.robot_name = robot_name
         self.use_image_features = use_image_features
@@ -64,17 +58,7 @@ def load_params(param_file):
         reader = csv.reader(param_csvfile, delimiter=" ")
         for row in reader:
             groundtruth_params_list.append(
-                GroundtruthParams(
-                    row[0],
-                    row[1],
-                    row[2],
-                    row[3],
-                    row[4],
-                    row[5],
-                    row[6],
-                    row[7],
-                    row[8],
-                )
+                GroundtruthParams(row[0], row[1], row[2], row[3], row[4], row[5])
             )
 
     return groundtruth_params_list
@@ -108,19 +92,11 @@ def run_groundtruth(params):
         + " "
         + params.base_surf_map
         + " "
-        + params.maps_directory
-        + " "
         + params.loc_map
-        + " "
-        + params.config_path
         + " -o "
         + output_directory
-        + " -w "
-        + params.world
         + " -i "
         + params.image_topic
-        + " -r "
-        + params.robot_name
     )
     if not bool(params.use_image_features):
         groundtruth_command += " --generate-image-features"

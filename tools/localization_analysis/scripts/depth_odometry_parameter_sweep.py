@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright (c) 2017, United States Government, as represented by the
 # Administrator of the National Aeronautics and Space Administration.
@@ -33,11 +33,11 @@ import multiprocessing
 import os
 
 import numpy as np
+import plot_parameter_sweep_results
 
 import config_creator
 import localization_common.utilities as lu
 import parameter_sweep_utilities
-import plot_parameter_sweep_results
 
 
 # Run depth odometry with values.

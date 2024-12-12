@@ -59,10 +59,33 @@ bool LocalizationNodelet::ResetMap(const std::string& map_file) {
   while (processing_image_) {
     usleep(100000);
   }
-  map_.reset(new sparse_mapping::SparseMap(map_file, true));
+  // Reset map before creating new one to avoid storing two maps in memory at the same time
+  map_.reset();
+  map_ = std::make_shared<sparse_mapping::SparseMap>(map_file, true);
   inst_.reset(new Localizer(map_.get()));
-  // Check to see if any params were changed when map was reset
-  ReadParams();
+
+  // Check to see if any params were changed when map was reset.
+  // Make sure they are valid.
+  if (!ReadParams(false)) {
+    ROS_ERROR_STREAM("Failed to switch to map file " << map_file
+                                                     << " due to invalid params.");
+    if (!last_valid_map_file_.empty()) {
+      ROS_ERROR_STREAM("Reverting to last map file " << last_valid_map_file_);
+      map_.reset();
+      map_ = std::make_shared<sparse_mapping::SparseMap>(last_valid_map_file_, true);
+      inst_.reset(new Localizer(map_.get()));
+      ReadParams();
+      enabled_ = true;
+    } else {
+      ROS_ERROR_STREAM("No last valid map, please reset with a valid map. Not localizing.");
+      map_.reset();
+      inst_.reset();
+    }
+    return false;
+  } else {
+    last_valid_map_file_ = map_file;
+  }
+
   enabled_ = true;
   return true;
 }
@@ -72,7 +95,9 @@ void LocalizationNodelet::Initialize(ros::NodeHandle* nh) {
 
   config_.AddFile("cameras.config");
   config_.AddFile("localization.config");
-  config_.ReadFiles();
+  if (!config_.ReadFiles()) {
+    ROS_FATAL("Failed to read config files.");
+  }
 
   // Resolve the full path to the AR tag file specified for the current world
   std::string map_file;
@@ -81,7 +106,11 @@ void LocalizationNodelet::Initialize(ros::NodeHandle* nh) {
 
   // Reset all internal shared pointers
   it_.reset(new image_transport::ImageTransport(*nh));
-  map_.reset(new sparse_mapping::SparseMap(map_file, true));
+  map_.reset();
+  map_ = std::make_shared<sparse_mapping::SparseMap>(map_file, true);
+  last_valid_map_file_ = map_file;
+
+
   inst_.reset(new Localizer(map_.get()));
 
   registration_publisher_ = nh->advertise<ff_msgs::CameraRegistration>(
@@ -116,18 +145,28 @@ void LocalizationNodelet::Initialize(ros::NodeHandle* nh) {
   cv::setNumThreads(num_threads);
 
   config_timer_ = nh->createTimer(ros::Duration(1), [this](ros::TimerEvent e) {
-      config_.CheckFilesUpdated(std::bind(&LocalizationNodelet::ReadParams, this));}, false, true);
+      config_.CheckFilesUpdated(std::bind(&LocalizationNodelet::ReadParamsWrapper, this));}, false, true);
 
   enable_srv_ = nh->advertiseService(SERVICE_LOCALIZATION_ML_ENABLE, &LocalizationNodelet::EnableService, this);
   reset_map_srv_ = nh->advertiseService(SERVICE_LOCALIZATION_RESET_MAP, &LocalizationNodelet::ResetMapService, this);
+  reset_map_loc_client_ = nh->serviceClient<ff_msgs::ResetMap>(
+                                                SERVICE_LOCALIZATION_RESET_MAP_LOC);
 }
 
-void LocalizationNodelet::ReadParams(void) {
+
+void LocalizationNodelet::ReadParamsWrapper() {
+  ReadParams(true);
+}
+
+bool LocalizationNodelet::ReadParams(bool fatal_failure) {
   if (!config_.ReadFiles()) {
     ROS_ERROR("Failed to read config files.");
-    return;
+    return false;
   }
-  if (inst_) inst_->ReadParams(&config_);
+  if (inst_) {
+    return inst_->ReadParams(config_, fatal_failure);
+  }
+  return true;
 }
 
 bool LocalizationNodelet::EnableService(ff_msgs::SetBool::Request & req, ff_msgs::SetBool::Response & res) {
@@ -147,7 +186,14 @@ bool LocalizationNodelet::ResetMapService(ff_msgs::ResetMap::Request& req, ff_ms
     map_file = req.map_file;
   }
   LOG(INFO) << "Resetting map to " << map_file;
-  return ResetMap(map_file);
+
+  res.success = ResetMap(map_file);
+
+  ff_msgs::ResetMap map_srv;
+  if (!reset_map_loc_client_.call(map_srv)) {
+    res.success = false;
+  }
+  return true;
 }
 
 void LocalizationNodelet::ImageCallback(const sensor_msgs::ImageConstPtr& msg) {
@@ -178,6 +224,7 @@ void LocalizationNodelet::ImageCallback(const sensor_msgs::ImageConstPtr& msg) {
 }
 
 void LocalizationNodelet::Localize(void) {
+  if (!inst_) return;
   ff_msgs::VisualLandmarks vl;
   Eigen::Matrix2Xd image_keypoints;
 

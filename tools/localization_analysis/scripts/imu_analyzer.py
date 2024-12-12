@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright (c) 2017, United States Government, as represented by the
 # Administrator of the National Aeronautics and Space Administration.
@@ -27,9 +27,9 @@ import argparse
 import os
 import sys
 
+import imu_measurements
 import matplotlib
 
-import imu_measurements
 import plot_helpers
 
 matplotlib.use("pdf")

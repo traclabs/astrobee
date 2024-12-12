@@ -44,6 +44,8 @@
 #include <string>
 #include <vector>
 
+#define MAX_COUNT 6
+
 namespace fs = boost::filesystem;
 namespace io = boost::iostreams;
 
@@ -71,9 +73,27 @@ bool ValidateCompression(const char* name, std::string const &value) {
   return false;
 }
 
+<<<<<<< HEAD
 void on_connect() {
   FF_INFO("subscriber present: sending plan");
   plan_pub->publish(cf);
+=======
+DEFINE_string(compression, "none",
+              "Type of compression [none, deflate, gzip]");
+DEFINE_string(ns, "", "Robot namespace");
+DEFINE_bool(remote, false, "Whether target command is remote robot");
+
+constexpr uintmax_t kMaxSize = 128 * 1024;
+
+ros::Publisher command_pub;
+ros::Time plan_pub_time;
+
+void on_connect(ros::SingleSubscriberPublisher const& sub,
+                ff_msgs::CompressedFile &cf) {
+  ROS_INFO("subscriber present: sending plan");
+  cf.header.stamp = ros::Time::now();
+  sub.publish(cf);
+>>>>>>> upstream/develop
 }
 
 void on_cf_ack(ff_msgs::msg::CompressedFileAck::SharedPtr const cf_ack) {
@@ -81,10 +101,20 @@ void on_cf_ack(ff_msgs::msg::CompressedFileAck::SharedPtr const cf_ack) {
   // compressed file ack is latched so we need to check the timestamp to make
   // sure this plan is being acked
   // ROS_WARN_STREAM(plan_pub_time << " : " << cf_ack->header.stamp);
+<<<<<<< HEAD
   if (plan_pub_time <= cf_ack->header.stamp) {
     FF_INFO("Compressed file ack is valid! Sending set plan!");
     ff_msgs::msg::CommandStamped cmd;
     cmd.cmd_name = ff_msgs::msg::CommandConstants::CMD_NAME_SET_PLAN;
+=======
+
+  // If remote and in the granite lab, the clocks of the robots might not be
+  // properly synchronized because we do it manually
+  if (plan_pub_time <= cf_ack->header.stamp + ros::Duration(5.0)) {
+    ROS_INFO("Compressed file ack is valid! Sending set plan!");
+    ff_msgs::CommandStamped cmd;
+    cmd.cmd_name = ff_msgs::CommandConstants::CMD_NAME_SET_PLAN;
+>>>>>>> upstream/develop
     cmd.subsys_name = "Astrobee";
     command_pub->publish(cmd);
   }
@@ -96,9 +126,18 @@ void on_plan_status(ff_msgs::msg::PlanStatusStamped::SharedPtr const ps) {
   // plan status is latched so we need to check the timestamp to make sure this
   // plan is loaded
   // ROS_WARN_STREAM(plan_pub_time << " : " << ps->header.stamp);
+<<<<<<< HEAD
   if (plan_pub_time <= ps->header.stamp) {
     ff_msgs::msg::CommandStamped cmd;
     cmd.cmd_name = ff_msgs::msg::CommandConstants::CMD_NAME_RUN_PLAN;
+=======
+
+  // If remote and in the granite lab, the clocks of the robots might not be
+  // properly synchronized because we do it manually
+  if (plan_pub_time <= ps->header.stamp + ros::Duration(5.0)) {
+    ff_msgs::CommandStamped cmd;
+    cmd.cmd_name = ff_msgs::CommandConstants::CMD_NAME_RUN_PLAN;
+>>>>>>> upstream/develop
     cmd.subsys_name = "Astrobee";
     command_pub->publish(cmd);
 
@@ -116,8 +155,15 @@ void TimerCallback() {
 
 int main(int argc, char** argv) {
   ff_common::InitFreeFlyerApplication(&argc, &argv);
+<<<<<<< HEAD
   rclcpp::init(argc, argv);
   NodeHandle nh;
+=======
+  ros::init(argc, argv, "plan_pub");
+  ros::NodeHandle n(std::string("/") + FLAGS_ns);
+
+  ros::Time::waitForValid();
+>>>>>>> upstream/develop
 
   if (!google::RegisterFlagValidator(&FLAGS_compression, &ValidateCompression)) {
     std::cerr << "Failed to register compression flag validator." << std::endl;
@@ -190,11 +236,26 @@ int main(int argc, char** argv) {
                            10,
                            std::bind(&on_plan_status, std::placeholders::_1));
 
+<<<<<<< HEAD
   std::chrono::nanoseconds ns(1000000000);
   while (nh->count_publishers(TOPIC_MANAGEMENT_EXEC_CF_ACK) == 0 ||
          nh->count_publishers(TOPIC_MANAGEMENT_EXEC_PLAN_STATUS) == 0 ||
          command_pub->get_subscription_count() == 0) {
     rclcpp::sleep_for(ns);
+=======
+  // Timeout if it can't find anything in 3s or if remote
+  // If remote, this wait allows enough spin
+  int count = 0;
+  while ((cf_ack_sub.getNumPublishers() == 0 ||
+         plan_status_sub.getNumPublishers() == 0 ||
+         command_pub.getNumSubscribers() == 0) && count < MAX_COUNT) {
+    count++;
+    ros::Duration(0.5).sleep();
+>>>>>>> upstream/develop
+  }
+  if (count == MAX_COUNT && !FLAGS_remote) {
+    ROS_ERROR("Could not connect");
+    return 1;
   }
 
   plan_pub = FF_CREATE_PUBLISHER(nh,

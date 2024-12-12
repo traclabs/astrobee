@@ -283,8 +283,6 @@ ff_path=`canonicalize ${rootpath}`
 DIST=`cat /etc/os-release | grep -oP "(?<=VERSION_CODENAME=).*"`
 if [ "$DIST" = "xenial" ]; then
     ros_version=kinetic
-elif [ "$DIST" = "bionic" ]; then
-    ros_version=melodic
 elif [ "$DIST" = "focal" ]; then
     ros_version=noetic
 fi
@@ -395,6 +393,7 @@ EOF
     exit 0
 fi
 
+<<<<<<< HEAD
 if [[ "${ROS_VERSION}" == "1" ]]; then
     if [ $native_build == 1 ] ; then
         echo "configuring for native linux..."
@@ -459,3 +458,25 @@ else  # begin ROS2 version
     echo "completing the rest of the configuration is up to you!"
 
 fi  # end ROS2 version
+=======
+if [ $armhf_build == 1 ] ; then
+    echo "configuring for armhf..."
+    catkin init
+    armhf_opts="-DCMAKE_TOOLCHAIN_FILE=${ff_path}/scripts/build/ubuntu_cross.cmake -DARMHF_ROS_DISTRO=${ros_version} -DCATKIN_ENABLE_TESTING=off"
+    use_ctc=" -DUSE_CTC=on"
+    enable_gazebo=""
+    build_loc_rviz_plugins=""
+    catkin profile add ${profile:-armhf}
+    catkin profile set ${profile:-armhf}
+    catkin config --extend $ARMHF_CHROOT_DIR/opt/ros/$ros_version \
+        --build-space ${workspace_path:-armhf/}build \
+        --install-space ${install_path:-${workspace_path:-armhf/}}opt/astrobee \
+        --devel-space ${workspace_path:-armhf/}devel \
+        --log-space ${workspace_path:-armhf/}logs \
+        --install \
+        --skiplist astrobee_handrail_8_5 astrobee_handrail_21_5 astrobee_handrail_30 astrobee_handrail_41_5 astrobee_iss astrobee_granite \
+            astrobee_dock astrobee_freeflyer astrobee_gazebo localization_rviz_plugins ground_dds_ros_bridge \
+        --cmake-args -DARMHF_CHROOT_DIR=$ARMHF_CHROOT_DIR ${armhf_opts} ${use_ctc} ${enable_gazebo} ${build_loc_rviz_plugins} ${extra_opts} \
+            -DCMAKE_BUILD_TYPE=Release
+fi
+>>>>>>> upstream/develop

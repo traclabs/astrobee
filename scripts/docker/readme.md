@@ -6,11 +6,9 @@ Before running these instructions, make sure you visit the main Astrobee INSTALL
 - Check the system requirements.
 - Follow the Docker-option install steps 1-2, install Docker and check out the Astrobee Robot Software (ARS).
 
-# Option 1: Using Visual Studio Code (experimental!)
+# Option 1: Using Visual Studio Code
 
 You may find it helpful to use VSCode's Docker integration to help you interactively develop inside a Docker container.
-
-Our team is tentatively moving in the direction of encouraging all developers to work this way, but our VSCode approach is still considered highly experimental and could change a lot.
 
 ## Install VSCode and the Dev Containers plugin
 
@@ -31,16 +29,19 @@ code --install-extension ms-vscode-remote.remote-containers
 
 ## Use VSCode to open the folder inside the Docker container
 
-You can open the Astrobee folder inside the Docker container like this ([per the discussion here](https://github.com/microsoft/vscode-remote-release/issues/2133#issuecomment-1212180962)):
+Tthe Dev Containers plugin will download a pre-built ARS Docker image from our official repository, start it running, and provide you with a development environment running inside the container.
+
+Start VS Code, run the `Dev Containers: Open Folder in Container...` command from the Command Palette (F1); Or you can open the `$ASTROBEE_WS/src` folder through the VSCode graphical interface, and you should then see a popup dialog from the Dev Containers plugin. Click the "Reopen in Container" button.
+
+You can choose between the `local` and `remote` profile. The `remote` profile is designed to run on remote servers and it is configured to open a vnc server and broadcast it in port 5900.
+
+After the devcontainer has started, if you continue using `DISPLAY=:0` (default), it will open the graphical application on the vnc server, if you set `DISPLAY=:1` in the terminal with `export DISPLAY=:1`, it will forward using X11 (you can switch back to `:0` for vnc).
+To open the vnc viewer in your local:
 
 ```bash
-cd $ASTROBEE_WS/src
-(path=$(pwd) && p=$(printf "%s" "$path" | xxd -p) && code --folder-uri "vscode-remote://dev-container+${p//[[:space:]]/}/src/astrobee/src")
+sudo apt-get install xtightvncviewer
+vncviewer localhost::5900 -encodings "copyrect tight hextile zlib corre rre raw"
 ```
-
-Or you can open the `$ASTROBEE_WS/src` folder through the VSCode graphical interface, and you should then see a popup dialog from the Dev Containers plugin. Click the "Reopen in Container" button.
-
-Either way, the Dev Containers plugin will download a pre-built ARS Docker image from our official repository, start it running, and provide you with a development environment running inside the container.
 
 You can manage your Dev Containers configuration using the files in the `.devcontainer` folder at the top level. For example, you can select a different Docker image to install from [the list on GitHub](https://github.com/nasa/astrobee/pkgs/container/astrobee) using the `FROM` command in the `Dockerfile`.
 
@@ -48,7 +49,7 @@ You can manage your Dev Containers configuration using the files in the `.devcon
 
 You can start by selecting `View->Terminal` in the VSCode graphical interface. This will display a terminal session inside the Docker container where you can run arbitrary commands. Your container will persist throughout your VSCode session, and changes you make using the VSCode editor will be reflected inside the container, making it easy to do quick interactive edit/build/test cycles.
 
-## Enable x-forwarding from the Dev Container
+## Enable x-forwarding from the Dev Container (local)
 
 In a cmd line in your host environment (not in the docker container) run:
 ```bash
@@ -61,6 +62,7 @@ this needs to be done everytime you restart vscode, and enables the screen forwa
 This runs inside the Docker container:
 
 ```bash
+<<<<<<< HEAD
 cd $ASTROBEE_WS
 source /opt/ros/rolling/setup.bash
 colcon build --symlink-install
@@ -70,6 +72,9 @@ coldon test-result --verbose
 
 For testing, you can alternatively use the script to produces better debug output if there is a failed test:
 ```bash
+=======
+catkin build
+>>>>>>> upstream/develop
 ./scripts/run_tests.sh
 ```
 
@@ -109,6 +114,8 @@ The `build.sh` script builds new ARS Docker images, with many configuration opti
 The `run.sh` script (optionally downloads and) runs ARS Docker images.
 
 The two scripts have similar options to make it easy to run the specific image you just built.
+
+If you want to run the docker containers directly on remote servers (with no display), there are methods to do this via VNC in \subpage vnc-docker or X11 in \subpage ssh-docker
 
 # Building Docker images
 
@@ -151,7 +158,7 @@ All pre-built remote images are available on [GitHub here](https://github.com/na
 
 By default, the build script will automatically detect your host's Ubuntu OS version and configure the Docker image to use the same version using `Dockerfile` `ARGS`.
 
-However, there is no requirement for the host OS and the Docker image OS to match.  You can override the default and select a specific Docker image Ubuntu version by specifying `--xenial`, `--bionic`, or `--focal` for Ubuntu 16.04, 18.04, or 20.04 docker images, respectively.
+However, there is no requirement for the host OS and the Docker image OS to match.  You can override the default and select a specific Docker image Ubuntu version by specifying `--xenial` or `--focal` for Ubuntu 16.04 or 20.04 docker images, respectively.
 
 For more information about all the build arguments:
 
@@ -161,14 +168,13 @@ For more information about all the build arguments:
 
 The `build.sh` script normally manages these `Dockerfile` `ARGS` but you can set them yourself if you run `docker build` manually:
 
-- `UBUNTU_VERSION` - The version of Ubuntu to use. Valid values are "16.04", "18.04", and "20.04".
+- `UBUNTU_VERSION` - The version of Ubuntu to use. Valid values are "16.04" and "20.04".
 - `ROS_VERSION` - The version of ROS to use. Valid values are "kinetic", "melodic", and "noetic".
 - `PYTHON` - The version of Python to use. Valid values are "" (an empty string representing Python 2) and "3".
 
 Constraints:
 - If `UBUNTU_VERSION` is `"16.04"`, `ROS_VERSION` and `PYTHON` must be `"kinetic"` and `""` respectively.
-- If `UBUNTU_VERSION` is `"18.04"`, `ROS_VERSION` and `PYTHON` must be `"melodic"` and `""` respectively.
-- If `UBUNTU_VERSION` is `"20.04"`, `ROS_VERSION` and `PYTHON` must be `"neotic"` and `"3"` respectively.
+- If `UBUNTU_VERSION` is `"20.04"`, `ROS_VERSION` and `PYTHON` must be `"noetic"` and `"3"` respectively.
 
 The Docker files also accept args to use local or container registry images.
 
@@ -229,8 +235,8 @@ argument parsing more predictable.)
 
 As with `build.sh`, by default, the docker image OS version will be
 configured to match your host's OS version, but you can override that
-by specifying the `--xenial`, `--bionic`, or `--focal` option for
-Ubuntu 16.04, 18.04, or 20.04 docker images, respectively.
+by specifying the `--xenial` or `--focal` option for
+Ubuntu 16.04 or 20.04 docker images, respectively.
 
 Use `--remote` to fetch and run a pre-built Astrobee docker
 image. (Omit `--remote` to run using a docker image built locally by
@@ -266,7 +272,7 @@ The package argument is optional. The default is to build/test all
 packages.
 
 If debugging a CI failure that is specific to a particular OS version,
-remember to pass `run.sh` the `--xenial`, `--bionic`, or `--focal`
+remember to pass `run.sh` the `--xenial` or `--focal`
 option to select the right OS version to replicate the failure.
 
 Note: integration tests that use Gazebo simulation will be silently

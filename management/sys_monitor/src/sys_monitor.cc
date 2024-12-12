@@ -189,12 +189,17 @@ void SysMonitor::HeartbeatCallback(const ff_msgs::msg::Heartbeat::SharedPtr hb) 
       // trigger fault
       // This fault only applies to clock skew between the MLP and the LLP since
       // this skew causes navigation failures.
+<<<<<<< HEAD
       float time_diff_sec = (time_now - rclcpp::Time(hb->header.stamp)).seconds();
       if (abs(time_diff_sec) > time_drift_thres_sec_) {
+=======
+      float time_diff_sec = (time_now - hb->header.stamp).toSec();
+      if (fabs(time_diff_sec) > time_drift_thres_sec_) {
+>>>>>>> upstream/develop
         if (!time_diff_fault_triggered_) {
           std::string key = ff_util::fault_keys[ff_util::TIME_DIFF_TOO_HIGH];
           unsigned int id = faults_[key];
-          AddFault(id, ("Time diff is: " + std::to_string(abs(time_diff_sec))));
+          AddFault(id, ("Time diff is: " + std::to_string(fabs(time_diff_sec))));
           PublishFaultResponse(id);
           time_diff_fault_triggered_ = true;
         }

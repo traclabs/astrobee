@@ -1162,11 +1162,21 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
       ps.pose = it->pose;
       path.poses.push_back(ps);
     }
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
     pub_segment_->publish(path);
     tolerance_pos_timer_ = GetTimeNow();
     tolerance_att_timer_ = GetTimeNow();
     tolerance_vel_timer_ = GetTimeNow();
     tolerance_omega_timer_ = GetTimeNow();
+=======
+    pub_segment_.publish(path);
+
+    // Initialize timers
+    tolerance_pos_timer_ = ros::Time::now();
+    tolerance_att_timer_ = ros::Time::now();
+    tolerance_vel_timer_ = ros::Time::now();
+    tolerance_omega_timer_ = ros::Time::now();
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
     // Success!
     return true;
   }
@@ -1180,9 +1190,15 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
       if (flight_mode_.tolerance_pos > 0.0 &&
           feedback->error_position > flight_mode_.tolerance_pos) {
         // If tolerance is present more that the allowable time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         if ((GetTimeNow() - tolerance_pos_timer_) > tolerance_max_time_) {
           FF_DEBUG_STREAM("Position tolerance violated");
           FF_DEBUG_STREAM("- Value: " << feedback->error_position
+=======
+        if ((ros::Time::now() - tolerance_pos_timer_).toSec() > tolerance_max_time_) {
+          NODELET_DEBUG_STREAM("Position tolerance violated");
+          NODELET_DEBUG_STREAM("- Value: " << feedback->error_position
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
                                           << ", Thresh: "
                                           << flight_mode_.tolerance_pos);
           fsm_.Update(TOLERANCE_POS);
@@ -1190,15 +1206,25 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
         }
       } else {
         // If there is no tolerance violation, reset time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         tolerance_pos_timer_ = GetTimeNow();
+=======
+        tolerance_pos_timer_ = ros::Time::now();
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
       }
       // Check attitude tolerance
       if (flight_mode_.tolerance_att > 0.0 &&
           feedback->error_attitude > flight_mode_.tolerance_att) {
         // If tolerance is present more that the allowable time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         if ((GetTimeNow() - tolerance_att_timer_) > tolerance_max_time_) {
           FF_DEBUG_STREAM("Attitude tolerance violated");
           FF_DEBUG_STREAM("- Value: " << feedback->error_attitude
+=======
+        if ((ros::Time::now() - tolerance_att_timer_).toSec() > tolerance_max_time_) {
+          NODELET_DEBUG_STREAM("Attitude tolerance violated");
+          NODELET_DEBUG_STREAM("- Value: " << feedback->error_attitude
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
                                           << ", Thresh: "
                                           << flight_mode_.tolerance_att);
           fsm_.Update(TOLERANCE_ATT);
@@ -1206,15 +1232,25 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
         }
       } else {
         // If there is no tolerance violation, reset time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         tolerance_att_timer_ = GetTimeNow();
+=======
+        tolerance_att_timer_ = ros::Time::now();
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
       }
       // Check velocity tolerance
       if (flight_mode_.tolerance_vel > 0.0 &&
           feedback->error_velocity > flight_mode_.tolerance_vel) {
         // If tolerance is present more that the allowable time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         if ((GetTimeNow() - tolerance_vel_timer_) > tolerance_max_time_) {
           FF_DEBUG_STREAM("Velocity tolerance violated");
           FF_DEBUG_STREAM("- Value: " << feedback->error_velocity
+=======
+        if ((ros::Time::now() - tolerance_vel_timer_).toSec() > tolerance_max_time_) {
+          NODELET_DEBUG_STREAM("Velocity tolerance violated");
+          NODELET_DEBUG_STREAM("- Value: " << feedback->error_velocity
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
                                           << ", Thresh: "
                                           << flight_mode_.tolerance_vel);
           fsm_.Update(TOLERANCE_VEL);
@@ -1222,15 +1258,25 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
         }
       } else {
         // If there is no tolerance violation, reset time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         tolerance_vel_timer_ = GetTimeNow();
+=======
+        tolerance_vel_timer_ = ros::Time::now();
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
       }
       // Check angular velocity tolerance
       if (flight_mode_.tolerance_omega > 0.0 &&
           feedback->error_omega > flight_mode_.tolerance_omega) {
         // If tolerance is present more that the allowable time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         if ((GetTimeNow() - tolerance_omega_timer_) > tolerance_max_time_) {
           FF_DEBUG_STREAM("Angular velocity tolerance violated");
           FF_DEBUG_STREAM("- Value: " << feedback->error_omega
+=======
+        if ((ros::Time::now() - tolerance_omega_timer_).toSec() > tolerance_max_time_) {
+          NODELET_DEBUG_STREAM("Angular velocity tolerance violated");
+          NODELET_DEBUG_STREAM("- Value: " << feedback->error_omega
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
                                           << ", Thresh: "
                                           << flight_mode_.tolerance_omega);
           fsm_.Update(TOLERANCE_OMEGA);
@@ -1238,7 +1284,11 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
         }
       } else {
         // If there is no tolerance violation, reset time
+<<<<<<< HEAD:mobility/choreographer/src/choreographer_component.cc
         tolerance_omega_timer_ = GetTimeNow();
+=======
+        tolerance_omega_timer_ = ros::Time::now();
+>>>>>>> upstream/develop:mobility/choreographer/src/choreographer_nodelet.cc
       }
     // Send progress in stopping/idling/replanning
     case STATE::STOPPING:

@@ -1,4 +1,4 @@
-#/bin/bash -e
+#!/bin/bash -e
 #
 # Copyright (c) 2017, United States Government, as represented by the
 # Administrator of the National Aeronautics and Space Administration.
@@ -29,30 +29,12 @@ sudo apt-get install -y devscripts equivs libproj-dev
 # delete old files (-f avoids 'no such file' warning on first run)
 rm -f *.deb *.debian.tar.xz *.orig.tar.gz *.dsc *.build *.buildinfo *.changes *.ddeb
 
-case $dist in
-  xenial)
-    echo "Ubuntu 16 detected"
-    ;;
-  bionic|focal)
-    build_list+=( opencv )
-    ;;&
-  bionic)
-    echo "Ubuntu 18 detected"
-     # jps3d deps
-    sudo apt-get install -y libvtk6.3 libboost-filesystem1.62.0 libboost-system1.62.0
-    ;;
-  focal)
-    echo "Ubuntu 20 detected"
-    #jps3d deps
-    sudo apt-get install -y libvtk7.1p libboost-filesystem1.71.0 libboost-system1.71.0
-    ;;
-  *)
-    echo "No supported distribution detected"
-    exit 1
-esac
-
 # Add public debians to build list
-build_list+=( alvar dlib dbow2 gtsam decomputil jps3d openmvg )
+# TODO: Convert ar-track-alvar-msgs and ar-track-alvar to ROS2. 
+# This is used in localization_marker...which we are not using yet in the ROS2 port so no harm for now to comment it out
+#build_list+=( ar-track-alvar-msgs ar-track-alvar dlib dbow2 gtsam decomputil jps3d openmvg opencv-xfeatures2d)
+build_list+=( dlib dbow2 gtsam decomputil jps3d openmvg opencv-xfeatures2d)
+
 # If restricted rti-dev debian is present, add miro and soracore as well
 dpkg-query -W -f='${Status}\n' rti-dev 2>&1 | grep -q "install ok installed" &&
 echo "Package rti-dev exists. Including miro and soracore to build list..." &&

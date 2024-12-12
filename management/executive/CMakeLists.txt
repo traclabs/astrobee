@@ -79,8 +79,14 @@ rclcpp_components_register_nodes(executive "executive::Executive")
 
 ## Declare a C++ executable: data_to_disk_pub
 add_executable(data_to_disk_pub tools/data_to_disk_pub.cc)
+<<<<<<< HEAD
 ament_target_dependencies(data_to_disk_pub rclcpp ff_common ff_msgs Boost)
 target_link_libraries(data_to_disk_pub executive gflags)
+=======
+add_dependencies(data_to_disk_pub ${catkin_EXPORTED_TARGETS})
+target_link_libraries(data_to_disk_pub
+  executive gflags ${catkin_LIBRARIES})
+>>>>>>> upstream/develop
 
 ## Declare a C++ executable: plan_pub
 add_executable(plan_pub tools/plan_pub.cc)
@@ -140,6 +146,7 @@ install(TARGETS ${PROJECT_NAME}
 # Install C++ executables
 install(TARGETS data_to_disk_pub DESTINATION bin)
 install(TARGETS plan_pub DESTINATION bin)
+<<<<<<< HEAD
 install(TARGETS simple_move DESTINATION lib/${PROJECT_NAME})
 install(TARGETS teleop_tool RUNTIME DESTINATION lib/${PROJECT_NAME})
 #install(TARGETS zones_pub DESTINATION bin)
@@ -154,6 +161,21 @@ install(TARGETS teleop_tool RUNTIME DESTINATION lib/${PROJECT_NAME})
 #  OUTPUT_QUIET
 #  ERROR_QUIET
 #  )")
+=======
+install(TARGETS simple_move DESTINATION bin)
+install(TARGETS teleop_tool DESTINATION bin)
+install(TARGETS zones_pub DESTINATION bin)
+install(CODE "execute_process(
+  COMMAND ln -s ../../bin/data_to_disk_pub share/${PROJECT_NAME}
+  COMMAND ln -s ../../bin/plan_pub share/${PROJECT_NAME}
+  COMMAND ln -s ../../bin/simple_move share/${PROJECT_NAME}
+  COMMAND ln -s ../../bin/teleop_tool share/${PROJECT_NAME}
+  COMMAND ln -s ../../bin/zones_pub share/${PROJECT_NAME}
+  WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
+  OUTPUT_QUIET
+  ERROR_QUIET
+  )")
+>>>>>>> upstream/develop
 
 # Mark launch files for installation
 install(DIRECTORY include/${PROJECT_NAME}
