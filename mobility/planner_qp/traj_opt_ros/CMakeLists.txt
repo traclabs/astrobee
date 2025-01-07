@@ -17,7 +17,7 @@
 
 cmake_minimum_required(VERSION 3.0)
 project(traj_opt_ros)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-deprecated-declarations  -Werror=return-type -DQT_NO_KEYWORDS")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wno-deprecated-declarations  -Werror=return-type -DQT_NO_KEYWORDS")
 
 # Qt Stuff, assume Qt5
 set(CMAKE_AUTOMOC ON)

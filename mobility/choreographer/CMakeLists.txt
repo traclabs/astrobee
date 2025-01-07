@@ -20,7 +20,7 @@ project(choreographer)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
@@ -39,6 +39,7 @@ find_package(jsonloader REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(pcl_conversions REQUIRED)
 
 ###########
 ## Build ##
@@ -56,7 +57,7 @@ add_library(choreographer SHARED
 )
 target_compile_definitions(choreographer
   PRIVATE "COMPOSITION_BUILDING_DLL")
-ament_target_dependencies(choreographer rclcpp rclcpp_components ff_common ff_util ff_msgs ff_hw_msgs jsonloader geometry_msgs nav_msgs visualization_msgs)
+ament_target_dependencies(choreographer rclcpp rclcpp_components ff_common ff_util ff_msgs ff_hw_msgs jsonloader geometry_msgs nav_msgs visualization_msgs pcl_conversions)
 rclcpp_components_register_nodes(choreographer "choreographer::ChoreographerComponent")
 
 #if(CATKIN_ENABLE_TESTING)
@@ -122,6 +123,7 @@ ament_export_dependencies(
   ff_common
   ff_util
   jsonloader
+  pcl_conversions
 )
 
 ament_export_include_directories(include)

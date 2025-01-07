@@ -20,7 +20,7 @@ project(mapper)
 
 # Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
 set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
 
@@ -38,6 +38,7 @@ find_package(ff_msgs REQUIRED)
 
 find_package(visualization_msgs REQUIRED)
 find_package(octomap REQUIRED)
+find_package(pcl_msgs REQUIRED)
 
   # message_runtime
 
@@ -75,8 +76,8 @@ add_library(${PROJECT_NAME} SHARED
 )
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")
-target_link_libraries(${PROJECT_NAME} ${OCTOMAP_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME} rclcpp rclcpp_components std_srvs ff_msgs ff_util visualization_msgs octomap)
+target_link_libraries(${PROJECT_NAME} ${OCTOMAP_LIBRARIES} ${PCL_LIBRARIES})
+ament_target_dependencies(${PROJECT_NAME} rclcpp rclcpp_components std_srvs ff_msgs ff_util visualization_msgs pcl_msgs octomap)
 rclcpp_components_register_nodes(${PROJECT_NAME} "mapper::MapperComponent")
 
 

@@ -287,4 +287,4 @@ def generate_launch_description():
              condition=IfCondition(LaunchConfiguration("queen"))
         )
         
-    )
+    ])

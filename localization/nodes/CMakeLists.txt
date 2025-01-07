@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.0)
 project(nodes)
 
 ## Compile as C++14, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 
 find_package(Boost REQUIRED COMPONENTS serialization)
 

@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.0)
 project(cpu_mem_monitor)
 
 ## Compile as C++14, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 add_definitions(-DROS1)
 
 ## Find catkin macros and libraries

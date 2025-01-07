@@ -1,6 +1,6 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
-ENV ROSDISTRO=rolling
+ENV ROSDISTRO=humble
 ENV ROS_PYTHON_VERSION=3
 ENV ROS_VERSION=2
 

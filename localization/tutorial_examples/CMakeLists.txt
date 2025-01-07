@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.0)
 project(tutorial_examples)
 
 ## Compile as C++14, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 
 # Find GTSAM
 find_package(GTSAM REQUIRED)

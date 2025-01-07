@@ -20,9 +20,10 @@ project(localization_common)
 
 ## Compile as C++14, supported in ROS Kinetic and newer
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 17)
 endif()
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
+#set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -O3 -fPIC")
 
 # Find amend and libraries
 find_package(ament_cmake REQUIRED)
@@ -35,8 +36,6 @@ find_package(config_reader REQUIRED)
 find_package(msg_conversions REQUIRED)
 find_package(ff_msgs REQUIRED)
 find_package(ff_common REQUIRED)
-
-# Find GTSAM
 find_package(GTSAM REQUIRED)
 
 # System dependencies are found with CMake's conventions
@@ -58,10 +57,10 @@ ament_python_install_package(${PROJECT_NAME})
 # Specify additional locations of header files
 include_directories(
   include
-  ${GTSAM_INCLUDE_DIR}
+  ${GTSAM_INCLUDE_DIR}  
   ${EIGEN3_INCLUDE_DIRS}
 )
-
+message(STATUS "GTSAM INCLUDE DIR: ${GTSAM_INCLUDE_DIR} !!!!!!!")
 # Declare C++ libraries
 add_library(${PROJECT_NAME} SHARED
   src/averager.cc
@@ -121,7 +120,19 @@ endif()
 ## Install ##
 #############
 
-ament_export_include_directories(include)
+ament_export_include_directories(
+  include
+  ${GTSAM_INCLUDE_DIR}
+)
+ament_export_dependencies(
+  astrobee
+  camera
+  config_reader
+  msg_conversions
+  ff_msgs
+  ff_common
+  GTSAM
+)
 
 # Mark libraries for installation
 install(TARGETS ${PROJECT_NAME}

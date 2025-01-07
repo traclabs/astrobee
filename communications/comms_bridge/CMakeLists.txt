@@ -20,7 +20,7 @@ cmake_minimum_required(VERSION 3.0)
 project(comms_bridge)
 
 ## Compile as C++14, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 
 if (USE_DDS)
 ## Find catkin macros and libraries
