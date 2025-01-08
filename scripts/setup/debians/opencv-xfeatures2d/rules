@@ -5,7 +5,7 @@ include /usr/share/dpkg/architecture.mk
 
 BUILDDIR = obj-$(DEB_HOST_MULTIARCH)
 
-
+# maybe change the install prefix next?
 CMAKE_FLAGS = -DCMAKE_BUILD_TYPE=RELEASE \
 	-DCMAKE_INSTALL_PREFIX="/usr" \
 	-DBUILD_EXAMPLES=OFF \
@@ -52,12 +52,16 @@ override_dh_install:
 	dh_install
 	dh_missing --fail-missing
 
+# override_dh_shlibdeps:
+# 	dh_shlibdeps --dpkg-shlibdeps-params=--ignore-missing-info
+
 override_dh_usrlocal:
 
 PKG = opencv
 UVER = $(shell dpkg-parsechangelog -S Version | sed 's,-.*,,')
 DTYPE = +dfsg
 VER  ?= $(subst $(DTYPE),,$(UVER))
+@echo $(VER)
 get-orig-source:
 	@echo "# OpenCV Downloading..."
 	uscan --no-conf --verbose --force-download --download-version $(VER) --no-symlink

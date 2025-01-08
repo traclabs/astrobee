@@ -1,0 +1,78 @@
+diff -crB /usr/include/boost/serialization/hash_collections_load_imp.hpp /usr/include/boost/serialization-updates/hash_collections_load_imp.hpp
+*** /usr/include/boost/serialization/hash_collections_load_imp.hpp	Mon Jan  6 19:44:21 2025
+--- /usr/include/boost/serialization-updates/hash_collections_load_imp.hpp	Mon Jan  6 19:50:44 2025
+***************
+*** 22,27 ****
+--- 22,28 ----
+  #include <boost/serialization/nvp.hpp>
+  #include <boost/serialization/collection_size_type.hpp>
+  #include <boost/serialization/item_version_type.hpp>
++ #include <boost/serialization/library_version_type.hpp>
+  
+  namespace boost{
+  namespace serialization {
+diff -crB /usr/include/boost/serialization/hash_collections_save_imp.hpp /usr/include/boost/serialization-updates/hash_collections_save_imp.hpp
+*** /usr/include/boost/serialization/hash_collections_save_imp.hpp	Mon Jan  6 19:44:33 2025
+--- /usr/include/boost/serialization-updates/hash_collections_save_imp.hpp	Mon Jan  6 19:50:44 2025
+***************
+*** 23,28 ****
+--- 23,29 ----
+  #include <boost/serialization/serialization.hpp>
+  #include <boost/serialization/collection_size_type.hpp>
+  #include <boost/serialization/item_version_type.hpp>
++ #include <boost/serialization/library_version_type.hpp>
+  
+  namespace boost{
+  namespace serialization {
+diff -crB /usr/include/boost/serialization/list.hpp /usr/include/boost/serialization-updates/list.hpp
+*** /usr/include/boost/serialization/list.hpp	Mon Jan  6 19:44:49 2025
+--- /usr/include/boost/serialization-updates/list.hpp	Mon Jan  6 19:50:44 2025
+***************
+*** 27,32 ****
+--- 27,33 ----
+  #include <boost/serialization/nvp.hpp>
+  #include <boost/serialization/collection_size_type.hpp>
+  #include <boost/serialization/item_version_type.hpp>
++ #include <boost/serialization/library_version_type.hpp>
+  #include <boost/serialization/split_free.hpp>
+  
+  namespace boost {
+diff -crB /usr/include/boost/serialization/slist.hpp /usr/include/boost/serialization-updates/slist.hpp
+*** /usr/include/boost/serialization/slist.hpp	Mon Jan  6 19:44:56 2025
+--- /usr/include/boost/serialization-updates/slist.hpp	Mon Jan  6 19:50:44 2025
+***************
+*** 25,30 ****
+--- 25,31 ----
+  #include <boost/serialization/nvp.hpp>
+  #include <boost/serialization/collection_size_type.hpp>
+  #include <boost/serialization/item_version_type.hpp>
++ #include <boost/serialization/library_version_type.hpp>
+  #include <boost/serialization/split_free.hpp>
+  #include <boost/serialization/detail/stack_constructor.hpp>
+  #include <boost/serialization/detail/is_default_constructible.hpp>
+diff -crB /usr/include/boost/serialization/unordered_collections_load_imp.hpp /usr/include/boost/serialization-updates/unordered_collections_load_imp.hpp
+*** /usr/include/boost/serialization/unordered_collections_load_imp.hpp	Mon Jan  6 19:45:17 2025
+--- /usr/include/boost/serialization-updates/unordered_collections_load_imp.hpp	Mon Jan  6 19:50:44 2025
+***************
+*** 34,39 ****
+--- 34,40 ----
+  #include <boost/serialization/nvp.hpp>
+  #include <boost/serialization/collection_size_type.hpp>
+  #include <boost/serialization/item_version_type.hpp>
++ #include <boost/serialization/library_version_type.hpp>
+  
+  namespace boost{
+  namespace serialization {
+diff -crB /usr/include/boost/serialization/unordered_collections_save_imp.hpp /usr/include/boost/serialization-updates/unordered_collections_save_imp.hpp
+*** /usr/include/boost/serialization/unordered_collections_save_imp.hpp	Mon Jan  6 19:45:32 2025
+--- /usr/include/boost/serialization-updates/unordered_collections_save_imp.hpp	Mon Jan  6 19:50:44 2025
+***************
+*** 25,30 ****
+--- 25,31 ----
+  #include <boost/serialization/version.hpp>
+  #include <boost/serialization/collection_size_type.hpp>
+  #include <boost/serialization/item_version_type.hpp>
++ #include <boost/serialization/library_version_type.hpp>
+  
+  
+  namespace boost{

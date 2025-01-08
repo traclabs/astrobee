@@ -9,7 +9,7 @@ Panels:
         - /Debug1
         - /Dock Cam1
       Splitter Ratio: 0.5
-    Tree Height: 433
+    Tree Height: 740
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -36,59 +36,9 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        bumble/ar_tag:
+        ar_tag:
           Value: true
-        bumble/body:
-          Value: true
-        bumble/dock_cam:
-          Value: true
-        bumble/flashlight_aft:
-          Value: true
-        bumble/flashlight_front:
-          Value: true
-        bumble/handrail/approach:
-          Value: true
-        bumble/handrail/body:
-          Value: true
-        bumble/handrail/complete:
-          Value: true
-        bumble/haz_cam:
-          Value: true
-        bumble/imu:
-          Value: true
-        bumble/inertial_link:
-          Value: true
-        bumble/laser:
-          Value: true
-        bumble/nav_cam:
-          Value: true
-        bumble/payload/bottom_aft:
-          Value: true
-        bumble/payload/bottom_front:
-          Value: true
-        bumble/payload/top_aft:
-          Value: true
-        bumble/payload/top_front:
-          Value: true
-        bumble/perch_cam:
-          Value: true
-        bumble/sci_cam:
-          Value: true
-        bumble/top_aft:
-          Value: true
-        bumble/top_aft_arm_distal_link:
-          Value: true
-        bumble/top_aft_arm_proximal_link:
-          Value: true
-        bumble/top_aft_gripper_left_distal_link:
-          Value: true
-        bumble/top_aft_gripper_left_proximal_link:
-          Value: true
-        bumble/top_aft_gripper_right_distal_link:
-          Value: true
-        bumble/top_aft_gripper_right_proximal_link:
-          Value: true
-        bumble/truth:
+        body:
           Value: true
         dock/berth1:
           Value: true
@@ -104,13 +54,49 @@ Visualization Manager:
           Value: true
         dock/body:
           Value: true
+        dock_cam:
+          Value: true
+        flashlight_aft:
+          Value: true
+        flashlight_front:
+          Value: true
         granite/body:
+          Value: true
+        handrail/approach:
+          Value: true
+        handrail/body:
+          Value: true
+        handrail/complete:
+          Value: true
+        haz_cam:
+          Value: true
+        imu:
+          Value: true
+        inertial_link:
           Value: true
         iss/body:
           Value: true
+        laser:
+          Value: true
+        nav_cam:
+          Value: true
+        payload/bottom_aft:
+          Value: true
+        payload/bottom_front:
+          Value: true
+        payload/top_aft:
+          Value: true
+        payload/top_front:
+          Value: true
         perch/body:
           Value: true
+        perch_cam:
+          Value: true
         rviz:
+          Value: true
+        sci_cam:
+          Value: true
+        top_aft:
           Value: true
         world:
           Value: true
@@ -121,48 +107,6 @@ Visualization Manager:
       Show Names: false
       Tree:
         world:
-          bumble/body:
-            bumble/ar_tag:
-              {}
-            bumble/dock_cam:
-              {}
-            bumble/flashlight_aft:
-              {}
-            bumble/flashlight_front:
-              {}
-            bumble/haz_cam:
-              {}
-            bumble/imu:
-              {}
-            bumble/inertial_link:
-              {}
-            bumble/laser:
-              {}
-            bumble/nav_cam:
-              {}
-            bumble/payload/bottom_aft:
-              {}
-            bumble/payload/bottom_front:
-              {}
-            bumble/payload/top_aft:
-              {}
-            bumble/payload/top_front:
-              {}
-            bumble/perch_cam:
-              {}
-            bumble/sci_cam:
-              {}
-            bumble/top_aft:
-              bumble/top_aft_arm_proximal_link:
-                bumble/top_aft_arm_distal_link:
-                  bumble/top_aft_gripper_left_proximal_link:
-                    bumble/top_aft_gripper_left_distal_link:
-                      {}
-                  bumble/top_aft_gripper_right_proximal_link:
-                    bumble/top_aft_gripper_right_distal_link:
-                      {}
-          bumble/truth:
-            {}
           dock/body:
             dock/berth1:
               dock/berth1/approach:
@@ -428,20 +372,64 @@ Visualization Manager:
             History Policy: Keep Last
             Reliability Policy: Reliable
             Value: /robot_description
-          Enabled: false
+          Enabled: true
           Links:
             All Links Enabled: true
             Expand Joint Details: false
             Expand Link Details: false
             Expand Tree: false
             Link Tree Style: Links in Alphabetic Order
+            body:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            inertial_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+            top_aft:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            top_aft_arm_distal_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            top_aft_arm_proximal_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            top_aft_gripper_left_distal_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            top_aft_gripper_left_proximal_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            top_aft_gripper_right_distal_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
+            top_aft_gripper_right_proximal_link:
+              Alpha: 1
+              Show Axes: false
+              Show Trail: false
+              Value: true
           Mass Properties:
             Inertia: false
             Mass: false
           Name: /
           TF Prefix: ""
           Update Interval: 0
-          Value: false
+          Value: true
           Visual Enabled: true
         - Class: rviz_common/Group
           Displays: ~
@@ -535,37 +523,37 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.5802009105682373
+      Distance: 5.092858791351318
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 8.70544147491455
-        Y: 8.735550880432129
-        Z: -2.141327142715454
+        X: 9.760664939880371
+        Y: 8.275540351867676
+        Z: -3.363565683364868
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7652035355567932
+      Pitch: 0.27020344138145447
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.548584222793579
+      Yaw: 5.583583831787109
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
   Dock Cam:
     collapsed: false
-  Height: 1043
+  Height: 1038
   Hide Left Dock: false
   Hide Right Dock: false
   Nav Cam:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000016700000379fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003b0000023a000000c700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000100044006f0063006b002000430061006d010000027b000000890000002800fffffffb0000000e004e00610076002000430061006d010000030a000000aa0000002800ffffff000000010000010f00000379fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003b00000379000000a000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d00650100000000000007800000024400fffffffb0000000800540069006d00650100000000000004500000000000000000000004fe0000037900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001670000036ffc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005d00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000100044006f0063006b002000430061006d010000003e000001b70000002800fffffffb0000000e004e00610076002000430061006d01000001fb000001b20000002800ffffff00000001000001560000036ffc0200000004fb000000100044006900730070006c006100790073010000003e0000036f000000cb00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003e0000036f000000a500fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d00650100000000000007800000026c00fffffffb0000000800540069006d00650100000000000004500000000000000000000004b70000036f00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:

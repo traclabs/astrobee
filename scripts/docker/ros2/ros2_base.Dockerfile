@@ -1,6 +1,6 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
-ENV ROSDISTRO=humble
+ENV ROSDISTRO=jazzy
 ENV ROS_PYTHON_VERSION=3
 ENV ROS_VERSION=2
 

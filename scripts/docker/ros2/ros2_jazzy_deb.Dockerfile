@@ -1,0 +1,36 @@
+
+ARG UBUNTU_VERSION=24.04
+ARG REMOTE=astrobee
+
+FROM ${REMOTE}/astrobee:latest-jazzy_base-ubuntu${UBUNTU_VERSION}
+
+# install ros rolling + gazebo and dependencies
+RUN /bin/bash -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' \
+    && wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
+
+RUN apt-get update && apt-get install -q -y --fix-missing \
+    gazebo \
+    ros-jazzy-desktop \
+    binutils \
+    mesa-utils \
+    x-window-system \
+    ros-jazzy-gazebo-ros-pkgs \
+    libgoogle-glog-dev libgflags-dev libgtest-dev \
+    libluajit-5.1-dev \
+    ros-jazzy-xacro \
+    ros-jazzy-ros-testing \ 
+    libceres-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Astrobee----------------------------------------------------------------
+COPY ./scripts/setup/debians /setup/astrobee/debians
+
+RUN apt-get update \
+  && /bin/bash /setup/astrobee/debians/build_install_debians.sh \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /setup/astrobee/debians
+
+#COPY ./scripts/setup/packages_*jammy.lst ./scripts/setup/packages_documentation.lst /setup/astrobee/
+#note apt-get update is run within the following shell script
+#RUN /setup/astrobee/install_desktop_packages.sh \
+#  && rm -rf /var/lib/apt/lists/*

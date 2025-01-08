@@ -286,5 +286,5 @@ def generate_launch_description():
              shell=True,
              condition=IfCondition(LaunchConfiguration("queen"))
         )
-        
-    ])
+    ]
+)

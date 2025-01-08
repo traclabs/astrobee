@@ -18,15 +18,15 @@
 # under the License.
 
 PACKAGE_NAME=libopencv-xfeatures2d
-ORIG_TAR=libopencv-xfeatures2d_4.2.0.orig.tar.gz
+ORIG_TAR=libopencv-xfeatures2d_4.5.4.orig.tar.gz
 DEB_DIR=opencv-xfeatures2d
 DIST=$(grep -oP "(?<=VERSION_CODENAME=).*" /etc/os-release)
 
 if [ -d $PACKAGE_NAME ]; then
   rm -rf $PACKAGE_NAME
 fi
-git clone --quiet https://github.com/opencv/opencv.git --branch 4.2.0 $PACKAGE_NAME/opencv 2>&1 || exit 1
-git clone --quiet https://github.com/opencv/opencv_contrib.git --branch 4.2.0 $PACKAGE_NAME/contrib 2>&1 || exit 1
+git clone --quiet https://github.com/opencv/opencv.git --branch 4.5.4 $PACKAGE_NAME/opencv 2>&1 || exit 1
+git clone --quiet https://github.com/opencv/opencv_contrib.git --branch 4.5.4 $PACKAGE_NAME/contrib 2>&1 || exit 1
 cd $PACKAGE_NAME/opencv
 git archive --prefix=$PACKAGE_NAME/ --output=../$ORIG_TAR --format tar.gz HEAD || exit 1
 cp -r ../../$DEB_DIR debian
