@@ -2,19 +2,19 @@
 ARG UBUNTU_VERSION=24.04
 ARG REMOTE=astrobee
 
-FROM ${REMOTE}/astrobee:latest-jazzy_base-ubuntu${UBUNTU_VERSION}
+# FROM ${REMOTE}/astrobee:latest-jazzy-base-ubuntu${UBUNTU_VERSION}
+FROM astrobee:latest-jazzy-base
 
 # install ros rolling + gazebo and dependencies
 RUN /bin/bash -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' \
     && wget https://packages.osrfoundation.org/gazebo.key -O - | sudo apt-key add -
 
 RUN apt-get update && apt-get install -q -y --fix-missing \
-    gazebo \
+    ros-jazzy-ros-gz \
     ros-jazzy-desktop \
     binutils \
     mesa-utils \
     x-window-system \
-    ros-jazzy-gazebo-ros-pkgs \
     libgoogle-glog-dev libgflags-dev libgtest-dev \
     libluajit-5.1-dev \
     ros-jazzy-xacro \

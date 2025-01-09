@@ -18,14 +18,14 @@
 # under the License.
 
 PACKAGE_NAME=libgtsam
-ORIG_TAR=libgtsam_4.1.1.orig.tar.gz
+ORIG_TAR=libgtsam_4.2.0-ros.orig.tar.gz
 DEB_DIR=gtsam
 DIST=$(grep -oP "(?<=VERSION_CODENAME=).*" /etc/os-release)
 
 if [ -d $PACKAGE_NAME ]; then
   rm -rf $PACKAGE_NAME
 fi
-git clone --quiet https://github.com/borglab/gtsam.git $PACKAGE_NAME --branch 4.1.1 2>&1 || exit 1
+git clone --quiet https://github.com/borglab/gtsam.git $PACKAGE_NAME --branch 4.2.0-ros 2>&1 || exit 1
 cd $PACKAGE_NAME
 git archive --prefix=$PACKAGE_NAME/ --output=../$ORIG_TAR --format tar.gz HEAD || exit 1
 cp -r ../$DEB_DIR debian

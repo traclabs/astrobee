@@ -38,6 +38,7 @@ RUN apt-get update && apt-get install -y  \
     python3-rosdep \
     python3-setuptools \
     python3-vcstool \
+    python3-venv \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
@@ -51,7 +52,9 @@ RUN pip3 freeze | grep pytest \
     && python3 -m pytest --version
 
 # install python packages
-RUN pip3 install -U \
+RUN python3 -m venv /opt/jazzyenv \
+    && source /opt/jazzyenv/bin/activate \
+    && pip3 install -U \
     argcomplete \
     flake8-blind-except \
     flake8-builtins \

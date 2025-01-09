@@ -25,13 +25,11 @@ debian_loc=$(dirname "$(readlink -f "$0")")
 dist=$(. /etc/os-release && echo $UBUNTU_CODENAME)
 build_list=()
 
-# add gtsam directly from 4.1 release deb
 sudo apt-get install -y software-properties-common
-sudo add-apt-repository -y ppa:borglab/gtsam-release-4.1
 
 sudo apt-get update
 
-sudo apt-get install -y devscripts equivs libproj-dev libgtsam-dev libgtsam-unstable-dev libboost-all-dev python-is-python3
+sudo apt-get install -y devscripts equivs libproj-dev  libboost-all-dev python-is-python3
 
 # delete old files (-f avoids 'no such file' warning on first run)
 rm -f *.deb *.debian.tar.xz *.orig.tar.gz *.dsc *.build *.buildinfo *.changes *.ddeb
@@ -41,7 +39,7 @@ rm -f *.deb *.debian.tar.xz *.orig.tar.gz *.dsc *.build *.buildinfo *.changes *.
 # This is used in localization_marker...which we are not using yet in the ROS2 port so no harm for now to comment it out
 # build_list+=( ar-track-alvar-msgs ar-track-alvar dlib dbow2 gtsam decomputil jps3d openmvg opencv-xfeatures2d)
 # build_list+=(dlib dbow2 decomputil jps3d openmvg opencv-xfeatures2d)
-build_list+=(dlib dbow2 decomputil jps3d)
+build_list+=(dlib dbow2 decomputil jps3d gtsam)
 
 # If restricted rti-dev debian is present, add miro and soracore as well
 dpkg-query -W -f='${Status}\n' rti-dev 2>&1 | grep -q "install ok installed" &&
@@ -58,4 +56,5 @@ do
   sudo dpkg -i *${pkg}*.deb || exit 1
 done
 
-sudo patch -p0 -d / < boostserialization.patch
+# only needed for 22.04 jammy when boost is v1.74
+# sudo patch -p0 -d / < boostserialization.patch

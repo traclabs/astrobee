@@ -17,6 +17,6 @@ Description: Jps3d.
 
 Package: libjps3d0
 Architecture: any
-Depends: libvtk9.1 (>= 9.1), libboost-filesystem1.74.0 (>= 1.74), libboost-system1.74.0 (>= 1.74), libyaml-cpp0.7 (>= 0.7), ${shlibs:Depends}, ${misc:Depends}
+Depends: libvtk9-dev (>= 9.1), libboost-filesystem-dev (>= 1.74), libboost-system-dev (>= 1.74), libyaml-cpp-dev (>= 0.7.0), ${shlibs:Depends}, ${misc:Depends}
 Description: Jps3d.
  Jps3d.

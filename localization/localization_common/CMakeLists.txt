@@ -28,8 +28,8 @@ set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -O3 -fPIC")
 # Find amend and libraries
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
-
 find_package(astrobee REQUIRED)
 find_package(camera REQUIRED)
 find_package(config_reader REQUIRED)
@@ -79,7 +79,7 @@ add_library(${PROJECT_NAME} SHARED
   src/utilities.cc
 )
 target_link_libraries(${PROJECT_NAME} gtsam ${OpenCV_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME} rclcpp astrobee ff_msgs config_reader camera msg_conversions ff_common)
+ament_target_dependencies(${PROJECT_NAME} rclcpp ament_index_cpp astrobee ff_msgs config_reader camera msg_conversions ff_common)
 ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 if(BUILD_TESTING)
