@@ -44,6 +44,8 @@
 
 #include <ff_util/ff_flight.h>
 
+using namespace std::chrono_literals;
+
 // Gflags
 DEFINE_bool(dock, false, "Send dock command");
 DEFINE_bool(get_face_forward, false, "Get face forward mode");
@@ -761,7 +763,7 @@ int main(int argc, char** argv) {
   // Hacky time out
   int count = 0;
 
-  std::chrono::nanoseconds nanoseconds(200000000);
+  std::chrono::nanoseconds nanoseconds(2s);
   while (nh->count_publishers(TOPIC_MANAGEMENT_ACK) == 0 && !FLAGS_remote) {
     rclcpp::sleep_for(nanoseconds);
     

@@ -85,7 +85,7 @@ def generate_launch_description():
         composable_node_descriptions=[
             ComposableNode(
                 package='localization_manager',
-                plugin='localization_manager::LocalizationManagerNodelet',
+                plugin='localization_manager::LocalizationManagerComponent',
                 name='localization_manager',
                 parameters=[{'use_sim_time': True}],
                 extra_arguments=[{'use_intra_process_comms': False}]),
@@ -397,7 +397,8 @@ def generate_launch_description():
                 parameters=[{'use_sim_time': True}]                
                 #extra_arguments=[{'use_intra_process_comms': False}]
               ),
-            ]
+            ],
+        output=LaunchConfiguration("output")
         ),
         ComposableNodeContainer(
         name='mlp_perch',
