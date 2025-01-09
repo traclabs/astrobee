@@ -29,53 +29,56 @@ void MapperComponent::PclCallback() {
   std::string cam_suffix = TOPIC_HARDWARE_PICOFLEXX_SUFFIX;
 
   if (use_haz_cam_) {
-    std::string cam = TOPIC_HARDWARE_NAME_HAZ_CAM;
-    // Get depth message
-    boost::shared_ptr<sensor_msgs::PointCloud2 const> msg;
-    // rclcpp::wait_for_message<sensor_msgs::PointCloud2>(msg, nh_,
-    //                   cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5));
-    if (msg == NULL) {
-      FF_INFO("No point clound message received");
-    } else {
-      // Structure to include pcl and its frame
-      StampedPcl new_pcl;
+    // TODO 
+    // std::string cam = TOPIC_HARDWARE_NAME_HAZ_CAM;
+    // // Get depth message
+    // boost::shared_ptr<sensor_msgs::PointCloud2 const> msg;
+    // // rclcpp::wait_for_message<sensor_msgs::PointCloud2>(msg, nh_,
+    // //                   cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5));
+    // if (msg == NULL) {
+      FF_INFO("TODO NOT IMPLEMENTED No point clound message received");
+    // } else {
+    //   // Structure to include pcl and its frame
+    //   StampedPcl new_pcl;
 
-      // Convert message into pcl type
-      pcl::PointCloud<pcl::PointXYZ> cloud;
-      pcl::fromROSMsg(*msg, cloud);
-      new_pcl.cloud = cloud;
-      new_pcl.tf_cam2world = globals_.tf_cam2world;
+    //   // Convert message into pcl type
+    //   pcl::PointCloud<pcl::PointXYZ> cloud;
+    //   pcl::fromROSMsg(*msg, cloud);
+    //   new_pcl.cloud = cloud;
+    //   new_pcl.tf_cam2world = globals_.tf_cam2world;
 
-      // save into global variables
-      globals_.pcl_queue.push(new_pcl);
-    }
+    //   // save into global variables
+    //   globals_.pcl_queue.push(new_pcl);
+    // }
   }
   if (use_perch_cam_) {
-    std::string cam = TOPIC_HARDWARE_NAME_PERCH_CAM;
-    // Get depth message
-    boost::shared_ptr<sensor_msgs::PointCloud2 const> msg;
+    // std::string cam = TOPIC_HARDWARE_NAME_PERCH_CAM;
+    // // Get depth message
+    // boost::shared_ptr<sensor_msgs::PointCloud2 const> msg;
 
-    // TODO(@mgouveia): New feature not available in current rolling
-    // rclcpp::wait_for_message(msg, nh_
-    //                   cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5));
-    if (msg == NULL) {
-      FF_INFO("No point clound message received");
-    } else {
-    // Structure to include pcl and its frame
-    StampedPcl new_pcl;
+    // // TODO(@mgouveia): New feature not available in current rolling
+    // // rclcpp::wait_for_message(msg, nh_
+    // //                   cam_prefix + cam + cam_suffix, std::chrono::duration<float>(0.5));
+    // if (msg == NULL) {
+      FF_INFO("TODO NOT IMPLEMENTED No point clound message received");
+    // } else {
+    // // Structure to include pcl and its frame
+    // StampedPcl new_pcl;
 
-    // Convert message into pcl type
-    pcl::PointCloud<pcl::PointXYZ> cloud;
-    pcl::fromROSMsg(*msg, cloud);
-    new_pcl.cloud = cloud;
-    new_pcl.tf_cam2world = globals_.tf_perch2world;
+    // // Convert message into pcl type
+    // pcl::PointCloud<pcl::PointXYZ> cloud;
+    // pcl::fromROSMsg(*msg, cloud);
+    // new_pcl.cloud = cloud;
+    // new_pcl.tf_cam2world = globals_.tf_perch2world;
 
-    // save into global variables
-    globals_.pcl_queue.push(new_pcl);
-    }
+    // // save into global variables
+    // globals_.pcl_queue.push(new_pcl);
+    // }
   }
 
-  OctomappingTask();
+  return;
+
+  // OctomappingTask();
 }
 
 
