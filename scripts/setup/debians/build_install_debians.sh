@@ -34,7 +34,8 @@ rm -f *.deb *.debian.tar.xz *.orig.tar.gz *.dsc *.build *.buildinfo *.changes *.
 # This is used in localization_marker...which we are not using yet in the ROS2 port so no harm for now to comment it out
 # TODO: Once in jazzy, I think we  only need to install jps3d. The rest can come from the system
 #build_list+=( ar-track-alvar-msgs ar-track-alvar dlib dbow2 gtsam decomputil jps3d openmvg opencv-xfeatures2d)
-build_list+=( dlib dbow2 gtsam decomputil jps3d openmvg opencv-xfeatures2d)
+#build_list+=( dlib dbow2 decomputil jps3d openmvg opencv-xfeatures2d)
+build_list+=(jps3d)
 
 # If restricted rti-dev debian is present, add miro and soracore as well
 dpkg-query -W -f='${Status}\n' rti-dev 2>&1 | grep -q "install ok installed" &&

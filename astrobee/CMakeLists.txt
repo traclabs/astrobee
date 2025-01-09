@@ -21,7 +21,7 @@ project(astrobee)
 set(ASTROBEE_VERSION 0.19.1)
 
 ## Compile as C++14, supported in ROS Kinetic and newer
-add_compile_options(-std=c++14)
+add_compile_options(-std=c++17)
 add_definitions(-DROS1)
 
 # Verify the user has the pre-commit hook

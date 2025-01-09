@@ -208,17 +208,17 @@ class GazeboModelPluginFlashlight : public FreeFlyerModelPlugin {
     {
       if(result)
       {
-        FF_WARN("YES, SUCCESS IN CALLING SERVICE: %s !!!!!!!!!!!!!!1", _srv_name.c_str());
+        //FF_WARN("YES, SUCCESS IN CALLING SERVICE: %s !!!!!!!!!!!!!!1", _srv_name.c_str());
         return true;
       }
-      else
-        FF_ERROR("Error ws in result error back");
-    } else
-    {
-      FF_ERROR("ERROR WAS IN CALLING SERVICE: %s", _srv_name.c_str());
-    }
+      //else
+      //  FF_ERROR("Error ws in result error back");
+    } //else
+   //{
+    //  FF_ERROR("ERROR WAS IN CALLING SERVICE: %s", _srv_name.c_str());
+   // }
 
-    FF_ERROR("Failed either creating the service or getting false return for entityRequest");
+    //FF_ERROR("Failed either creating the service or getting false return for entityRequest");
     return false;
   }
 

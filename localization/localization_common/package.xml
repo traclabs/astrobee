@@ -27,6 +27,8 @@
   <!--<build_depend>GTSAM</build_depend>
   <build_depend>ament_index_cpp</build_depend>-->
   <build_depend>ff_common</build_depend>  
+  <build_depend>ament_index_cpp</build_depend>
+  <build_depend>gtsam</build_depend>
 
   <exec_depend>astrobee</exec_depend>
   <exec_depend>camera</exec_depend>
@@ -34,6 +36,7 @@
   <exec_depend>msg_conversions</exec_depend>
   <exec_depend>ff_msgs</exec_depend>
   <exec_depend>ff_common</exec_depend>
+  <exec_depend>gtsam</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

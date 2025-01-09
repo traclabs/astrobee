@@ -66,6 +66,17 @@ ament_target_dependencies(${PROJECT_NAME} rclcpp rclcpp_components ff_common ff_
 ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 rclcpp_components_register_nodes(${PROJECT_NAME} "planner_trapezoidal::PlannerTrapezoidalComponent")
 
+
+ament_export_dependencies(
+  rclcpp 
+  ff_common
+  ff_util
+  ff_msgs
+  PCL
+  choreographer
+  tf2_geometry_msgs
+)
+
 #############
 ## Install ##
 #############

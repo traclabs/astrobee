@@ -20,12 +20,11 @@ from launch.substitutions import PathJoinSubstitution
 
 def generate_launch_description():
 
-    config_file = ["--ros-args ", "--params-file ", get_path("config", "astrobee_gazebo"), "/", "params.yaml"]
-    # extra_gazebo_args = ["--ros-args", "--params-file", config_file]
-    pkg_astrobee_gazebo = get_package_share_directory(
-        'astrobee_gazebo')
+    pkg_astrobee_gazebo = get_package_share_directory('astrobee_gazebo')
     world_filename = PythonExpression(["'", LaunchConfiguration("world"), "' + '.sdf'"])
     world_file = PathJoinSubstitution([pkg_astrobee_gazebo, 'worlds', world_filename])
+    config_file = PathJoinSubstitution([pkg_astrobee_gazebo, 'config', "params.yaml"])
+
     return LaunchDescription([
         DeclareLaunchArgument("gui", default_value="true"),
         DeclareLaunchArgument("speed",   default_value="1"),
@@ -40,10 +39,11 @@ def generate_launch_description():
 # the plugin through sdf robot description since I can't set the parameter here
 
 # ANA FIX THIS
+#            get_launch_file( 'launch/gzserver.launch.py', 'gazebo_ros'),
+#            launch_arguments = {
 #                                'verbose': LaunchConfiguration('debug'),   # Debug a node set
 #                                'physics': LaunchConfiguration('physics'), # SIM IP address
-#                                'extra_gazebo_args': config_file,
-
+#                                'params_file': config_file,
 
         IncludeLaunchDescription(
             get_launch_file( 'launch/gz_sim.launch.py', 'ros_gz_sim'),

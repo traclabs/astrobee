@@ -127,8 +127,6 @@ void TimeToMsg(const Time timestamp, rclcpp::Time& time_msg) {
   time_msg = rclcpp::Time(sec, nanosec, RCL_ROS_TIME); 
 }
 
-void TimeToMsg(const Time timestamp, builtin_interfaces::msg::Time& time_msg) { time_msg = builtin_interfaces::msg::Time(TimeToRosTime(timestamp)); }
-
 gtsam::Pose3 PoseFromMsg(const geometry_msgs::PoseStamped& msg) { return PoseFromMsg(msg.pose); }
 
 gtsam::Pose3 PoseFromMsg(const geometry_msgs::Pose& msg_pose) {

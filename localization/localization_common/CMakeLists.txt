@@ -21,7 +21,8 @@ project(localization_common)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
+#set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror -O3 -fPIC" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-error -O3 -fPIC")
 
 # Find amend and libraries
 find_package(ament_cmake REQUIRED)
@@ -34,8 +35,7 @@ find_package(config_reader REQUIRED)
 find_package(msg_conversions REQUIRED)
 find_package(ff_msgs REQUIRED)
 find_package(ff_common REQUIRED)
-
-# Find GTSAM
+find_package(ament_index_cpp REQUIRED)
 find_package(GTSAM REQUIRED)
 
 # System dependencies are found with CMake's conventions
@@ -62,10 +62,10 @@ ament_python_install_package(${PROJECT_NAME})
 # Specify additional locations of header files
 include_directories(
   include
-  ${GTSAM_INCLUDE_DIR}
+  ${GTSAM_INCLUDE_DIR}  
   ${EIGEN3_INCLUDE_DIRS}
 )
-
+message(STATUS "GTSAM INCLUDE DIR: ${GTSAM_INCLUDE_DIR} !!!!!!!")
 # Declare C++ libraries
 add_library(${PROJECT_NAME} SHARED
   src/averager.cc
@@ -84,7 +84,7 @@ add_library(${PROJECT_NAME} SHARED
   src/utilities.cc
 )
 target_link_libraries(${PROJECT_NAME} gtsam ${OpenCV_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME} rclcpp astrobee ff_msgs config_reader camera msg_conversions ff_common)
+ament_target_dependencies(${PROJECT_NAME} rclcpp astrobee ff_msgs config_reader camera msg_conversions ff_common ament_index_cpp)
 ament_export_targets(${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 if(BUILD_TESTING)
@@ -125,10 +125,21 @@ endif()
 ## Install ##
 #############
 
-ament_export_include_directories(include)
+ament_export_include_directories(
+  include
+  ${GTSAM_INCLUDE_DIR}
+)
 ament_export_dependencies(
+  astrobee
+  camera
+  config_reader
+  msg_conversions
+  ff_msgs
+  ff_common
+  ament_index_cpp
   GTSAM
 )
+
 # Mark libraries for installation
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}

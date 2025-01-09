@@ -40,15 +40,11 @@ find_package(visualization_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(pcl_msgs REQUIRED)
 find_package(octomap REQUIRED)
+find_package(pcl_msgs REQUIRED)
 
-  # message_runtime
 
-<<<<<<< HEAD
-=======
-
->>>>>>> sync/merge_latest_nasa_develop
-LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
-find_package(Octomap REQUIRED)
+#LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../../cmake")
+#find_package(Octomap REQUIRED)
 
 # Find Eigen3
 find_package(Eigen3 REQUIRED)
@@ -64,7 +60,7 @@ include_directories(
   include
   ${EIGEN3_INCLUDE_DIR}
   ${PCL_INCLUDE_DIRS}
-  ${OCTOMAP_INCLUDE_DIRS}
+#  ${OCTOMAP_INCLUDE_DIRS}
 )
 
 # Declare C++ libraries
@@ -80,8 +76,8 @@ add_library(${PROJECT_NAME} SHARED
 )
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE "COMPOSITION_BUILDING_DLL")
-target_link_libraries(${PROJECT_NAME} ${OCTOMAP_LIBRARIES} ${PCL_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME} rclcpp rclcpp_components std_srvs ff_msgs sensor_msgs pcl_msgs ff_util visualization_msgs octomap)
+target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES}) # ${OCTOMAP_LIBRARIES} 
+ament_target_dependencies(${PROJECT_NAME} rclcpp rclcpp_components std_srvs ff_msgs ff_util visualization_msgs pcl_msgs octomap)
 rclcpp_components_register_nodes(${PROJECT_NAME} "mapper::MapperComponent")
 
 

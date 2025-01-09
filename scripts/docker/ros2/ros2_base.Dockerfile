@@ -1,6 +1,6 @@
-FROM ubuntu:focal
+FROM ubuntu:noble
 
-ENV ROSDISTRO=rolling
+ENV ROSDISTRO=jazzy
 ENV ROS_PYTHON_VERSION=3
 ENV ROS_VERSION=2
 
@@ -39,6 +39,17 @@ RUN apt-get update && apt-get install -y  \
     python3-setuptools \
     python3-vcstool \
     wget \
+    python3-argcomplete \
+    python3-flake8-blind-except \
+    python3-flake8-builtins \
+    python3-flake8-class-newline \
+    python3-flake8-comprehensions \
+    python3-flake8-deprecated \
+    python3-flake8-import-order \
+    python3-flake8-quotes \
+    python3-pytest-repeat \
+    python3-pytest-rerunfailures \
+    python3-pytest-timeout \
     && rm -rf /var/lib/apt/lists/*
 
 # bootstrap rosdep
@@ -47,22 +58,9 @@ RUN rosdep init \
 
 # This is a workaround for pytest not found causing builds to fail
 # Following RUN statements tests for regression of https://github.com/ros2/ros2/issues/722
-RUN pip3 freeze | grep pytest \
-    && python3 -m pytest --version
+#RUN pip3 freeze | grep pytest \
+#    && python3 -m pytest --version
 
-# install python packages
-RUN pip3 install -U \
-    argcomplete \
-    flake8-blind-except \
-    flake8-builtins \
-    flake8-class-newline \
-    flake8-comprehensions \
-    flake8-deprecated \
-    flake8-import-order \
-    flake8-quotes \
-    pytest-repeat \
-    pytest-rerunfailures \
-    pytest-timeout
 
 # make python run python3 for compatibility with astrobee scripts
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+#RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1

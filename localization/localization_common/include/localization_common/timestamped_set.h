@@ -23,6 +23,13 @@
 #include <localization_common/time.h>
 
 #include <boost/optional.hpp>
+
+// Boost bug  - Check if this bug is fixed when we migrate to noble/jazzy
+#include <boost/serialization/version.hpp>
+#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 == 74
+#include <boost/serialization/library_version_type.hpp>
+#endif
+
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/unordered_map.hpp>
 
@@ -53,7 +60,7 @@ class TimestampedSet {
 
   // Assumes values have corresponding timestamps at the same index and each timestamp is unique.
   TimestampedSet(const std::vector<Time>& timestamps, const std::vector<T>& values,
-                 const boost::optional<size_t> max_size = boost::none);
+                 const boost::optional<int> max_size = boost::none);
 
   // Adds a value at the corresponding timestamp.
   // Returns whether the value was successfully added.
@@ -434,7 +441,7 @@ TimestampedSet<T>::InRangeValues(const Time oldest_allowed_timestamp, const Time
   //auto lower_bound = timestamp_value_map_.lower_bound(oldest_allowed_timestamp);
   // No values less than latest allowed time
   if (upper_bound == timestamp_value_map_.cbegin()) return {cend(), cend()};
-  return std::make_pair(lower_bound, upper_bound);
+  return std::make_pair(timestamp_value_map_.lower_bound(oldest_allowed_timestamp), upper_bound);
 }
 
 template <typename T>

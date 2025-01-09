@@ -99,7 +99,7 @@ Time TimeFromRosTime(const rclcpp::Time& time);
 
 void TimeToHeader(const Time timestamp, std_msgs::Header& header);
 
-void TimeToMsg(const Time timestamp, builtin_interfaces::msg::Time& time_msg);
+void TimeToMsg(const Time timestamp, rclcpp::Time& time_msg);
 
 gtsam::Pose3 PoseFromMsg(const geometry_msgs::PoseStamped& msg);
 
