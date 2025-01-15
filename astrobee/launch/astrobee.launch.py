@@ -113,7 +113,7 @@ def generate_launch_description():
                   "output" : LaunchConfiguration("output"), 
                   "gtloc"  : LaunchConfiguration("gtloc"),    # Use Ground Truth Localizer
                 }.items(),
-                condition=LaunchConfigurationNotEquals("llp", "disabled"),
+                condition=IfCondition(EqualsSubstitution(LaunchConfiguration("llp"), "disabled")),
               )                      
             ]
         ),
@@ -137,7 +137,7 @@ def generate_launch_description():
                 "output" : LaunchConfiguration("output"), 
                 "gtloc"  : LaunchConfiguration("gtloc"),   # Use Ground Truth Localizer
               }.items(),
-              condition=LaunchConfigurationNotEquals("llp", "disabled"),
+              condition=IfCondition(EqualsSubstitution(LaunchConfiguration("llp"), "disabled")),
               )
             ]
         )

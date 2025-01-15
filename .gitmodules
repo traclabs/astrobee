@@ -9,5 +9,8 @@
 	url = ssh://git@babelfish.arc.nasa.gov:7999/astrobee/astrobee_platform.git
 [submodule "description/media"]
 	path = description/media
-	url = https://github.com/nasa/astrobee_media.git
+	url = git@github.com:traclabs/astrobee_media.git
 	shallow = true
+	branch = jazzy
+	remote = origin/jazzy
+	update = merge
