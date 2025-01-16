@@ -763,7 +763,9 @@ int main(int argc, char** argv) {
   // Hacky time out
   int count = 0;
 
-  std::chrono::nanoseconds nanoseconds(2s);
+  // TODO @sgee revert
+  // std::chrono::nanoseconds nanoseconds(2s);
+  std::chrono::nanoseconds nanoseconds(20s);
   while (nh->count_publishers(TOPIC_MANAGEMENT_ACK) == 0 && !FLAGS_remote) {
     rclcpp::sleep_for(nanoseconds);
     

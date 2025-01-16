@@ -110,7 +110,6 @@ void FreeFlyerPlugin::InitializePlugin(std::string const& robot_name, std::strin
 
 // Poll for extrinsics until found
 void FreeFlyerPlugin::SetupExtrinsics() {
-  gzwarn << "Setting up extrinsics... plugin frame: " << plugin_frame_.c_str() << std::endl;
   // If we don't need extrinsics, then don't bother looking...
   if (plugin_frame_.empty()) {
     if (ExtrinsicsCallback(nullptr))
@@ -121,14 +120,18 @@ void FreeFlyerPlugin::SetupExtrinsics() {
   if (parent_frame_.empty())
     parent_frame_ = GetFrame(FRAME_NAME_BODY);
   // Keep trying to find the frame transform
-  try { gzwarn << "Should be trying to get transfrom from " << parent_frame_ << " to: " << GetFrame() << std::endl;
+  try {
+    gzdbg << "Trying to get transfrom from " << parent_frame_ << " to: " << GetFrame() << std::endl;
     geometry_msgs::TransformStamped tf =
       buffer_->lookupTransform(parent_frame_, GetFrame(), ros::Time(0));
     if (ExtrinsicsCallback(&tf)) {
       OnExtrinsicsReceived(nh_);
       timer_.stop();
+      gzdbg << "Finished setting up extrinsics for " << GetFrame() << std::endl;
     }
-  } catch (tf2::TransformException &ex) {}
+  } catch (tf2::TransformException &ex) {
+    gzwarn << "Frame " << parent_frame_ << " to: " << GetFrame() << " still not available" << std::endl;
+  }
 }
 
 // Get the extrinsics frame

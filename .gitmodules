@@ -11,3 +11,4 @@
 	path = description/media
 	url = https://github.com/traclabs/astrobee_media.git
 	shallow = true
+	branch = jazzy

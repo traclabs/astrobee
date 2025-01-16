@@ -149,7 +149,11 @@ class FreeFlyerTimer {
 
   void stop() {
     if (created_) {
+      reset();
       timer_->cancel();
+      created_ = false;
+      FF_DEFINE_LOGGER("ff_timer")
+      FF_INFO("Stopping timer.");
     }
   }
 

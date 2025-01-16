@@ -118,20 +118,21 @@ add_library(gazebo_model_plugin_truth SHARED
 target_link_libraries(gazebo_model_plugin_truth astrobee_gazebo)
 #ament_target_dependencies(gazebo_model_plugin_truth rclcpp tf2 tf2_ros ros_gz )
 
-
 # Create a model plugin for the propulsion system
 #add_library(gazebo_model_plugin_pmc SHARED
 #  src/gazebo_model_plugin_pmc/gazebo_model_plugin_pmc.cc
 #)
 #target_link_libraries(gazebo_model_plugin_pmc astrobee_gazebo)
+#ament_target_dependencies(gazebo_model_plugin_pmc ff_hw_msgs tf2 tf2_ros )
 #ament_target_dependencies(gazebo_model_plugin_pmc rclcpp ff_msgs ff_hw_msgs ros_gz  pmc)
 #ament_export_libraries(gazebo_model_plugin_pmc)
 
 # Create a model plugin for the perching arm
-#add_library(gazebo_model_plugin_perching_arm SHARED
-#  src/gazebo_model_plugin_perching_arm/gazebo_model_plugin_perching_arm.cc
-#)
-#target_link_libraries(gazebo_model_plugin_perching_arm astrobee_gazebo)
+add_library(gazebo_model_plugin_perching_arm SHARED
+  src/gazebo_model_plugin_perching_arm/gazebo_model_plugin_perching_arm.cc
+)
+target_link_libraries(gazebo_model_plugin_perching_arm astrobee_gazebo)
+ament_target_dependencies(gazebo_model_plugin_perching_arm ff_hw_msgs ) #tf2 tf2_ros )
 #ament_target_dependencies(gazebo_model_plugin_perching_arm rclcpp ff_msgs ff_hw_msgs )
 
 # Create a model plugin for the front flashlight
@@ -262,8 +263,8 @@ install(TARGETS
   gazebo_model_plugin_eps
   gazebo_model_plugin_drag
   gazebo_model_plugin_truth
-#  gazebo_model_plugin_pmc
-#  gazebo_model_plugin_perching_arm
+  #gazebo_model_plugin_pmc
+  gazebo_model_plugin_perching_arm
   gazebo_model_plugin_flashlight
 #  gazebo_model_plugin_laser
   gazebo_model_plugin_heartbeat
