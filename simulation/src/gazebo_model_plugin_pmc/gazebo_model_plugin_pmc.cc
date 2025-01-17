@@ -15,6 +15,9 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
+// Gazebo includes
+#include <astrobee_gazebo/astrobee_gazebo.h>
+#include <gz/plugin/Register.hh>
 
 // FSW shared libraries
 #include <config_reader/config_reader.h>
@@ -24,9 +27,6 @@
 
 // Autocode inclide
 #include <pmc/pmc_sim.h>
-
-// Gazebo includes
-#include <astrobee_gazebo/astrobee_gazebo.h>
 
 // FreeFlyer messages
 #include <ff_hw_msgs/msg/pmc_command.hpp>
@@ -58,7 +58,7 @@ typedef msg::Wrench Wrench;
 #include <string>
 #include <map>
 
-namespace gazebo {
+namespace astrobee_gazebo {
 
 FF_DEFINE_LOGGER("gazebo_model_plugin_pmc");
 
@@ -161,18 +161,13 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
   }
 
   // Destructor
-  ~GazeboModelPluginPmc() {
-    #if GAZEBO_MAJOR_VERSION > 7
-    update_.reset();
-    #else
-    event::Events::DisconnectWorldUpdateBegin(update_);
-    #endif
-  }
+  ~GazeboModelPluginPmc() {}
 
  protected:
   // Called when the plugin is loaded into the simulator
   void LoadCallback(NodeHandle &nh,
-    physics::ModelPtr model, sdf::ElementPtr sdf) {
+    gz::sim::EntityComponentManager &_ecm) {
+
     config_params.AddFile("hw/pmc_actuator.config");
     if (!GetParams()) {
       FF_ERROR("PMC Actuator: Failed to get parameters.");
@@ -181,8 +176,8 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
     }
 
     // If we specify a frame name different to our sensor tag name
-    if (sdf->HasElement("bypass_blower_model"))
-      bypass_blower_model_ = sdf->Get<bool>("bypass_blower_model");
+    if (sdf_->HasElement("bypass_blower_model"))
+      bypass_blower_model_ = sdf_->Get<bool>("bypass_blower_model");
 
     // Create a null command to be used later
     ff_hw_msgs::PmcGoal null_goal;
@@ -222,12 +217,10 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
       std::bind(&GazeboModelPluginPmc::IdlingTimeoutService, this, std::placeholders::_1, std::placeholders::_2));
 
     // Create a watchdog timer to ensure the PMC commands are set
+    /// TODO this may be better served in the OnUpdate function
     timer_command_.createTimer(1.0/control_rate_hz_,
       std::bind(&GazeboModelPluginPmc::CommandTimerCallback, this), nh_, false, true);
 
-    // Called before each iteration of simulated world update
-    update_ = event::Events::ConnectWorldUpdateBegin(
-      std::bind(&GazeboModelPluginPmc::WorldUpdateCallback, this));
   }
 
   // Read the configuration from the LUA config file
@@ -336,42 +329,29 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
     }
   }
 
+  void Update(const gz::sim::UpdateInfo &/*_info*/,
+              gz::sim::EntityComponentManager &_ecm)
+  {
+    gz::math::Vector3d world_vel = (GetLink()->WorldAngularVelocity(_ecm)).value_or(gz::math::Vector3d(0.0,0.0,0.0));
+    pmc_.SetAngularVelocity(world_vel.X(), world_vel.Y(), world_vel.Z());
+  }
+
   // Must be called at 62.5Hz to satisfy the needs of GNC
   void CommandTimerCallback() {
     // Step the blower model
-    #if GAZEBO_MAJOR_VERSION > 7
-    pmc_.SetAngularVelocity(
-      GetLink()->RelativeAngularVel().X(),
-      GetLink()->RelativeAngularVel().Y(),
-      GetLink()->RelativeAngularVel().Z());
-    #else
-    pmc_.SetAngularVelocity(
-      GetLink()->GetRelativeAngularVel().x,
-      GetLink()->GetRelativeAngularVel().y,
-      GetLink()->GetRelativeAngularVel().z);
-    #endif
     pmc_.SetBatteryVoltage(14.0);
     pmc_.Step();
+
     // Calculate the force and torque on the platform
-    #if GAZEBO_MAJOR_VERSION > 7
-    force_ = ignition::math::Vector3d(0, 0, 0);
-    torque_ = ignition::math::Vector3d(0, 0, 0);
+    force_ = gz::math::Vector3d(0, 0, 0);
+    torque_ = gz::math::Vector3d(0, 0, 0);
     for (size_t i = 0; i < NUMBER_OF_PMCS; i++) {
       auto t = pmc_.Force();
-      force_ += ignition::math::Vector3d(t[0], t[1], t[2]);
+      force_ += gz::math::Vector3d(t[0], t[1], t[2]);
       t = pmc_.Torque();
-      torque_ += ignition::math::Vector3d(t[0], t[1], t[2]);
+      torque_ += gz::math::Vector3d(t[0], t[1], t[2]);
     }
-    #else
-    force_ = math::Vector3(0, 0, 0);
-    torque_ = math::Vector3(0, 0, 0);
-    for (size_t i = 0; i < NUMBER_OF_PMCS; i++) {
-      auto t = pmc_.Force();
-      force_ += math::Vector3(t[0], t[1], t[2]);
-      t = pmc_.Torque();
-      torque_ += math::Vector3(t[0], t[1], t[2]);
-    }
-    #endif
+
     // Publish telemetry
     PublishTelemetry();
   }
@@ -441,22 +421,19 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
   }
 
   // Called on each sensor update event
-  void WorldUpdateCallback() {
+  void PreUpdate(const gz::sim::UpdateInfo &/*_info*/,
+                 gz::sim::EntityComponentManager &_ecm)
+  {
     if (bypass_blower_model_) {
-      #if GAZEBO_MAJOR_VERSION > 7
-      GetLink()->AddRelativeForce(ignition::math::Vector3d(
-        wrench_.force.x, wrench_.force.y, wrench_.force.z));
-      GetLink()->AddRelativeTorque(ignition::math::Vector3d(
-        wrench_.torque.x, wrench_.torque.y, wrench_.torque.z));
-      #else
-      GetLink()->AddRelativeForce(math::Vector3(
-        wrench_.force.x, wrench_.force.y, wrench_.force.z));
-      GetLink()->AddRelativeTorque(math::Vector3(
-        wrench_.torque.x, wrench_.torque.y, wrench_.torque.z));
-      #endif
+      GetLink()->AddWorldWrench(_ecm,
+                                gz::math::Vector3d(wrench_.force.x,
+                                                   wrench_.force.y,
+                                                   wrench_.force.z),
+                                gz::math::Vector3d(wrench_.torque.x,
+                                                   wrench_.torque.y,
+                                                   wrench_.torque.z));
     } else {
-      GetLink()->AddRelativeForce(force_);
-      GetLink()->AddRelativeTorque(torque_);
+      GetLink()->AddWorldWrench(_ecm, force_, torque_);
     }
   }
 
@@ -471,17 +448,11 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
   rclcpp::Service<ff_msgs::SetFloat>::SharedPtr update_timeout_srv_;
   ff_util::FreeFlyerTimer timer_command_, timer_watchdog_;               // Timers
   double watchdog_period_;
-  #if GAZEBO_MAJOR_VERSION > 7
-  ignition::math::Vector3d force_;                                       // Current body-frame force
-  ignition::math::Vector3d torque_;                                      // Current body-frame torque
-  #else
-  math::Vector3 force_;                                                  // Current body-frame force
-  math::Vector3 torque_;                                                 // Current body-frame torque
-  #endif
+  gz::math::Vector3d force_;                                             // Current body-frame force
+  gz::math::Vector3d torque_;                                            // Current body-frame torque
   geometry_msgs::Wrench wrench_;                                         // Used when bypassing PMC
   pmc::PMCSim pmc_;
   ff_hw_msgs::PmcCommand null_command_;                                  // PMC null command
-  event::ConnectionPtr update_;                                          // Update event from gazeo
   ff_hw_msgs::PmcTelemetry telemetry_vector_;                            // Telemetry
   bool pmc_enabled_;                                                     // Is the PMC enabled?
   bool bypass_blower_model_;                                             // Bypass the blower model
@@ -493,7 +464,17 @@ class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
   std::string frame_id_;                                                 // Frame
 };
 
-// Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(GazeboModelPluginPmc)
+}   // namespace astrobee_gazebo
 
-}   // namespace gazebo
+// Register this plugin with the simulator
+GZ_ADD_PLUGIN(
+  astrobee_gazebo::GazeboModelPluginPmc,
+  gz::sim::System,
+  astrobee_gazebo::GazeboModelPluginPmc::ISystemConfigure,
+  astrobee_gazebo::GazeboModelPluginPmc::ISystemPreUpdate,
+  astrobee_gazebo::GazeboModelPluginPmc::ISystemUpdate,
+  astrobee_gazebo::GazeboModelPluginPmc::ISystemPostUpdate)
+
+GZ_ADD_PLUGIN_ALIAS(astrobee_gazebo::GazeboModelPluginPmc, 
+                    "astrobee_plugin_pmc",
+                    "astrobee_gazebo::GazeboModelPluginPmc")

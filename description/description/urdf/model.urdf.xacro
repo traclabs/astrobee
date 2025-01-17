@@ -114,7 +114,7 @@
 
   <!-- MODEL -->
   <xacro:include filename="$(find description)/urdf/model_drag.urdf.xacro" />
-<!--  <xacro:include filename="$(find description)/urdf/model_pmc.urdf.xacro" />-->
+  <xacro:include filename="$(find description)/urdf/model_pmc.urdf.xacro" />
   <xacro:include filename="$(find description)/urdf/model_eps.urdf.xacro" />
   <xacro:include filename="$(find description)/urdf/model_truth.urdf.xacro" />
 <!--  <xacro:include filename="$(find description)/urdf/model_laser.urdf.xacro" /> -->

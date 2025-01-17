@@ -99,24 +99,25 @@ def generate_launch_description():
         #                name="llp" address="$(arg llp)" user="astrobee" password="astrobee"
         #                env-loader="/opt/astrobee/env_wrapper.sh" default="true">
         #       </machine>
-        #GroupAction(
-        #    actions=[
-        #      PushRosNamespace(LaunchConfiguration('ns')),
-        #      IncludeLaunchDescription(
-        #        get_launch_file("launch/robot/LLP.launch.py"),
-        #        launch_arguments={
-        #          "drivers": LaunchConfiguration("drivers"),  # Don't start driver nodes
-        #          "spurn"  : LaunchConfiguration("spurn"),    # Prevent node
-        #          "nodes"  : LaunchConfiguration("nodes"),    # Launch node group
-        #          "extra"  : LaunchConfiguration("extra"),    # Inject extra nodes
-        #          "debug"  : LaunchConfiguration("debug"),    # Debug a node set
-        #          "output" : LaunchConfiguration("output"), 
-        #          "gtloc"  : LaunchConfiguration("gtloc"),    # Use Ground Truth Localizer
-        #        }.items(),
-        #        condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "disabled")),
-        #      )                      
-        #    ]
-        #),
+        GroupAction(
+           actions=[
+             PushRosNamespace(LaunchConfiguration('ns')),
+             IncludeLaunchDescription(
+               get_launch_file("launch/robot/LLP.launch.py"),
+               launch_arguments={
+                 "drivers": LaunchConfiguration("drivers"),  # Don't start driver nodes
+                 "spurn"  : LaunchConfiguration("spurn"),    # Prevent node
+                 "nodes"  : LaunchConfiguration("nodes"),    # Launch node group
+                 "extra"  : LaunchConfiguration("extra"),    # Inject extra nodes
+                 "debug"  : LaunchConfiguration("debug"),    # Debug a node set
+                 "output" : LaunchConfiguration("output"),
+                 "gtloc"  : LaunchConfiguration("gtloc"),    # Use Ground Truth Localizer
+               }.items(),
+               condition=IfCondition(NotEqualsSubstitution(LaunchConfiguration("llp"), "disabled")),
+             )
+           ]
+        ),
+
         # MLP
         #       <!-- Connect and update environment variables if required -->
         #       <machine unless="$(eval arg('mlp')=='local')" timeout="10"
