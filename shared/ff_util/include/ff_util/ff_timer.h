@@ -152,7 +152,7 @@ class FreeFlyerTimer {
       reset();
       timer_->cancel();
       created_ = false;
-      timer_.reset(); // destroy the timer. @sgee: hoped this would remove one of the rcl errors I'm seeing, but that seems to be a much deeper-seeded bug.
+      // timer_.reset(); // destroy the timer. @sgee: hoped this would remove one of the rcl errors I'm seeing, but that seems to be a much deeper-seeded bug.
     }
   }
 

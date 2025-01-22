@@ -381,9 +381,9 @@
         velocity="0.12" />
     </joint>
     <xacro:if value="${bay == 'top_aft'}">
-      <!--gazebo>
+      <gazebo>
         <plugin 
-          name="astrobee_gazebo::GazeboModelPluginPerchingArm" 
+          name="astrobee_plugin_perching_arm" 
           filename="gazebo_model_plugin_perching_arm">
           <rate>10.0</rate>
           <bay>top_aft</bay>
@@ -391,12 +391,12 @@
           <distal>0</distal>
           <gripper>0</gripper>
         </plugin>
-      </gazebo>-->
+      </gazebo>
     </xacro:if>
     <xacro:if value="${bay == 'bot_aft'}">
-      <!--<gazebo>
+      <gazebo>
         <plugin 
-          name="astrobee_gazebo::GazeboModelPluginPerchingArm" 
+          name="astrobee_plugin_perching_arm" 
           filename="gazebo_model_plugin_perching_arm">
           <rate>10.0</rate>
           <bay>bot_aft</bay>
@@ -404,7 +404,15 @@
           <distal>0</distal>
           <gripper>0</gripper>
         </plugin>
-      </gazebo>-->
+      </gazebo>
     </xacro:if>
   </xacro:macro>
+
+  <!-- <gazebo>
+    <plugin
+      filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+      <topic>${prefix}joint_states</topic>
+    </plugin>
+  </gazebo> -->
 </robot>

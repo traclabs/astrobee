@@ -421,6 +421,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
  protected:
   // Called to initialize this component
   void Initialize(NodeHandle &nh) {
+    FF_WARN_STREAM("INIT THE DOCK");
     // Grab some configuration parameters for this node from the LUA config reader
     cfg_.AddFile("behaviors/dock.config");
     if (!cfg_.Initialize(nh))
@@ -493,23 +494,28 @@ class DockComponent : public ff_util::FreeFlyerComponent {
     server_.SetCancelCallback(std::bind(
       &DockComponent::CancelCallback, this));
     server_.Create(nh, ACTION_BEHAVIORS_DOCK);
+
+
+    FF_WARN_STREAM("DOCK READY TO GO");
   }
 
   // Timeout on a trajectory generation request
   void EnableTimeoutCallback(void) {
+    FF_WARN_STREAM("ENABLE TIMEOUT CALLBACK");
     return AssertFault(ff_util::INITIALIZATION_FAILED,
                        "Could not find enable service", GetTimeNow());
   }
 
   // Timeout on a trajectory generation request
   void UndockTimeoutCallback(void) {
+    FF_WARN_STREAM("UNDOCK TIMEOUT CALLBACK");
     return AssertFault(ff_util::INITIALIZATION_FAILED,
                        "Could not find undock service", GetTimeNow());
   }
 
   // Ensure all clients are connected
   void ConnectedCallback() {
-    FF_DEBUG_STREAM("ConnectedCallback()");
+    FF_WARN_STREAM("ConnectedCallback()");
     if (!client_u_.IsConnected()) return;       // Undock service
     if (!client_s_.IsConnected()) return;       // Switch action
     if (!client_m_.IsConnected()) return;       // Move action
@@ -519,6 +525,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   // Called on registration of a planner
   bool SetStateCallback(const std::shared_ptr<ff_msgs::SetState::Request> req,
                         std::shared_ptr<ff_msgs::SetState::Response> res) {
+    FF_WARN_STREAM("SET STATE CALLBACK");
     fsm_.SetState(req->state);
     res->success = true;
     UpdateCallback(fsm_.GetState(), MANUAL_STATE_SET);
@@ -527,6 +534,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
 
   // Complete the current dock or undock action
   void Result(int32_t response, std::string const& msg = "") {
+    FF_WARN_STREAM("RESULT CALLBACK");
     // Send the feedback if needed
     switch (fsm_.GetState()) {
     case STATE::INITIALIZING:
@@ -553,6 +561,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   // When the FSM state changes we get a callback here, so that we
   // can choose to do various things.
   void UpdateCallback(FSM::State const& state, FSM::Event const& event) {
+    FF_WARN_STREAM("UPDATE CALLBACK");
     // Debug events
     ff_msgs::DockState msg;
     msg.header.frame_id = GetPlatform();
@@ -573,7 +582,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
     case MOTION_FAILED:    msg.fsm_event = "MOTION_FAILED";    break;
     case MANUAL_STATE_SET: msg.fsm_event = "MANUAL_STATE_SET"; break;
     }
-    FF_DEBUG_STREAM("Received event " << msg.fsm_event);
+    FF_WARN_STREAM("Received event " << msg.fsm_event);
     // Debug state changes
     switch (state) {
     case STATE::INITIALIZING:
@@ -611,7 +620,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
     case STATE::RECOVERY_SWITCHING_TO_ML_LOC:
       msg.fsm_state = "RECOVERY_SWITCHING_TO_ML_LOC";      break;
     }
-    FF_DEBUG_STREAM("State changed to " << msg.fsm_state);
+    FF_WARN_STREAM("State changed to " << msg.fsm_state);
     // Broadcast the docking state
     pub_->publish(msg);
     // Send the feedback if needed
@@ -632,6 +641,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
 
   // Check that we are close enough to the approach pose
   bool CloseEnoughToApproach(std::string berth) {
+    FF_WARN_STREAM("CLOSE ENOUGH");
     try {
       // Look up the body frame in the berth frame
       geometry_msgs::TransformStamped tf = tf_buffer_->lookupTransform(
@@ -651,6 +661,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   }
 
   bool CheckBerth() {
+    FF_WARN_STREAM("CHECK BERTH");
     // Look for the berth and confirm localization is working
     std::map<uint8_t, std::string>::iterator it;
     rclcpp::Time begin = GetTimeNow();
@@ -681,7 +692,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
       FF_ERROR_STREAM("Could not detect berth from current pose");
       return false;
     } else {
-      FF_DEBUG_STREAM("Berth frame detected: " << it->second);
+      FF_WARN_STREAM("Berth frame detected: " << it->second);
       // At this point we should have good AR or ML localization, so we can
       // determine our pose to within a couple centimeters.
       frame_ = it->second;
@@ -691,6 +702,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   // EPS (DOCKING)
 
   bool Undock() {
+    FF_WARN_STREAM("UNDOCK BB");
     // Any error finding the berth transform or calling the service will result
     // in an EPS_TIMEOUT event, which the FSM will use to recover.
     timer_eps_.start();
@@ -702,17 +714,18 @@ class DockComponent : public ff_util::FreeFlyerComponent {
     // Check that we actually called EPS undock() successfully
     switch (response->value) {
     case ff_hw_msgs::Undock::Response::SUCCESS:
-      FF_DEBUG_STREAM("Undocking called successfully");
+      FF_WARN_STREAM("Undocking called successfully");
       return true;
     case ff_hw_msgs::Undock::Response::UNDOCK_FAILED:
     default:
       break;
     }
-    FF_DEBUG_STREAM("There was a problem calling the undock service");
+    FF_WARN_STREAM("There was a problem calling the undock service");
     return false;
   }
 
   void DockStateCallback(const std::shared_ptr<ff_hw_msgs::EpsDockStateStamped> msg) {
+    FF_WARN_STREAM("DOCK STATE CALLBACK");
     switch (msg->state) {
     // We don't worry about a timeout on docking, because we'll get a motion
     // failure if docking doesn't succeed.
@@ -729,6 +742,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   }
 
   void DockTimerCallback() {
+    FF_WARN_STREAM("DOCK TIMER CALLBACK");
     return fsm_.Update(EPS_TIMEOUT);
   }
 
@@ -736,6 +750,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
 
   // Helper function for localization switching
   bool Switch(std::string const& pipeline) {
+    FF_WARN_STREAM("SWITCH CALLBACK");
     // Send the switch goal
     ff_msgs::Localization::Goal goal;
     goal.command = ff_msgs::Localization::Goal::COMMAND_SWITCH_PIPELINE;
@@ -750,6 +765,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   // Do something with the switch result
   void SResultCallback(ff_util::FreeFlyerActionState::Enum result_code,
     std::shared_ptr<const ff_msgs::Localization::Result> result) {
+    FF_WARN_STREAM("SWITCH RESULT CALLBACK");
     switch (result_code) {
     case ff_util::FreeFlyerActionState::SUCCESS:
       return fsm_.Update(SWITCH_SUCCESS);
@@ -763,6 +779,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
 
   // Prepare for a motion
   bool Prep(std::string const& flight_mode) {
+    FF_WARN_STREAM("PREP DOCK");
     static ff_msgs::Motion::Goal goal;
     goal.command = ff_msgs::Motion::Goal::PREP;
     goal.flight_mode = flight_mode;
@@ -771,6 +788,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
 
   // Send a move command
   bool Move(DockPose type, std::string const& mode) {
+    FF_WARN_STREAM("MOVE DOCK");
     // Create a new motion foal
     ff_msgs::Motion::Goal goal;
     goal.command = ff_msgs::Motion::Goal::MOVE;
@@ -873,11 +891,13 @@ class DockComponent : public ff_util::FreeFlyerComponent {
   // Result of a move action
   void MResultCallback(ff_util::FreeFlyerActionState::Enum result_code,
     std::shared_ptr<const ff_msgs::Motion::Result> result) {
+      FF_WARN_STREAM("MOVE RESULT CALLBACK");
     switch (result_code) {
     case ff_util::FreeFlyerActionState::SUCCESS:
       return fsm_.Update(MOTION_SUCCESS);
     default:
       err_msg_ = "Move Code " + std::to_string(result->response) + ": (" + result->fsm_result + ")";
+      FF_WARN_STREAM("MOVE RESULT CALLBACK MOVE CODE: "<<err_msg_);
       return fsm_.Update(MOTION_FAILED);
     }
   }
@@ -886,6 +906,7 @@ class DockComponent : public ff_util::FreeFlyerComponent {
 
   // A new arm action has been called
   void GoalCallback(std::shared_ptr<const ff_msgs::Dock::Goal> goal) {
+    FF_WARN_STREAM("DOCK GOAL CALLBACK");
     auto result = std::make_shared<ff_msgs::Dock::Result>();
     switch (goal->command) {
     case ff_msgs::Dock::Goal::DOCK:
@@ -951,11 +972,13 @@ class DockComponent : public ff_util::FreeFlyerComponent {
 
   // Preempt the current action with a new action
   void PreemptCallback() {
+    FF_WARN_STREAM("DOCK PREEMPT CALLBACK");
     return fsm_.Update(GOAL_PREEMPT);
   }
 
   // A Cancellation request arrives
   void CancelCallback() {
+    FF_WARN_STREAM("CANCEL CALLBACK");
     return fsm_.Update(GOAL_CANCEL);
   }
 

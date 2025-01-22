@@ -38,7 +38,8 @@ def generate_launch_description():
             namespace="granite",
             executable="robot_state_publisher",
             name="astrobee_state_publisher",
-            parameters=[{'robot_description': ParameterValue(granite_robot_description) }],
+            parameters=[{'robot_description': ParameterValue(granite_robot_description),
+                         'use_sim_time': True}],
             arguments=[granite_urdf],
             condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "granite"))
         ),
@@ -48,7 +49,8 @@ def generate_launch_description():
             namespace="iss",
             executable="robot_state_publisher",
             name="astrobee_state_publisher",
-            parameters=[{'robot_description': ParameterValue(iss_robot_description) }],
+            parameters=[{'robot_description': ParameterValue(iss_robot_description),
+                         'use_sim_time': True}],
             arguments=[iss_urdf],
             condition=IfCondition(EqualsSubstitution(LaunchConfiguration("world"), "iss"))
         ),
@@ -58,7 +60,8 @@ def generate_launch_description():
             namespace="dock",
             executable="robot_state_publisher",
             name="astrobee_state_publisher",
-            parameters=[{'robot_description': ParameterValue(dock_robot_description) }],
+            parameters=[{'robot_description': ParameterValue(dock_robot_description),
+                         'use_sim_time': True}],
             arguments=[dock_urdf]
         ),
         # Granite robot description
@@ -67,7 +70,8 @@ def generate_launch_description():
             namespace="handrail_8_5",
             executable="robot_state_publisher",
             name="astrobee_state_publisher",
-            parameters=[{'robot_description': ParameterValue(handrail_8_5_robot_description) }],
+            parameters=[{'robot_description': ParameterValue(handrail_8_5_robot_description),
+                         'use_sim_time': True}],
             arguments=[handrail_8_5_urdf]
         ),
         # Granite robot description
@@ -76,7 +80,8 @@ def generate_launch_description():
             namespace="handrail_21_5",
             executable="robot_state_publisher",
             name="astrobee_state_publisher",
-            parameters=[{'robot_description': ParameterValue(handrail_21_5_robot_description) }],
+            parameters=[{'robot_description': ParameterValue(handrail_21_5_robot_description),
+                         'use_sim_time': True}],
             arguments=[handrail_21_5_urdf]
         ),
         # Granite robot description
@@ -85,7 +90,8 @@ def generate_launch_description():
             namespace="handrail_30",
             executable="robot_state_publisher",
             name="astrobee_state_publisher",
-            parameters=[{'robot_description': ParameterValue(handrail_30_robot_description) }],
+            parameters=[{'robot_description': ParameterValue(handrail_30_robot_description),
+                         'use_sim_time': True}],
             arguments=[handrail_30_urdf]
         ),
         # Granite robot description
@@ -94,14 +100,16 @@ def generate_launch_description():
             namespace="handrail_41_5",
             executable="robot_state_publisher",
             name="astrobee_state_publisher",
-            parameters=[{'robot_description': ParameterValue(handrail_41_5_robot_description) }],
+            parameters=[{'robot_description': ParameterValue(handrail_41_5_robot_description),
+                         'use_sim_time': True}],
             arguments=[handrail_41_5_urdf]
         ),
         # We must publish global transforms in case no robot has been spawned
         Node(
-        package='framestore',
-        namespace='',
-        executable='global_transforms',
-        name='global_transforms',
+            package='framestore',
+            namespace='',
+            executable='global_transforms',
+            name='global_transforms',
+            parameters=[{'use_sim_time': True}],
         )
     ])

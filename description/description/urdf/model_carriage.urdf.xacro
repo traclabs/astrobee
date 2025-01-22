@@ -56,4 +56,14 @@
     <mu2>0.</mu2>
     <fdir1>0 0 1</fdir1>
   </gazebo>
+
+  <!-- <gazebo>
+    <plugin
+      filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+      <topic>${prefix}carriage/joint_states</topic>
+      <joint_name>${prefix}carriage</joint_name>
+    </plugin>
+  </gazebo> -->
+
 </robot>

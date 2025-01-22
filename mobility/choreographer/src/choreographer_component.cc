@@ -851,13 +851,17 @@ class ChoreographerComponent : public ff_util::FreeFlyerComponent {
       child_frame = GetPlatform() + "/" + child_frame;
     try {
       rclcpp::Time now = GetTimeNow();
+      // rclcpp::Time now = tf2::get_now();
+      // FF_WARN_STREAM("getting clock time "<<now.);
+      // geometry_msgs::TransformStamped tf = tf_buffer_->lookupTransform(
+      //   std::string(FRAME_NAME_WORLD), child_frame, tf2::TimePointZero, 100ms); // was 50ms
       geometry_msgs::TransformStamped tf = tf_buffer_->lookupTransform(
         std::string(FRAME_NAME_WORLD), child_frame, now, 50ms);
       pose.header = tf.header;
       pose.pose = msg_conversions::ros_transform_to_ros_pose(tf.transform);
     }
     catch (tf2::TransformException &ex) {
-      FF_WARN_STREAM("Transform failed" << ex.what());
+      FF_WARN_STREAM("Transform failed: " << ex.what());
       return false;
     }
     return true;

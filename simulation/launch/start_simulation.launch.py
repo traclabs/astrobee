@@ -31,19 +31,7 @@ def generate_launch_description():
         DeclareLaunchArgument("debug",   default_value="false"),
         DeclareLaunchArgument("physics",   default_value="ode"),
 
-
-        SetEnvironmentVariable(name='GAZEBO_RESOURCE_PATH', value="/usr/share/gazebo-11"),
-
-#   <param name="/simulation_speed" value="$(arg speed)" />
-# TODO(@mgouveia): Not sure what to do about the speed, I think I'll have to pass it to
-# the plugin through sdf robot description since I can't set the parameter here
-
-# ANA FIX THIS
-#            get_launch_file( 'launch/gzserver.launch.py', 'gazebo_ros'),
-#            launch_arguments = {
-#                                'verbose': LaunchConfiguration('debug'),   # Debug a node set
-#                                'physics': LaunchConfiguration('physics'), # SIM IP address
-#                                'params_file': config_file,
+        #SetEnvironmentVariable(name='GAZEBO_RESOURCE_PATH', value="/usr/share/gazebo-11"),
 
         IncludeLaunchDescription(
             get_launch_file( 'launch/gz_sim.launch.py', 'ros_gz_sim'),
@@ -51,8 +39,8 @@ def generate_launch_description():
                ('gz_args', [
                    world_file,
                    ' -r',
-                   ' -v 4', 
-                   ' -s'
+                   ' -v 4',
+                   #' -s'
                ])
             ]   
         ),
@@ -76,6 +64,7 @@ def generate_launch_description():
           parameters=[{
               'config_file': os.path.join(pkg_astrobee_gazebo, 'config', 'ros_gz_astrobee_bridge.yaml'),
               'qos_overrides./tf_static.publisher.durability': 'transient_local',
+              'use_sim_time': True,
           }],
           output='screen'
         )                 

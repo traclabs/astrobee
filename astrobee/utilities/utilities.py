@@ -42,7 +42,7 @@ from launch.substitutions import (
     EqualsSubstitution,
     NotEqualsSubstitution
 )
-from launch_ros.actions import ComposableNodeContainer, Node
+from launch_ros.actions import ComposableNodeContainer, Node, SetParameter
 from launch_ros.descriptions import ComposableNode, ParameterValue
 
 

@@ -66,7 +66,7 @@ using FSM = ff_util::FSM;
 
 // This class is a plugin that calls the GNC autocode to predict
 // the forced to be applied to the rigid body
-class GazeboModelPluginPmc : public FreeFlyerModelPlugin {
+class GazeboModelPluginPmc : public FreeFlyerModelPlugin, public gz::sim::ISystemUpdate {
  public:
   static constexpr size_t NUMBER_OF_PMCS      = 2;
   static constexpr size_t NUMBER_OF_NOZZLES   = 6;

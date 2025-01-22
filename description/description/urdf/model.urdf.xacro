@@ -155,4 +155,12 @@
     <xacro:include filename="$(find description)/urdf/model_carriage.urdf.xacro" />
   </xacro:if>
 
+  <!-- <gazebo>
+    <plugin
+      filename="gz-sim-joint-state-publisher-system"
+      name="gz::sim::systems::JointStatePublisher">
+      <topic>${prefix}joint_states</topic>
+    </plugin>
+  </gazebo> -->
+
 </robot>

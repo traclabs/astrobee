@@ -119,7 +119,8 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin,
       public gz::sim::System,
       public gz::sim::ISystemConfigure,
       public gz::sim::ISystemPostUpdate,
-      public gz::sim::ISystemPreUpdate {
+      public gz::sim::ISystemPreUpdate
+{
  public:
   // Constructor
   explicit FreeFlyerModelPlugin(std::string const& plugin_name,
@@ -141,8 +142,7 @@ class FreeFlyerModelPlugin : public FreeFlyerPlugin,
                  gz::sim::EntityComponentManager &_ecm) {}
 
   virtual void PostUpdate(const gz::sim::UpdateInfo &_info,
-                const gz::sim::EntityComponentManager &_ecm) {}; 
-
+                const gz::sim::EntityComponentManager &_ecm) {};
   
   protected:
                        
@@ -208,8 +208,6 @@ class FreeFlyerSensorPlugin : public FreeFlyerPlugin,
 
   virtual void PostUpdate(const gz::sim::UpdateInfo &_info,
                 const gz::sim::EntityComponentManager &_ecm) {}; 
-
-
 
  protected:
 
